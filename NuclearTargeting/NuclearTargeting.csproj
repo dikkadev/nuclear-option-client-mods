@@ -3,7 +3,7 @@
     <TargetFramework>netstandard2.1</TargetFramework>
     <AssemblyName>NuclearTargeting</AssemblyName>
     <RootNamespace>NuclearTargeting</RootNamespace>
-    <Version>0.2.0</Version>
+    <Version>0.2.1</Version>
     <BepInExPluginGuid>dev.dikka.nucleartargeting</BepInExPluginGuid>
     <BepInExPluginName>NuclearTargeting</BepInExPluginName>
     <Nullable>enable</Nullable>

@@ -3,7 +3,7 @@
     <TargetFramework>netstandard2.1</TargetFramework>
     <AssemblyName>NuclearSounds</AssemblyName>
     <RootNamespace>NuclearSounds</RootNamespace>
-    <Version>0.1.0</Version>
+    <Version>0.1.1</Version>
     <BepInExPluginGuid>dev.dikka.nuclearsounds</BepInExPluginGuid>
     <BepInExPluginName>NuclearSounds</BepInExPluginName>
     <Nullable>enable</Nullable>

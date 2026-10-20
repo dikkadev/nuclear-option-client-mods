@@ -641,6 +641,24 @@ class Publication(Fixture):
 
 
 class CommandLine(unittest.TestCase):
+    def test_json_output_preserves_unicode_on_a_windows_legacy_stream(self):
+        raw = io.BytesIO()
+        output = io.TextIOWrapper(raw, encoding='cp1252')
+        value = {'notes': '\ufeff\u65e5\u672c\u8a9e'}
+        with patch.object(engine, 'status', return_value=value), contextlib.redirect_stdout(output):
+            self.assertEqual(cli.main(['status', '--offline', '--json']), 0)
+        output.flush()
+        self.assertEqual(json.loads(raw.getvalue().decode('ascii')), value)
+
+    def test_notes_file_accepts_windows_utf8_bom(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / 'notes.txt'
+            path.write_text('Stable release notes.', encoding='utf-8-sig')
+            with patch.object(engine, 'plan', return_value={'ok': True}) as plan, contextlib.redirect_stdout(io.StringIO()):
+                self.assertEqual(cli.main(['plan', '--all', '--game-version', '0.34.1', '--notes-file', str(path),
+                                           '--output', str(Path(directory) / 'release'), '--json']), 0)
+            self.assertEqual(plan.call_args.kwargs['notes'], 'Stable release notes.')
+
     def test_no_terminal_no_args_does_not_open_wizard(self):
         with patch.object(sys.stdin, 'isatty', return_value=False), contextlib.redirect_stdout(io.StringIO()), patch.object(cli, 'wizard') as wizard:
             self.assertEqual(cli.main([]), 2)

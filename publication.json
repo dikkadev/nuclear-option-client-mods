@@ -5,174 +5,174 @@
     {
       "name": "NuclearConnectivity",
       "id": "dev.dikka.nuclearconnectivity",
-      "version": "0.2.2",
-      "inputHash": "e0d4eb40500c61502b2f35050e2985ff96a9bdfbb9c2ba0e48c779b6ef1b5e4a"
+      "version": "0.2.3",
+      "inputHash": "67ca4d5292ad47f96bca8a2ea39b2e04b00464eeb8da9f48319e2b0b72e08260"
     },
     {
       "name": "NuclearControllerGestures",
       "id": "dev.dikka.nuclearcontrollergestures",
-      "version": "0.1.0",
-      "inputHash": "4900c5f307b981493a0f9536f2863433c1353c12750a8f0ab0f97042ddf495c7"
+      "version": "0.1.1",
+      "inputHash": "c44be42bffd02be1a5adbd40d31c2b9c940df992d1e1f4372337d3298580a418"
     },
     {
       "name": "NuclearDeathBlackout",
       "id": "dev.dikka.nucleardeathblackout",
-      "version": "0.2.2",
-      "inputHash": "31c810e58349addcd16d131c3532c155690857e2f5bd40cdd6ef57cbb42b52f5"
+      "version": "0.2.3",
+      "inputHash": "d62859fdc237a829dc5576247cc89034f9bb5d9cb1b0e0f0e85d9ac2251846d9"
     },
     {
       "name": "NuclearMapPlayerNames",
       "id": "dev.dikka.nuclearmapplayernames",
-      "version": "0.2.2",
-      "inputHash": "613c9ab57cb6c788c608eed10545ebb911736d75e1326ce84fed168940403463"
+      "version": "0.2.3",
+      "inputHash": "6bcbbd9f5ba0e32ef6142fafced74fe060fdac9053cdf1ac81954fc2c4c687f9"
     },
     {
       "name": "NuclearMfdWeapons",
       "id": "dev.dikka.nuclearmfdweapons",
-      "version": "0.1.3",
-      "inputHash": "2ad0dffdddc038c3a5516eceffb8e28ce4e3680fd0832627f3ce55907effceb5"
+      "version": "0.1.4",
+      "inputHash": "6070a2d2856683b34dbe5067a1de9d20fab9d3d38ae6df0ab5a04860ef6fa240"
     },
     {
       "name": "NuclearTargeting",
       "id": "dev.dikka.nucleartargeting",
-      "version": "0.2.0",
-      "inputHash": "a877b1984996ebd408e1e11b28bbc977263492891bcbfd7efe6d2f98457ae6f5"
+      "version": "0.2.1",
+      "inputHash": "028cf7f262244e3ff41e077cb1ef4716efc5b7e4930c661089c40d1cc04c4cad"
     },
     {
       "name": "NuclearSounds",
       "id": "dev.dikka.nuclearsounds",
-      "version": "0.1.0",
-      "inputHash": "cad201fa468f305d9e4746b15f3984383d0340823a8412dfad62c4d766472e3a"
+      "version": "0.1.1",
+      "inputHash": "9600853948fcc0deabdfcd8d0a8c038000e903df82e8e720b6f6366452dc9bdf"
     },
     {
       "name": "NuclearTrackAge",
       "id": "dev.dikka.nucleartrackage",
-      "version": "0.1.2",
-      "inputHash": "d51188a3021e340ee54e80aa0f7637aeb435d85353e9dacfbb54cc6ff5f1fb5a"
+      "version": "0.1.3",
+      "inputHash": "1922ae1855b5baf055c8977fe45c2e6ccfc4f983132214e7087e249c3e9d7725"
     },
     {
       "name": "NuclearUnits",
       "id": "dev.dikka.nuclearunits",
-      "version": "1.2.3",
-      "inputHash": "55a747f3aef519c70163b1e9ef2c2f2c2fbbcf47f46ccae595c5d6790e6ff239"
+      "version": "1.2.4",
+      "inputHash": "7b769243f3bf24eabe8c187f691481b8e73f4125cca2203d2fd831c4dc04684e"
     },
     {
       "name": "NuclearDelivery",
       "id": "dev.dikka.nucleardelivery",
-      "version": "0.1.2",
-      "inputHash": "16c96ab771881a0ba848ba7e24b5acccbfe2f940e3096959d70d504154d19075"
+      "version": "0.1.3",
+      "inputHash": "87cc197b72efe19dce98ea9a93f5ad0be0b49446e26b704da529090ec5ce87ed"
     },
     {
       "name": "NuclearMinimap",
       "id": "dev.dikka.nuclearminimap",
-      "version": "0.3.1",
-      "inputHash": "eec3dd51b9c21416b53bea0f310508f5dbe4c6b16fc960478bfd496316abdf81"
+      "version": "0.3.2",
+      "inputHash": "3086e245c9725d62a15c421fc4cea9d1841db5dec4328269ffa7aedbde2d7f7c"
     }
   ],
   "releases": [
     {
       "kind": "mod",
       "name": "NuclearConnectivity",
-      "version": "0.2.2",
-      "tag": "NuclearConnectivity-v0.2.2",
+      "version": "0.2.3",
+      "tag": "NuclearConnectivity-v0.2.3",
       "asset": "NuclearConnectivity.zip",
-      "prerelease": true
+      "prerelease": false
     },
     {
       "kind": "mod",
       "name": "NuclearControllerGestures",
-      "version": "0.1.0",
-      "tag": "NuclearControllerGestures-v0.1.0",
+      "version": "0.1.1",
+      "tag": "NuclearControllerGestures-v0.1.1",
       "asset": "NuclearControllerGestures.zip",
-      "prerelease": true
+      "prerelease": false
     },
     {
       "kind": "mod",
       "name": "NuclearDeathBlackout",
-      "version": "0.2.2",
-      "tag": "NuclearDeathBlackout-v0.2.2",
+      "version": "0.2.3",
+      "tag": "NuclearDeathBlackout-v0.2.3",
       "asset": "NuclearDeathBlackout.zip",
-      "prerelease": true
+      "prerelease": false
     },
     {
       "kind": "mod",
       "name": "NuclearMapPlayerNames",
-      "version": "0.2.2",
-      "tag": "NuclearMapPlayerNames-v0.2.2",
+      "version": "0.2.3",
+      "tag": "NuclearMapPlayerNames-v0.2.3",
       "asset": "NuclearMapPlayerNames.zip",
-      "prerelease": true
+      "prerelease": false
     },
     {
       "kind": "mod",
       "name": "NuclearMfdWeapons",
-      "version": "0.1.3",
-      "tag": "NuclearMfdWeapons-v0.1.3",
+      "version": "0.1.4",
+      "tag": "NuclearMfdWeapons-v0.1.4",
       "asset": "NuclearMfdWeapons.zip",
-      "prerelease": true
+      "prerelease": false
     },
     {
       "kind": "mod",
       "name": "NuclearTargeting",
-      "version": "0.2.0",
-      "tag": "NuclearTargeting-v0.2.0",
+      "version": "0.2.1",
+      "tag": "NuclearTargeting-v0.2.1",
       "asset": "NuclearTargeting.zip",
-      "prerelease": true
+      "prerelease": false
     },
     {
       "kind": "mod",
       "name": "NuclearSounds",
-      "version": "0.1.0",
-      "tag": "NuclearSounds-v0.1.0",
+      "version": "0.1.1",
+      "tag": "NuclearSounds-v0.1.1",
       "asset": "NuclearSounds.zip",
-      "prerelease": true
+      "prerelease": false
     },
     {
       "kind": "mod",
       "name": "NuclearTrackAge",
-      "version": "0.1.2",
-      "tag": "NuclearTrackAge-v0.1.2",
+      "version": "0.1.3",
+      "tag": "NuclearTrackAge-v0.1.3",
       "asset": "NuclearTrackAge.zip",
-      "prerelease": true
+      "prerelease": false
     },
     {
       "kind": "mod",
       "name": "NuclearUnits",
-      "version": "1.2.3",
-      "tag": "NuclearUnits-v1.2.3",
+      "version": "1.2.4",
+      "tag": "NuclearUnits-v1.2.4",
       "asset": "NuclearUnits.zip",
-      "prerelease": true
+      "prerelease": false
     },
     {
       "kind": "mod",
       "name": "NuclearDelivery",
-      "version": "0.1.2",
-      "tag": "NuclearDelivery-v0.1.2",
+      "version": "0.1.3",
+      "tag": "NuclearDelivery-v0.1.3",
       "asset": "NuclearDelivery.zip",
-      "prerelease": true
+      "prerelease": false
     },
     {
       "kind": "mod",
       "name": "NuclearMinimap",
-      "version": "0.3.1",
-      "tag": "NuclearMinimap-v0.3.1",
+      "version": "0.3.2",
+      "tag": "NuclearMinimap-v0.3.2",
       "asset": "NuclearMinimap.zip",
-      "prerelease": true
+      "prerelease": false
     },
     {
       "kind": "pack",
       "name": "our",
-      "version": "0.1.0",
-      "tag": "ClientModpack-v0.1.0",
+      "version": "0.1.1",
+      "tag": "ClientModpack-v0.1.1",
       "asset": "nuclear-option-client-mods.nommpack",
-      "prerelease": true
+      "prerelease": false
     },
     {
       "kind": "pack",
       "name": "full",
-      "version": "0.1.0",
-      "tag": "FullModpack-v0.1.0",
+      "version": "0.1.1",
+      "tag": "FullModpack-v0.1.1",
       "asset": "nuclear-option-full-modpack.nommpack",
-      "prerelease": true
+      "prerelease": false
     }
   ]
 }

@@ -3,7 +3,7 @@
     <TargetFramework>netstandard2.1</TargetFramework>
     <AssemblyName>NuclearDeathBlackout</AssemblyName>
     <RootNamespace>NuclearDeathBlackout</RootNamespace>
-    <Version>0.2.2</Version>
+    <Version>0.2.3</Version>
     <BepInExPluginGuid>dev.dikka.nucleardeathblackout</BepInExPluginGuid>
     <BepInExPluginName>NuclearDeathBlackout</BepInExPluginName>
     <Nullable>enable</Nullable>

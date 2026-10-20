@@ -263,7 +263,7 @@ def main(argv=None):
                                 output=args.output, repo=args.repo, offline=args.offline,
                                 prerelease=args.prerelease, include_untracked=args.include_untracked,
                                 license_file=args.license_file,
-                                notes=args.notes_file.read_text('utf-8') if args.notes_file else '')
+                                notes=args.notes_file.read_text('utf-8-sig') if args.notes_file else '')
         elif args.command == 'prepare':
             value = engine.prepare(args.plan)
         elif args.command == 'publish':
@@ -277,7 +277,9 @@ def main(argv=None):
         else:
             value = engine.verify_published(args.plan) if args.remote else engine.verify_prepared(args.plan)
         if args.json:
-            output.write(json.dumps(value, ensure_ascii=False) + '\n')
+            # JSON escapes preserve all Unicode without depending on a Windows
+            # redirected stream's legacy code page.
+            output.write(json.dumps(value, ensure_ascii=True) + '\n')
         else:
             render(value)
         return 0
