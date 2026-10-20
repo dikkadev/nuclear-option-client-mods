@@ -1,0 +1,15 @@
+# Third-party plugins included in the full pack. Versions/checksums live in the lock.
+# Layouts are reviewed explicitly: never copy a release's game/core/config files.
+[mods."BepInEx.ConfigurationManager"]
+origin = "https://github.com/BepInEx/BepInEx.ConfigurationManager"
+layout = "zip"
+strip_prefix = "BepInEx/plugins/"
+
+[mods."LoadoutPresets"]
+origin = "https://github.com/RudrNaik/NO-LoadoutPresets"
+layout = "dll"
+
+[mods."no-autopilot-mod"]
+origin = "https://github.com/qwerty1423/no-autopilot-mod"
+layout = "7z"
+strip_prefix = "no-autopilot-mod/"

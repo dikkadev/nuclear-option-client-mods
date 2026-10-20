@@ -1,0 +1,331 @@
+{
+  "schemaVersion": 1,
+  "description": "Explicit reflection field contracts from active mod FieldRefAccess and Traverse usage; update deliberately with source changes. Cecil FullName type notation.",
+  "fields": [
+    {
+      "type": "TargetCam",
+      "name": "landingScreenUI",
+      "fieldType": "LandingScreenUI"
+    },
+    {
+      "type": "LandingScreenUI",
+      "name": "displayCanvas",
+      "fieldType": "UnityEngine.Canvas"
+    },
+    {
+      "type": "TargetCam",
+      "name": "targetScreenUI",
+      "fieldType": "TargetScreenUI"
+    },
+    {
+      "type": "TacScreen",
+      "name": "targetCamDisplay",
+      "fieldType": "UnityEngine.GameObject"
+    },
+    {
+      "type": "TacScreen",
+      "name": "landingCamDisplay",
+      "fieldType": "UnityEngine.GameObject"
+    },
+    {
+      "type": "TacScreen",
+      "name": "radarCenter",
+      "fieldType": "UnityEngine.Transform"
+    },
+    {
+      "type": "CombatHUD",
+      "name": "topRightPanel",
+      "fieldType": "UnityEngine.GameObject"
+    },
+    {
+      "type": "NozzleGauge",
+      "name": "label",
+      "fieldType": "TMPro.TextMeshProUGUI"
+    },
+    {
+      "type": "NozzleGauge",
+      "name": "nozzleIcon",
+      "fieldType": "UnityEngine.Transform"
+    },
+    {
+      "type": "NozzleGauge",
+      "name": "inputPivot",
+      "fieldType": "UnityEngine.Transform"
+    },
+    {
+      "type": "Aircraft",
+      "name": "statusDisplay",
+      "fieldType": "StatusDisplay"
+    },
+    {
+      "type": "StatusDisplay",
+      "name": "aircraftBackground",
+      "fieldType": "UnityEngine.UI.Image"
+    },
+    {
+      "type": "WeaponStatus",
+      "name": "weaponImage",
+      "fieldType": "UnityEngine.UI.Image"
+    },
+    {
+      "type": "TacScreen",
+      "name": "canvas",
+      "fieldType": "UnityEngine.Canvas"
+    },
+    {
+      "type": "TacScreen",
+      "name": "aircraft",
+      "fieldType": "Aircraft"
+    },
+    {
+      "type": "CombatHUD",
+      "name": "weaponStatus",
+      "fieldType": "WeaponStatus"
+    },
+    {
+      "type": "WeaponStatus",
+      "name": "weaponPanel",
+      "fieldType": "UnityEngine.GameObject"
+    },
+    {
+      "type": "CombatHUD",
+      "name": "countermeasureBackground",
+      "fieldType": "UnityEngine.GameObject"
+    },
+    {
+      "type": "CombatHUD",
+      "name": "countermeasureImage",
+      "fieldType": "UnityEngine.UI.Image"
+    },
+    {
+      "type": "CombatHUD",
+      "name": "countermeasureName",
+      "fieldType": "TMPro.TextMeshProUGUI"
+    },
+    {
+      "type": "CombatHUD",
+      "name": "countermeasureAmmo",
+      "fieldType": "TMPro.TextMeshProUGUI"
+    },
+    {
+      "type": "CountermeasureManager",
+      "name": "countermeasureStations",
+      "fieldType": "System.Collections.Generic.List`1<CountermeasureManager/CountermeasureStation>"
+    },
+    {
+      "type": "CountermeasureManager/CountermeasureStation",
+      "name": "countermeasures",
+      "fieldType": "System.Collections.Generic.List`1<Countermeasure>"
+    },
+    {
+      "type": "RadarJammer",
+      "name": "powerSupply",
+      "fieldType": "PowerSupply"
+    },
+    {
+      "type": "Altitude",
+      "name": "absAlt",
+      "fieldType": "TMPro.TextMeshProUGUI"
+    },
+    {
+      "type": "Altitude",
+      "name": "aircraft",
+      "fieldType": "Aircraft"
+    },
+    {
+      "type": "Altitude",
+      "name": "radarAlt",
+      "fieldType": "TMPro.TextMeshProUGUI"
+    },
+    {
+      "type": "AoADisplay",
+      "name": "stallVoice",
+      "fieldType": "UnityEngine.AudioClip"
+    },
+    {
+      "type": "BasicFlightInstruments",
+      "name": "aircraft",
+      "fieldType": "Aircraft"
+    },
+    {
+      "type": "BasicFlightInstruments",
+      "name": "airspeedDisplay",
+      "fieldType": "TMPro.TextMeshProUGUI"
+    },
+    {
+      "type": "BasicFlightInstruments",
+      "name": "altitudeDisplay",
+      "fieldType": "TMPro.TextMeshProUGUI"
+    },
+    {
+      "type": "BasicFlightInstruments",
+      "name": "climbRateDisplay",
+      "fieldType": "TMPro.TextMeshProUGUI"
+    },
+    {
+      "type": "Climbrate",
+      "name": "aircraft",
+      "fieldType": "Aircraft"
+    },
+    {
+      "type": "Climbrate",
+      "name": "climbRate",
+      "fieldType": "TMPro.TextMeshProUGUI"
+    },
+    {
+      "type": "CombatHUD",
+      "name": "currentWeaponStation",
+      "fieldType": "WeaponStation"
+    },
+    {
+      "type": "CombatHUD",
+      "name": "markers",
+      "fieldType": "System.Collections.Generic.List`1<HUDUnitMarker>"
+    },
+    {
+      "type": "CombatHUD",
+      "name": "targetInfo",
+      "fieldType": "TMPro.TextMeshProUGUI"
+    },
+    {
+      "type": "CombatHUD",
+      "name": "targetList",
+      "fieldType": "System.Collections.Generic.List`1<Unit>"
+    },
+    {
+      "type": "FuelGauge",
+      "name": "aircraft",
+      "fieldType": "Aircraft"
+    },
+    {
+      "type": "FuelGauge",
+      "name": "fuelLabel",
+      "fieldType": "TMPro.TextMeshProUGUI"
+    },
+    {
+      "type": "GearIndicator",
+      "name": "lowerGearVoice",
+      "fieldType": "UnityEngine.AudioClip"
+    },
+    {
+      "type": "LandingScreenUI",
+      "name": "altitude",
+      "fieldType": "UnityEngine.UI.Text"
+    },
+    {
+      "type": "LandingScreenUI",
+      "name": "rel_speed",
+      "fieldType": "UnityEngine.UI.Text"
+    },
+    {
+      "type": "LandingScreenUI",
+      "name": "speed",
+      "fieldType": "UnityEngine.UI.Text"
+    },
+    {
+      "type": "LandingScreenUI",
+      "name": "vert_speed",
+      "fieldType": "UnityEngine.UI.Text"
+    },
+    {
+      "type": "SoundManager",
+      "name": "interfaceSource",
+      "fieldType": "UnityEngine.AudioSource"
+    },
+    {
+      "type": "SpeedGauge",
+      "name": "aircraft",
+      "fieldType": "Aircraft"
+    },
+    {
+      "type": "SpeedGauge",
+      "name": "airspeedDisplay",
+      "fieldType": "TMPro.TextMeshProUGUI"
+    },
+    {
+      "type": "SpeedGauge",
+      "name": "overspeedVoice",
+      "fieldType": "UnityEngine.AudioClip"
+    },
+    {
+      "type": "TargetListSelector_UnitItem",
+      "name": "unitDist",
+      "fieldType": "TMPro.TextMeshProUGUI"
+    },
+    {
+      "type": "TargetMarker",
+      "name": "infoAlt",
+      "fieldType": "UnityEngine.UI.Text"
+    },
+    {
+      "type": "TargetMarker",
+      "name": "infoRange",
+      "fieldType": "UnityEngine.UI.Text"
+    },
+    {
+      "type": "TargetMarker",
+      "name": "infoSpeed",
+      "fieldType": "UnityEngine.UI.Text"
+    },
+    {
+      "type": "TargetScreenUI",
+      "name": "altitude",
+      "fieldType": "TMPro.TextMeshProUGUI"
+    },
+    {
+      "type": "TargetScreenUI",
+      "name": "distance",
+      "fieldType": "TMPro.TextMeshProUGUI"
+    },
+    {
+      "type": "TargetScreenUI",
+      "name": "gridText",
+      "fieldType": "TMPro.TextMeshProUGUI"
+    },
+    {
+      "type": "TargetScreenUI",
+      "name": "hq",
+      "fieldType": "FactionHQ"
+    },
+    {
+      "type": "TargetScreenUI",
+      "name": "rel_altitude",
+      "fieldType": "TMPro.TextMeshProUGUI"
+    },
+    {
+      "type": "TargetScreenUI",
+      "name": "rel_speed",
+      "fieldType": "TMPro.TextMeshProUGUI"
+    },
+    {
+      "type": "TargetScreenUI",
+      "name": "speed",
+      "fieldType": "TMPro.TextMeshProUGUI"
+    },
+    {
+      "type": "TargetScreenUI",
+      "name": "targetCam",
+      "fieldType": "TargetCam"
+    },
+    {
+      "type": "TargetScreenUI",
+      "name": "targetList",
+      "fieldType": "System.Collections.Generic.List`1<Unit>"
+    },
+    {
+      "type": "ThreatList",
+      "name": "itemLookup",
+      "fieldType": "System.Collections.Generic.Dictionary`2<PersistentID,ThreatItem>"
+    },
+    {
+      "type": "VirtualMFD",
+      "name": "altitude",
+      "fieldType": "TMPro.TextMeshProUGUI"
+    },
+    {
+      "type": "VirtualMFD",
+      "name": "speed",
+      "fieldType": "TMPro.TextMeshProUGUI"
+    }
+  ]
+}

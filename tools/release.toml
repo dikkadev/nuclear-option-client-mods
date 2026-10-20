@@ -1,0 +1,12 @@
+[publication]
+repository = "dikkadev/nuclear-option-client-mods"
+branch = "main"
+commit_name = "dikkadev"
+commit_email = "dikkadev@users.noreply.github.com"
+
+[packs]
+our_version = "0.1.0"
+full_version = "0.1.0"
+
+[build]
+sdk_version = "10.0.401"

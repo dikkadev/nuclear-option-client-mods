@@ -1,0 +1,90 @@
+# Public build/package inputs. Project files supply plugin versions.
+configuration = "Release"
+
+[mods.NuclearConnectivity]
+id = "dev.dikka.nuclearconnectivity"
+display_name = "NuclearConnectivity"
+description = "Client-side Nuclear Option mod for external integrations, currently Steam Timeline combat markers."
+tags = ["QoL", "Integration"]
+include = ["README.md"]
+project = "NuclearConnectivity/NuclearConnectivity.csproj"
+
+[mods.NuclearControllerGestures]
+id = "dev.dikka.nuclearcontrollergestures"
+display_name = "NuclearControllerGestures"
+description = "Configurable additive controller double-press bindings for native button actions; original controls remain available."
+tags = ["QoL", "Controls"]
+include = ["README.md"]
+project = "NuclearControllerGestures/NuclearControllerGestures.csproj"
+
+[mods.NuclearDeathBlackout]
+id = "dev.dikka.nucleardeathblackout"
+display_name = "NuclearDeathBlackout"
+description = "Client-side Nuclear Option mod that cuts to black and briefly mutes audio when the local main pilot dies."
+tags = ["Immersion", "QoL"]
+include = ["README.md"]
+project = "NuclearDeathBlackout/NuclearDeathBlackout.csproj"
+
+[mods.NuclearMapPlayerNames]
+id = "dev.dikka.nuclearmapplayernames"
+display_name = "NuclearMapPlayerNames"
+description = "Client-side Nuclear Option mod that shows multiplayer usernames next to player-controlled aircraft on the dynamic map."
+tags = ["QoL", "Map", "Multiplayer"]
+include = ["README.md"]
+project = "NuclearMapPlayerNames/NuclearMapPlayerNames.csproj"
+
+[mods.NuclearMfdWeapons]
+id = "dev.dikka.nuclearmfdweapons"
+display_name = "NuclearMfdWeapons"
+description = "Cockpit weapon, ammunition and countermeasure display with a brief loadout preview and optional stock HUD."
+tags = ["QoL", "HUD", "Immersion"]
+include = ["README.md", "THIRD-PARTY-NOTICES.txt"]
+project = "NuclearMfdWeapons/NuclearMfdWeapons.csproj"
+
+[mods.NuclearTargeting]
+id = "dev.dikka.nucleartargeting"
+display_name = "NuclearTargeting"
+description = "Client-side alternative target selection with optional cycling and tap-selection caps."
+tags = ["QoL", "Targeting"]
+include = ["README.md"]
+project = "NuclearTargeting/NuclearTargeting.csproj"
+
+[mods.NuclearSounds]
+id = "dev.dikka.nuclearsounds"
+display_name = "NuclearSounds"
+description = "Client-side designation tones, voice callouts, and fuel/terrain warnings with estimated fuel time."
+tags = ["QoL", "HUD", "Audio"]
+include = ["README.md", "assets/**"]
+project = "NuclearSounds/NuclearSounds.csproj"
+
+[mods.NuclearTrackAge]
+id = "dev.dikka.nucleartrackage"
+display_name = "NuclearTrackAge"
+description = "Client-side Nuclear Option mod that annotates stale enemy target tracks with how old the last known position is."
+tags = ["QoL", "HUD", "Map"]
+include = ["README.md"]
+project = "NuclearTrackAge/NuclearTrackAge.csproj"
+
+[mods.NuclearUnits]
+id = "dev.dikka.nuclearunits"
+display_name = "NuclearUnits"
+description = "Client-side Nuclear Option mod that lets players choose units per HUD readout instead of relying only on the game's global metric/imperial setting."
+tags = ["QoL", "HUD"]
+include = ["README.md"]
+project = "NuclearUnits/NuclearUnits.csproj"
+
+[mods.NuclearDelivery]
+id = "dev.dikka.nucleardelivery"
+display_name = "NuclearDelivery"
+description = "Missile and bomb delivery counters on the target camera and cockpit MFD: flight, reported armor contact and lost deliveries."
+tags = ["QoL", "HUD"]
+include = ["README.md", "THIRD-PARTY-NOTICES.txt"]
+project = "NuclearDelivery/NuclearDelivery.csproj"
+
+[mods.NuclearMinimap]
+id = "dev.dikka.nuclearminimap"
+display_name = "NuclearMinimap"
+description = "Native minimap orientation and hold zoom, with an optional cockpit map display and configurable HUD visibility."
+tags = ["QoL", "HUD", "Map"]
+include = ["README.md", "THIRD-PARTY-NOTICES.txt"]
+project = "NuclearMinimap/NuclearMinimap.csproj"

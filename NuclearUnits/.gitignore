@@ -1,0 +1,19 @@
+# Build output
+bin/
+obj/
+dist/
+
+# Local environment overrides
+.env
+
+# IDE/editor files
+.vs/
+.vscode/
+.idea/
+*.user
+*.suo
+*.userprefs
+
+# OS files
+.DS_Store
+Thumbs.db

@@ -1,0 +1,9 @@
+.env
+.env.*
+!.env.example
+**/bin/
+**/obj/
+**/dist/
+**/__pycache__/
+.git/
+.jj/

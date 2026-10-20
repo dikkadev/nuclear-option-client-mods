@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="../../NuclearMinimap/DeviceZoomBinding.cs" Link="Production/DeviceZoomBinding.cs" />
+    <Compile Include="../../NuclearMinimap/CaptureButtonEdges.cs" Link="Production/CaptureButtonEdges.cs" />
+    <Compile Include="../../NuclearControllerGestures/DoublePressGesture.cs" Link="Production/DoublePressGesture.cs" />
+    <Compile Include="../../NuclearTargeting/TapTargetBuffer.cs" Link="Production/TapTargetBuffer.cs" />
+    <Compile Include="../../NuclearUnits/HudUnitFormatter.cs" Link="Production/HudUnitFormatter.cs" />
+    <Compile Include="../../NuclearTrackAge/TrackAgeFormatter.cs" Link="Production/TrackAgeFormatter.cs" />
+    <Compile Include="../../NuclearSounds/FuelTimeEstimate.cs" Link="Production/FuelTimeEstimate.cs" />
+    <Compile Include="../../NuclearDelivery/DeliveryLedger.cs" Link="Production/DeliveryLedger.cs" />
+    <Compile Include="../../NuclearDelivery/DeliveryLayout.cs" Link="Production/DeliveryLayout.cs" />
+    <Compile Include="../../NuclearMinimap/MapPresentation.cs" Link="Production/MapPresentation.cs" />
+    <Compile Include="../../NuclearMinimap/MapZoom.cs" Link="Production/MapZoom.cs" />
+    <Compile Include="../../NuclearMinimap/MapCenter.cs" Link="Production/MapCenter.cs" />
+    <Compile Include="../../NuclearMinimap/TapHoldGesture.cs" Link="Production/TapHoldGesture.cs" />
+  </ItemGroup>
+</Project>

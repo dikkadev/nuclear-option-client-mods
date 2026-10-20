@@ -1,0 +1,64 @@
+{
+  "schema": 1,
+  "registry": {
+    "manifestUrl": "https://kopterbuzz.github.io/NOMNOM/manifest/manifest.json",
+    "versionUrl": "https://kopterbuzz.github.io/NOMNOM/manifest/version.json",
+    "version": "1.1.0.2970"
+  },
+  "mods": [
+    {
+      "id": "BepInEx.ConfigurationManager",
+      "origin": "https://github.com/BepInEx/BepInEx.ConfigurationManager",
+      "artifact": {
+        "fileName": "BepInEx.ConfigurationManager_BepInEx5_v18.4.1.zip",
+        "version": "18.4.1",
+        "category": "release",
+        "type": "plugin",
+        "gameVersion": "0.34.2",
+        "downloadUrl": "https://github.com/BepInEx/BepInEx.ConfigurationManager/releases/download/v18.4.1/BepInEx.ConfigurationManager_BepInEx5_v18.4.1.zip",
+        "hash": "sha256:9eb19791508a2acb973dfb2bcd196c631fb53cf041c462d69d889e515115aa53",
+        "sha256": "9eb19791508a2acb973dfb2bcd196c631fb53cf041c462d69d889e515115aa53"
+      },
+      "layout": "zip",
+      "stripPrefix": "BepInEx/plugins/"
+    },
+    {
+      "id": "LoadoutPresets",
+      "origin": "https://github.com/RudrNaik/NO-LoadoutPresets",
+      "artifact": {
+        "fileName": "LoadoutPresets_1.0.0.dll",
+        "version": "0.0.6",
+        "category": "release",
+        "type": "plugin",
+        "gameVersion": "0.33",
+        "downloadUrl": "https://github.com/RudrNaik/NO-LoadoutPresets/releases/download/v0.0.6/LoadoutPresets_1.0.0.dll",
+        "hash": "sha256:099616752e764825a481b6dee6e6d594dc2e5f2d760903388d79e11640065e05",
+        "sha256": "099616752e764825a481b6dee6e6d594dc2e5f2d760903388d79e11640065e05"
+      },
+      "layout": "dll",
+      "stripPrefix": ""
+    },
+    {
+      "id": "no-autopilot-mod",
+      "origin": "https://github.com/qwerty1423/no-autopilot-mod",
+      "artifact": {
+        "fileName": "com.qwerty1423.NOAutopilot-5.6.0.7z",
+        "version": "5.6.0",
+        "category": "release",
+        "type": "plugin",
+        "gameVersion": "0.33",
+        "downloadUrl": "https://github.com/qwerty1423/no-autopilot-mod/releases/download/v5.6.0/com.qwerty1423.NOAutopilot-5.6.0.7z",
+        "hash": "sha256:cbf764389e29938a8c9f3adf9ba24a3450c8264faa547d0ca3181c648eb1f4c1",
+        "dependencies": [
+          {
+            "id": "BepInEx.ConfigurationManager",
+            "version": "18.4.1"
+          }
+        ],
+        "sha256": "cbf764389e29938a8c9f3adf9ba24a3450c8264faa547d0ca3181c648eb1f4c1"
+      },
+      "layout": "7z",
+      "stripPrefix": "no-autopilot-mod/"
+    }
+  ]
+}

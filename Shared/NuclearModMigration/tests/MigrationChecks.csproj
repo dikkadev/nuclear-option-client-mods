@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <BepInExCoreDir Condition="'$(BepInExCoreDir)' == ''">$(NO_BEPINEX_CORE_DIR)</BepInExCoreDir>
+    <NuclearOptionManagedDir Condition="'$(NuclearOptionManagedDir)' == ''">$(NO_MANAGED_DIR)</NuclearOptionManagedDir>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="../../../NuclearTargeting/TapCapConfigMigration.cs" Link="TapCapConfigMigration.cs" />
+    <Reference Include="BepInEx"><HintPath>$(BepInExCoreDir)/BepInEx.dll</HintPath></Reference>
+    <Reference Include="UnityEngine"><HintPath>$(NuclearOptionManagedDir)/UnityEngine.dll</HintPath></Reference>
+    <Reference Include="UnityEngine.CoreModule"><HintPath>$(NuclearOptionManagedDir)/UnityEngine.CoreModule.dll</HintPath></Reference>
+    <Reference Include="UnityEngine.InputLegacyModule"><HintPath>$(NuclearOptionManagedDir)/UnityEngine.InputLegacyModule.dll</HintPath></Reference>
+  </ItemGroup>
+  <Import Project="../NuclearModMigration.props" />
+</Project>

@@ -1,0 +1,5 @@
+<Project>
+  <ItemGroup>
+    <Compile Include="$(MSBuildThisFileDirectory)LegacyConfig.cs" Link="Shared/LegacyConfig.cs" />
+  </ItemGroup>
+</Project>

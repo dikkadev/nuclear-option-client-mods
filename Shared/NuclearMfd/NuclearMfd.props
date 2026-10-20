@@ -1,0 +1,6 @@
+<Project>
+  <!-- Compile into the consuming plugin; there is no runtime library DLL. -->
+  <ItemGroup>
+    <Compile Include="$(MSBuildThisFileDirectory)*.cs" Link="NuclearMfd/%(Filename)%(Extension)" />
+  </ItemGroup>
+</Project>
