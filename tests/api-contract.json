@@ -18,6 +18,11 @@
       "fieldType": "TargetScreenUI"
     },
     {
+      "type": "TargetScreenUI",
+      "name": "targetBoxes",
+      "fieldType": "System.Collections.Generic.List`1<UnityEngine.UI.Image>"
+    },
+    {
       "type": "TacScreen",
       "name": "targetCamDisplay",
       "fieldType": "UnityEngine.GameObject"

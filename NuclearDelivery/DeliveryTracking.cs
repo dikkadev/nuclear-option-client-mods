@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using HarmonyLib;
 using UnityEngine;
@@ -18,6 +19,9 @@ namespace NuclearDelivery
         private static readonly DeliveryLedger Ledger = new DeliveryLedger();
         private static readonly Dictionary<int, TrackedLaunch> Launches = new Dictionary<int, TrackedLaunch>();
         private static readonly List<int> Remove = new List<int>();
+        // Every launch, regardless of owner, so allied munitions can mark targets after an aircraft change.
+        private static readonly HashSet<Missile> Flying = new HashSet<Missile>();
+        private static readonly Predicate<Missile> Ended = missile => missile == null || missile.disabled;
         private static Aircraft? owner;
         private static bool active;
         public static DeliveryCounts Counts => Ledger.Snapshot();
@@ -25,6 +29,7 @@ namespace NuclearDelivery
         public static void Update(Aircraft? aircraft, bool enabled, float recentSeconds, float timeoutSeconds)
         {
             SetOwner(aircraft, enabled);
+            if (!enabled) Flying.Clear(); else Flying.RemoveWhere(Ended);
             if (!active || owner == null) return;
             float now = Time.time;
             Remove.Clear();
@@ -81,9 +86,25 @@ namespace NuclearDelivery
             Ledger.Launch(id, launch.Kind, launch.Started);
             if (launch.ArmorContact.HasValue) Ledger.Resolve(id, launch.ArmorContact.Value, launch.Resolved);
         }
+        // Live targetID follows retargeting and loss of lock; the HQ filter excludes enemy munitions.
+        public static int Engaging(Unit target, bool includeAllies)
+        {
+            if (!active || owner == null || target == null) return 0;
+            var id = target.persistentID;
+            if (!id.IsValid) return 0;
+            var hq = owner.NetworkHQ;
+            int count = 0;
+            foreach (var missile in Flying)
+            {
+                if (missile == null || missile.disabled || missile.targetID != id) continue;
+                if (includeAllies ? missile.NetworkHQ == hq : IsOwned(missile)) count++;
+            }
+            return count;
+        }
         private static void Started(Missile missile)
         {
             if (Plugin.Instance?.IsTrackingEnabled != true) return;
+            Flying.Add(missile);
             SetOwner(CombatHUD.i != null ? CombatHUD.i.aircraft : null, active);
             if (!active || owner == null) return;
             int id = missile.GetInstanceID();
@@ -99,6 +120,7 @@ namespace NuclearDelivery
         }
         private static void Detonated(Missile missile, bool hitArmor)
         {
+            Flying.Remove(missile);
             if (Plugin.Instance?.IsTrackingEnabled != true) return;
             SetOwner(CombatHUD.i != null ? CombatHUD.i.aircraft : null, active);
             if (!active || owner == null || !Launches.TryGetValue(missile.GetInstanceID(), out var launch)) return;

@@ -98,6 +98,8 @@ The target overlay owns children under the exact aircraft's lazily created Targe
 
 Delivery0.1.2: compare radar boxes with target camera at default scales on VT7 and differently scaled panels. With an in-flight munition, extend gear to activate the landing camera; check both M/B columns above mode/magnification, then return to radar/target. Test each independent view toggle, old saved scale values, aircraft transfer and disable/re-enable. No owned overlay should remain on the previous aircraft.
 
+Engagement markers: select two or more targets and fire one guided missile at one of them. Only that target's camera box should show the green missile icon below it, and the icon should follow the box. Fire a second munition at the same target to get the count "2". The marker must clear at detonation or loss of lock and move when a munition retargets. In multiplayer, check that an allied launch marks the target only while Mark Allied Munitions is on, and that enemy missiles never mark a target. Check the icon is visible in color and IR modes, then check the marker toggle and scale, target deselection, aircraft transfer and disable/re-enable. Record `Delivery counters ready: target engagement markers` or the targetBoxes unavailable warning.
+
 ### Native minimap on the cockpit Radar screen
 
 NuclearMinimap 0.1.0 runtime acceptance is pending. Compare its Radar presentation with the native HUD minimap at matching range and heading: terrain, contacts, own-aircraft position, selected targets and existing map labels must agree. Check VT-7 plus nested Darkreach/Alkyon and Ibis radar surfaces, radar-equipped and optical-only aircraft, and theme/resolution changes. Confirm source refresh continues while the HUD copy is hidden.

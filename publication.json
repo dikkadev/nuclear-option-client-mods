@@ -59,8 +59,8 @@
     {
       "name": "NuclearDelivery",
       "id": "dev.dikka.nucleardelivery",
-      "version": "0.1.3",
-      "inputHash": "87cc197b72efe19dce98ea9a93f5ad0be0b49446e26b704da529090ec5ce87ed"
+      "version": "0.1.4",
+      "inputHash": "34f6a9af65cbcb02abe4244d907edf4f40eac1db2df120a5641f8ccca66546b8"
     },
     {
       "name": "NuclearMinimap",
@@ -71,19 +71,11 @@
   ],
   "releases": [
     {
-      "kind": "pack",
-      "name": "our",
-      "version": "1.0.0",
-      "tag": "Modpack-mine-v1.0.0",
-      "asset": "nuclear-option-modpack-mine.nommpack",
-      "prerelease": false
-    },
-    {
-      "kind": "pack",
-      "name": "full",
-      "version": "1.0.0",
-      "tag": "Modpack-full-v1.0.0",
-      "asset": "nuclear-option-modpack-full.nommpack",
+      "kind": "mod",
+      "name": "NuclearDelivery",
+      "version": "0.1.4",
+      "tag": "NuclearDelivery-v0.1.4",
+      "asset": "NuclearDelivery.zip",
       "prerelease": false
     }
   ]

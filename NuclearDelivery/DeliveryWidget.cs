@@ -40,7 +40,7 @@ namespace NuclearDelivery
             }
             catch { Dispose(); throw; }
         }
-        private static TMP_FontAsset ResolveFont(RectTransform parent)
+        internal static TMP_FontAsset ResolveFont(RectTransform parent)
         {
             var hud = SceneSingleton<FlightHud>.i;
             var native = hud != null ? hud.GetComponentInChildren<TextMeshProUGUI>(true) : null;

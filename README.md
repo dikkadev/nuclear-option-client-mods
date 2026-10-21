@@ -11,7 +11,7 @@ private development history.
 | `NuclearConnectivity` | 0.2.3 | `dev.dikka.nuclearconnectivity` | Client-side Nuclear Option mod for external integrations, currently Steam Timeline combat markers. |
 | `NuclearControllerGestures` | 0.1.1 | `dev.dikka.nuclearcontrollergestures` | Configurable additive controller double-press bindings for native button actions; original controls remain available. |
 | `NuclearDeathBlackout` | 0.2.3 | `dev.dikka.nucleardeathblackout` | Client-side Nuclear Option mod that cuts to black and briefly mutes audio when the local main pilot dies. |
-| `NuclearDelivery` | 0.1.3 | `dev.dikka.nucleardelivery` | Missile and bomb delivery counters on the target camera and cockpit MFD: flight, reported armor contact and lost deliveries. |
+| `NuclearDelivery` | 0.1.4 | `dev.dikka.nucleardelivery` | Missile and bomb delivery counters on the target camera and cockpit MFD: flight, reported armor contact and lost deliveries. |
 | `NuclearMapPlayerNames` | 0.2.3 | `dev.dikka.nuclearmapplayernames` | Client-side Nuclear Option mod that shows multiplayer usernames next to player-controlled aircraft on the dynamic map. |
 | `NuclearMfdWeapons` | 0.1.4 | `dev.dikka.nuclearmfdweapons` | Cockpit weapon, ammunition and countermeasure display with a brief loadout preview and optional stock HUD. |
 | `NuclearMinimap` | 0.3.2 | `dev.dikka.nuclearminimap` | Native minimap orientation and hold zoom, with an optional cockpit map display and configurable HUD visibility. |
