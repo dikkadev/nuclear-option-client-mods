@@ -1,4 +1,4 @@
-# Third-party plugins included in the full pack. Versions/checksums live in the lock.
+# Third-party registry references for the full pack. Versions/checksums live in the lock.
 # Layouts are reviewed explicitly: never copy a release's game/core/config files.
 [mods."BepInEx.ConfigurationManager"]
 origin = "https://github.com/BepInEx/BepInEx.ConfigurationManager"

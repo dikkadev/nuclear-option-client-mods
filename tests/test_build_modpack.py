@@ -213,26 +213,26 @@ class ModpackTests(unittest.TestCase):
             builder.package(self.root, self.output, skip_build=True)
         self.assertFalse(self.output.exists())
 
-    def test_full_pack_keeps_own_payload_and_adds_pinned_extras(self):
+    def test_full_pack_keeps_own_payload_and_references_extras_without_vendoring(self):
         own = builder.prepared_payload(self.root, skip_build=True)
-        extra = {'mods/extra.plugin/plugin.dll': b'extra'}
         origins = [{'id': 'extra.plugin', 'version': '4.5.6', 'origin': 'https://example.test/repo'}]
-        with patch.object(builder, 'prepare_extras', return_value=(extra, origins)):
+        with patch.object(builder, 'reference_extras', return_value=origins):
             full = builder.full_payload(self.root, own)
         self.assertEqual(full['mods/dev.test.Active/Active.dll'], own['mods/dev.test.Active/Active.dll'])
-        self.assertEqual(full['mods/extra.plugin/plugin.dll'], b'extra')
+        self.assertFalse(any(name.startswith('mods/extra.plugin/') for name in full))
+        self.assertEqual({name for name in full if name.startswith('mods/')},
+                         {name for name in own if name.startswith('mods/')})
         self.assertEqual(json.loads(full['modlist.nomm.json'])[-1], {'id': 'extra.plugin', 'version': '4.5.6'})
         self.assertNotIn('origins.json', own)
         self.assertEqual(json.loads(full['origins.json'])['mods'], origins)
         self.assertIn('game-runtime-unverified', json.loads(full['build-info.json'])['thirdPartyVerification'])
+        self.assertEqual(json.loads(full['build-info.json'])['thirdPartyMode'], 'registry-references')
+        self.assertIn('already-installed external ID', full['PACK-README.txt'].decode())
 
-    def test_full_pack_rejects_own_id_or_path_collision(self):
+    def test_full_pack_rejects_referenced_id_collision(self):
         own = builder.prepared_payload(self.root, skip_build=True)
-        with patch.object(builder, 'prepare_extras', return_value=({}, [{'id': 'dev.test.Active', 'version': '1.2.3'}])):
+        with patch.object(builder, 'reference_extras', return_value=[{'id': 'dev.test.Active', 'version': '1.2.3'}]):
             with self.assertRaisesRegex(ValueError, 'IDs collide'):
-                builder.full_payload(self.root, own)
-        with patch.object(builder, 'prepare_extras', return_value=({'build-info.json': b'bad'}, [])):
-            with self.assertRaisesRegex(ValueError, 'payload collides'):
                 builder.full_payload(self.root, own)
 
     def test_archive_staging_failure_preserves_both_outputs(self):

@@ -28,9 +28,27 @@ from process_utils import background_kwargs
 ROOT = Path(__file__).resolve().parents[1]
 REGISTRY = 'https://kopterbuzz.github.io/NOMNOM/manifest/manifest.json'
 PACKS = {
+    'our': ('Modpack-mine-v', 'nuclear-option-modpack-mine.nommpack'),
+    'full': ('Modpack-full-v', 'nuclear-option-modpack-full.nommpack'),
+}
+LEGACY_PACKS = {
     'our': ('ClientModpack-v', 'nuclear-option-client-mods.nommpack'),
     'full': ('FullModpack-v', 'nuclear-option-full-modpack.nommpack'),
 }
+
+
+def pack_label(name):
+    return 'mine' if name == 'our' else name
+
+
+def pack_variants(name):
+    return (PACKS[name], LEGACY_PACKS[name])
+
+
+def pack_versions(releases, name):
+    return [version for release in releases if not release.get('draft')
+            for prefix, _ in pack_variants(name)
+            if (version := tag_version(release.get('tag_name'), prefix))]
 
 
 def canonical(value):
@@ -243,14 +261,15 @@ def status(root=ROOT, *, repo=None, offline=False):
         suggested = mod['version'] if not latest or version_key(mod['version']) > version_key(latest) else next_version(latest, 'patch')
         rows.append({'name': mod['name'], 'local': mod['version'], 'published': latest,
                      'individualPublished': individual, 'packPublished': pack_version, 'suggested': suggested})
-    for name, (prefix, _) in PACKS.items():
-        versions = [v for r in remote['releases'] if not r.get('draft') and (v := tag_version(r.get('tag_name'), prefix))]
-        rows.append({'name': f'pack:{name}', 'local': settings['packs'][name + '_version'],
+    for name in PACKS:
+        versions = pack_versions(remote['releases'], name)
+        rows.append({'name': f'pack:{pack_label(name)}', 'local': settings['packs'][name + '_version'],
                      'published': max(versions, key=version_key) if versions else None})
     return {'repository': repo, 'offline': offline, 'items': rows}
 
 
 def bump(root, names, change, *, pack=None):
+    pack = 'our' if pack == 'mine' else pack
     builder = load_builder(root)
     mods = builder.load_mods(root)
     selected = select_mods(mods, names)
@@ -385,12 +404,13 @@ def published_pack_members(mods, releases):
     versions must still be protected on later pack AND individual publications.
     """
     result = {m['name']: [] for m in mods}
-    for prefix, filename in PACKS.values():
-        candidates = [(version_key(v), r) for r in releases if not r.get('draft')
-                      and (v := tag_version(r.get('tag_name'), prefix))]
+    for name in PACKS:
+        candidates = [(version_key(v), r, filename) for r in releases if not r.get('draft')
+                      for prefix, filename in pack_variants(name)
+                      if (v := tag_version(r.get('tag_name'), prefix))]
         if not candidates:
             continue
-        release = max(candidates, key=lambda pair: pair[0])[1]
+        _, release, filename = max(candidates, key=lambda pair: pair[0])
         asset = next((a for a in release.get('assets', []) if a['name'] == filename), None)
         if asset is None:
             raise ValueError(f'Published pack is missing its named asset: {release["tag_name"]}')
@@ -492,6 +512,7 @@ def check_pack_dlls(mods, contents, references):
 
 def plan(root, names, packs, *, game_version, output, repo=None, offline=False,
          prerelease=False, notes='', include_untracked=False, license_file=None):
+    packs = ['our' if name == 'mine' else name for name in packs]
     from release_source import (collect_source, source_hash, file_manifest, write_snapshot,
                                 public_readme, scan_for_secrets, list_source_files,
                                 is_exportable, mod_directories)
@@ -519,8 +540,7 @@ def plan(root, names, packs, *, game_version, output, repo=None, offline=False,
     for item in items:
         latest = remote['versions'].get(item['name'])
         if item['kind'] == 'pack':
-            prefix = PACKS[item['name']][0]
-            known = [v for r in remote['releases'] if not r.get('draft') and (v := tag_version(r.get('tag_name'), prefix))]
+            known = pack_versions(remote['releases'], item['name'])
             latest = max(known, key=version_key) if known else None
         existing = next((r for r in remote['releases'] if r['tag_name'] == item['tag']), None)
         if existing is not None:
@@ -528,7 +548,7 @@ def plan(root, names, packs, *, game_version, output, repo=None, offline=False,
         if latest and version_key(item['version']) <= version_key(latest):
             raise ValueError(f'{item["name"]} {item["version"]} must exceed published {latest}; use bump first')
         item['prerelease'] = prerelease
-        item['notes'] = notes.strip() or f'{item["name"]} {item["version"]} for Nuclear Option {game_version}.'
+        item['notes'] = notes.strip() or f'{release_title(item)} for Nuclear Option {game_version}.'
     files = collect_source(root, mods, include_untracked=include_untracked)
     directories = mod_directories(root, mods)
     new_source = [p for p, mode in list_source_files(root, True).items()
@@ -628,6 +648,10 @@ def read_plan(path):
         elif item['kind'] == 'pack' and item['name'] in PACKS:
             prefix, asset = PACKS[item['name']]
             tag = prefix + item['version']
+            for old_prefix, old_asset in pack_variants(item['name']):
+                if item['tag'] == old_prefix + item['version'] and item['asset'] == old_asset:
+                    tag, asset = item['tag'], item['asset']
+                    break
             if config(snapshot)['packs'][item['name'] + '_version'] != item['version']:
                 raise ValueError('Planned pack version differs from the frozen configuration')
         else:
@@ -724,7 +748,7 @@ def prepare(plan_path, *, root=ROOT):
                         payload['licenses/our-mods-LICENSE.txt'] = files['LICENSE']
                         if 'LICENSE-NOTICE.md' in files:
                             payload['licenses/our-mods-LICENSE-NOTICE.md'] = files['LICENSE-NOTICE.md']
-                        payload['LICENSE-SCOPE.txt'] = b'The original-code license in licenses/our-mods-LICENSE.txt applies only to the dev.dikka plugins. Third-party plugins retain their own licenses and notices.\n'
+                        payload['LICENSE-SCOPE.txt'] = b'The original-code license in licenses/our-mods-LICENSE.txt applies to the bundled dev.dikka plugins. External plugins are registry references, with their own upstream licenses; their files are not bundled here.\n'
                     else:
                         payload['LICENSE'] = files['LICENSE']
                         if 'LICENSE-NOTICE.md' in files:
@@ -812,7 +836,12 @@ def release_body(item, commit, value, asset):
 
 
 def release_title(item):
-    name = {'our': 'Nuclear Option Client Modpack', 'full': 'Nuclear Option Full Modpack'}.get(item['name'], item['name']) if item['kind'] == 'pack' else item['name']
+    name = item['name']
+    if item['kind'] == 'pack':
+        if item['tag'].startswith(LEGACY_PACKS[name][0]):
+            name = {'our': 'Nuclear Option Client Modpack', 'full': 'Nuclear Option Full Modpack'}[name]
+        else:
+            name = 'Nuclear Option Modpack -' + pack_label(name)
     return f'{name} {item["version"]}'
 
 
@@ -944,7 +973,7 @@ def publish(plan_path, *, create_repo=False, dry_run=False, expect_hash=None):
     for item in value['items']:
         latest = remote['versions'].get(item['name'])
         if item['kind'] == 'pack':
-            versions = [v for r in remote['releases'] if (v := tag_version(r.get('tag_name'), PACKS[item['name']][0]))]
+            versions = pack_versions(remote['releases'], item['name'])
             latest = max(versions, key=version_key) if versions else None
         if latest and version_key(item['version']) <= version_key(latest) and item['tag'] not in existing:
             raise ValueError(f'Newer/equal version now exists for {item["name"]}; bump and prepare again')

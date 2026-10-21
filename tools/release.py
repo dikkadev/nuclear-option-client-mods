@@ -23,6 +23,8 @@ ONE REPOSITORY, LOCAL BUILDS
   mod is released. No private Git/jj history, internal notes, game assemblies or
   GitHub Actions are exported. Builds and checks run locally from the exact
   frozen public source. ZIPs and the optional modpack use the same built DLLs.
+  --pack mine bundles your mods; --pack full adds pinned external registry
+  references without vendoring their files. Both packs have independent versions.
 
 TWO WAYS TO USE THIS CLI
   No arguments on a terminal opens the interactive wizard. With arguments, all
@@ -97,13 +99,13 @@ def parser():
     status.add_argument('--offline', action='store_true', help='Show local versions without any network access')
     bump = commands.add_parser('bump', help='Explicitly edit selected local project or pack versions; no build/upload')
     bump.add_argument('--mod', action='append', default=[], help='Active mod name, repeatable')
-    bump.add_argument('--pack', choices=['our', 'full'], help='Edit this pack version instead of mod versions')
+    bump.add_argument('--pack', choices=['mine', 'full', 'our'], help='Edit this pack version instead of mod versions; our is a mine alias')
     bump.add_argument('--to', required=True, help='patch, minor, major, or an exact numeric version')
     plan = commands.add_parser('plan', help='Freeze ALL public source and the selected release choices; no build/upload')
     selection = plan.add_mutually_exclusive_group()
     selection.add_argument('--mod', action='append', default=[], help='Release this active mod, repeatable; other source is still exported')
     selection.add_argument('--all', action='store_true', help='Release all active regular mods')
-    plan.add_argument('--pack', choices=['our', 'full', 'both'], help='Also release a separately versioned pack; may be used without --mod')
+    plan.add_argument('--pack', choices=['mine', 'full', 'both', 'our'], help='Separately versioned pack: mine bundles your mods, full adds external registry references; our is a mine alias')
     plan.add_argument('--game-version', required=True, help='Actual supported client game version, for example 0.34.2; no stale default')
     plan.add_argument('--output', type=Path, required=True, help='New or empty release directory for plan.json and source/')
     plan.add_argument('--repo', help='Override tools/release.toml destination (OWNER/NAME under dikkadev)')
@@ -180,7 +182,7 @@ def wizard():
     choices = [questionary.Choice(f"{i['name']} (local {i['local']}, published {i.get('published') or 'none'})", value=i['name'])
                for i in state['items'] if not i['name'].startswith('pack:')]
     selected = ask(questionary.checkbox('Which mods do you want to release? (Space selects, Enter continues)', choices=choices))
-    pack = ask(questionary.select('Include a modpack?', choices=['None', 'full', 'our', 'both']))
+    pack = ask(questionary.select('Include a modpack?', choices=['None', 'full', 'mine', 'both']))
     if not selected and pack == 'None':
         print('Nothing selected.')
         return 0
@@ -191,13 +193,13 @@ def wizard():
                      validate=valid_version))
         if target != item['local']:
             changes.append((name, target, None))
-    packs = [] if pack == 'None' else ['our', 'full'] if pack == 'both' else [pack]
+    packs = [] if pack == 'None' else ['our', 'full'] if pack == 'both' else ['our' if pack == 'mine' else pack]
     for name in packs:
-        item = next(i for i in state['items'] if i['name'] == 'pack:' + name)
+        item = next(i for i in state['items'] if i['name'] == 'pack:' + engine.pack_label(name))
         suggestion = item['local']
         if item.get('published') and engine.version_key(suggestion) <= engine.version_key(item['published']):
             suggestion = engine.next_version(item['published'], 'patch')
-        target = ask(questionary.text(f'Version for {name} pack', default=suggestion, validate=valid_version))
+        target = ask(questionary.text(f'Version for {engine.pack_label(name)} pack', default=suggestion, validate=valid_version))
         engine.version_key(target)
         if target != item['local']:
             changes.append((name, target, name))

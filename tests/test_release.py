@@ -191,10 +191,28 @@ class LocalPreparation(Fixture):
         self.assertEqual(settings['packs']['full_version'], '2.1.0')
         self.assertEqual(settings['packs']['our_version'], '1.0.0')
 
+    def test_mine_alias_uses_named_pack_release_and_independent_version(self):
+        engine.bump(self.root, [], 'patch', pack='mine')
+        value = self.make_plan(packs=['mine'])
+        pack = next(item for item in value['items'] if item['kind'] == 'pack')
+        self.assertEqual(pack['tag'], 'Modpack-mine-v1.0.1')
+        self.assertEqual(pack['asset'], 'nuclear-option-modpack-mine.nommpack')
+        self.assertEqual(engine.release_title(pack), 'Nuclear Option Modpack -mine 1.0.1')
+
+    def test_old_pack_plans_and_titles_still_verify_after_rename(self):
+        with patch.dict(engine.PACKS, engine.LEGACY_PACKS):
+            self.make_plan(packs=['our'])
+            self.prepare_fake()
+        value = engine.read_plan(self.out / 'plan.json')
+        pack = next(item for item in value['items'] if item['kind'] == 'pack')
+        self.assertEqual(pack['tag'], 'ClientModpack-v1.0.0')
+        self.assertEqual(engine.release_title(pack), 'Nuclear Option Client Modpack 1.0.0')
+        engine.verify_prepared(self.out / 'plan.json')
+
     def test_package_and_pack_use_identical_dlls(self):
         self.make_plan(packs=['our'])
         self.prepare_fake()
-        with zipfile.ZipFile(self.out / 'artifacts/Alpha.zip') as own, zipfile.ZipFile(self.out / 'artifacts/nuclear-option-client-mods.nommpack') as pack:
+        with zipfile.ZipFile(self.out / 'artifacts/Alpha.zip') as own, zipfile.ZipFile(self.out / 'artifacts/nuclear-option-modpack-mine.nommpack') as pack:
             self.assertEqual(own.read('Alpha/Alpha.dll'), pack.read('mods/dev.test.alpha/Alpha.dll'))
             self.assertEqual(json.loads(own.read('Alpha/release-info.json'))['version'], '1.2.3')
             self.assertEqual(json.loads(pack.read('modlist.nomm.json')),
@@ -364,7 +382,7 @@ class PackVersionConsistency(Fixture):
             value = self.make_plan(packs=['our'], offline=False)
         self.assertEqual(value['packReferences']['Beta']['dllSha256'], engine.digest(b'dev.test.beta:0.2.0'))
         self.prepare_fake()
-        with zipfile.ZipFile(self.out / 'artifacts/nuclear-option-client-mods.nommpack') as archive:
+        with zipfile.ZipFile(self.out / 'artifacts/nuclear-option-modpack-mine.nommpack') as archive:
             self.assertEqual(archive.read('mods/dev.test.beta/Beta.dll'), b'dev.test.beta:0.2.0')
 
     def test_same_source_but_different_compiled_same_version_dll_is_refused(self):

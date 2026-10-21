@@ -3,7 +3,7 @@
 # requires-python = ">=3.11"
 # dependencies = ["py7zr==1.1.3"]
 # ///
-"""Build and verify client mods, then produce our-only and full NOMM import packs."""
+"""Build NOMM -mine and -full packs; -full references pinned external mods."""
 from __future__ import annotations
 
 import argparse
@@ -197,18 +197,18 @@ def prepared_payload(root: Path, selected: list[str] | None = None, skip_build: 
     return contents
 
 
-def prepare_extras(root: Path) -> tuple[dict[str, bytes], list[dict]]:
-    # Lazy import keeps the existing our-only API usable without archive dependencies.
+def reference_extras(root: Path) -> list[dict]:
+    # Read the reviewed pins without downloading or unpacking third-party files.
     sys.path.insert(0, str(Path(__file__).resolve().parent))
-    from modpack_registry import prepare_extras as registry_payload
-    return registry_payload(root)
+    from modpack_registry import load_locked_mods
+    return [{'id': mod['id'], 'version': mod['artifact']['version'],
+             'origin': mod['origin'], 'artifact': mod['artifact'], 'mode': 'reference'}
+            for mod in load_locked_mods(root)]
 
 
 def full_payload(root: Path, own: dict[str, bytes]) -> dict[str, bytes]:
-    extras, origins = prepare_extras(root)
-    if set(own) & set(extras):
-        raise ValueError('Third-party payload collides with our pack')
-    contents = dict(own, **extras)
+    origins = reference_extras(root)
+    contents = dict(own)
     modlist = json.loads(own['modlist.nomm.json'])
     if {m['id'] for m in modlist} & {m['id'] for m in origins}:
         raise ValueError('Third-party IDs collide with our mods')
@@ -216,22 +216,28 @@ def full_payload(root: Path, own: dict[str, bytes]) -> dict[str, bytes]:
     contents['modlist.nomm.json'] = json.dumps(modlist, indent=2).encode()
     contents['origins.json'] = json.dumps({'schema': 1, 'mods': origins}, indent=2).encode()
     contents['PACK-README.txt'] = (
-        'Nuclear Option full client modpack\n\n'
+        'Nuclear Option Modpack -full\n\n'
         'Import this whole .nommpack in NOMM 5.4.0. Import enables included mods and disables\n'
         'other non-protected mods. Existing game/BepInEx/user configuration is preserved.\n'
-        'Configuration Manager: F1 (default). Each extra source/version/hash is in origins.json.\n'
+        'Your dev.dikka mods are bundled. External plugins are registry references only:\n'
+        'NOMM downloads missing external IDs from its online registry. No external DLLs,\n'
+        'assets or configurations are vendored in this archive. Pins and sources are in origins.json.\n'
+        'NOMM retains an already-installed external ID even if its version differs from the pin.\n'
+        'Use NOMM to update/remove that external mod when the pinned version is required.\n'
+        'Configuration Manager: F1 (default).\n'
         'For sound testing: F1 > NuclearSounds > Audio Test > Play Audio Test,\n'
         'tick once and close F1. A tone plays after two seconds, followed by a lower-gear voice.\n'
-        'Autopilot includes its Audio and Profiles; see its bundled README for controls.\n'
+        'Autopilot downloads its Audio and Profiles from its upstream registry artifact.\n'
         'If two fuel estimates appear, use F1 > NO Autopilot > Visuals > Show Fuel Overlay\n'
         'to turn off its fuel overlay while retaining NuclearSounds fuel text.\n'
         'For Loadout Presets isolation, disable it in NOMM rather than its internal Enabled\n'
         'setting: that setting can still suppress vanilla loadout defaults.\n'
-        'Build/API checks cover our active mods. Extras are hash/layout checked; full-pack\n'
-        'gameplay still requires testing in the client.\n'
+        'Build/API checks cover our active mods. External files are downloaded by NOMM;\n'
+        'full-pack gameplay still requires testing in the client.\n'
     ).encode()
     info = json.loads(own['build-info.json'])
-    info['thirdPartyVerification'] = 'pinned-download-hashes+archive-layout; game-runtime-unverified'
+    info['thirdPartyMode'] = 'registry-references'
+    info['thirdPartyVerification'] = 'locked-reference-metadata; game-runtime-unverified'
     info['thirdParty'] = origins
     contents['build-info.json'] = json.dumps(info, indent=2).encode()
     return contents
@@ -268,18 +274,20 @@ def package(root: Path, output: Path, selected: list[str] | None = None, skip_bu
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--mod', action='append', help='Package selected active mod (repeatable); default all active mods')
-    parser.add_argument('--pack', choices=['our', 'full', 'both'], help='Default both; --mod/--output alone select our pack')
+    parser.add_argument('--pack', choices=['mine', 'full', 'both', 'our'], help='Default both; mine bundles your mods, full adds registry references; our is a mine alias')
     parser.add_argument('--output', type=Path, help='Custom filename for one pack (incompatible with --pack both)')
     parser.add_argument('--skip-build', action='store_true', help='Package existing DLLs without build or compatibility verification')
     args = parser.parse_args()
     try:
         choice = args.pack or ('our' if args.mod or args.output else 'both')
+        if choice == 'mine':
+            choice = 'our'
         if args.mod and choice != 'our':
             raise ValueError('--mod requires --pack our')
         if args.output and choice == 'both':
             raise ValueError('--output requires --pack our or --pack full')
-        own_output = ROOT / 'dist/modpacks/nuclear-option-client-mods.nommpack'
-        full_output = ROOT / 'dist/modpacks/nuclear-option-full-modpack.nommpack'
+        own_output = ROOT / 'dist/modpacks/nuclear-option-modpack-mine.nommpack'
+        full_output = ROOT / 'dist/modpacks/nuclear-option-modpack-full.nommpack'
         own = prepared_payload(ROOT, args.mod, args.skip_build)
         packs = {}
         if choice in ('our', 'both'):
