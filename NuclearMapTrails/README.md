@@ -55,7 +55,7 @@ Teams = Friendly
 Show Own Trail = true
 Show Only On Maximized Map = false
 ## Seconds of flight kept per trail
-Trail Duration = 60
+Trail Duration = 90
 Sample Interval = 0.5
 Fade Out = true
 Newest Opacity = 0.85
@@ -64,7 +64,7 @@ Altitude Brightness = true
 ## Metres above sea level
 Low Altitude = 0
 High Altitude = 8000
-Low Altitude Brightness = 0.45
+Low Altitude Brightness = 0.60
 Line Width = 2
 ## IconColor, FactionColor or Custom
 Color Mode = IconColor
@@ -73,6 +73,12 @@ Custom Enemy Color = FF594DFF
 ```
 
 All values apply live through Configuration Manager. Disabling `Show Trails` or changing `Teams` clears the recorded trails.
+
+Version 0.1.1 raises the defaults to 90 seconds and 0.60 low-altitude brightness. Existing saved settings are preserved; change these two values in Configuration Manager to use the new defaults with an existing config.
+
+## Client testing
+
+On 2026-10-22, the user confirmed that version 0.1.0 worked correctly in their game client. Version 0.1.1 changes only the two defaults above and has not yet been retested in the client.
 
 ## Local Development Install
 

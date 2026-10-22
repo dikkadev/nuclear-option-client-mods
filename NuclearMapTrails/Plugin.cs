@@ -91,7 +91,7 @@ namespace NuclearMapTrails
             TrailDuration = Config.Bind(
                 section,
                 "Trail Duration",
-                60f,
+                90f,
                 new ConfigDescription("How many seconds of flight path each trail keeps.", new AcceptableValueRange<float>(5f, 600f))
             );
 
@@ -147,7 +147,7 @@ namespace NuclearMapTrails
             LowAltitudeBrightness = Config.Bind(
                 section,
                 "Low Altitude Brightness",
-                0.45f,
+                0.60f,
                 new ConfigDescription("Color brightness multiplier for low trail points; 1 disables the darkening.", new AcceptableValueRange<float>(0f, 1f))
             );
 

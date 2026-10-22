@@ -29,8 +29,8 @@
     {
       "name": "NuclearMapTrails",
       "id": "dev.dikka.nuclearmaptrails",
-      "version": "0.1.0",
-      "inputHash": "ff7e8f6707782a9ae5bcaf6eea128388cc129cd0743a420558dce72cfc1efbc1"
+      "version": "0.1.1",
+      "inputHash": "5dbe55592e99fd1320f86ea7bf75b8c48759f9b461d45860fda1947ca863b13a"
     },
     {
       "name": "NuclearMfdWeapons",
@@ -79,17 +79,9 @@
     {
       "kind": "mod",
       "name": "NuclearMapTrails",
-      "version": "0.1.0",
-      "tag": "NuclearMapTrails-v0.1.0",
+      "version": "0.1.1",
+      "tag": "NuclearMapTrails-v0.1.1",
       "asset": "NuclearMapTrails.zip",
-      "prerelease": false
-    },
-    {
-      "kind": "pack",
-      "name": "full",
-      "version": "1.0.1",
-      "tag": "Modpack-full-v1.0.1",
-      "asset": "nuclear-option-modpack-full.nommpack",
       "prerelease": false
     }
   ]

@@ -4,6 +4,8 @@ Use three checks for a game update: linked-source logic tests, a build against t
 
 ## Logic and compilation
 
+NuclearMapTrails client acceptance (2026-10-22): the user tested 0.1.0 in their game client and reported that it worked correctly. This is user-confirmed runtime acceptance; individual cases in the matrix below were not enumerated. The subsequent 0.1.1 default changes (90-second trails, 0.60 low-altitude brightness) have not yet been retested in the client.
+
 Run the command in [README.md](README.md) for the logic checks. Supply the current Windows client's full `NuclearOption_Data/Managed` directory and matching BepInEx 5 core assemblies through the local `.env`. Build all eleven active projects in Release. Do not substitute dedicated-server assemblies, add test stubs to production projects, or distribute game DLLs.
 
 Record the game version/Steam build ID, mod source commit, BepInEx version and SHA-256 of `Assembly-CSharp.dll` and direct reference DLLs. Repeat the build when those references change. After rebuilding, run the [metadata preflight](ClientApiCheck/README.md) to verify Harmony target resolution and typed/reflected fields. Inspect current classes with ILSpy when a referenced method or private field changes; a compiling private-field lookup may still fail at runtime.
