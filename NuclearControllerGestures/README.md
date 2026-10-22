@@ -1,3 +1,5 @@
+![NuclearControllerGestures](docs/assets/cover.png)
+
 # NuclearControllerGestures
 
 Independent controller double presses for Nuclear Option's regular BepInEx 5 client. No other Nuclear mod is required.

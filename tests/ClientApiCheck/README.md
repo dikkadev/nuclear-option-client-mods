@@ -1,6 +1,6 @@
 # Client API metadata preflight
 
-After building all eleven active mods in Release against the current client references:
+After building all twelve active mods in Release against the current client references:
 
 ```powershell
 . ../Open-Workspace.ps1

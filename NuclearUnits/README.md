@@ -1,3 +1,5 @@
+![NuclearUnits](docs/assets/cover.png)
+
 # NuclearUnits
 
 `NuclearUnits` is a client-side `Nuclear Option` mod that lets you choose units per HUD readout instead of relying on the game's single global metric/imperial setting.

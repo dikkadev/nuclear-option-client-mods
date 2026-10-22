@@ -27,6 +27,12 @@
       "inputHash": "6bcbbd9f5ba0e32ef6142fafced74fe060fdac9053cdf1ac81954fc2c4c687f9"
     },
     {
+      "name": "NuclearMapTrails",
+      "id": "dev.dikka.nuclearmaptrails",
+      "version": "0.1.0",
+      "inputHash": "ff7e8f6707782a9ae5bcaf6eea128388cc129cd0743a420558dce72cfc1efbc1"
+    },
+    {
       "name": "NuclearMfdWeapons",
       "id": "dev.dikka.nuclearmfdweapons",
       "version": "0.1.4",
@@ -72,10 +78,18 @@
   "releases": [
     {
       "kind": "mod",
-      "name": "NuclearDelivery",
-      "version": "0.1.4",
-      "tag": "NuclearDelivery-v0.1.4",
-      "asset": "NuclearDelivery.zip",
+      "name": "NuclearMapTrails",
+      "version": "0.1.0",
+      "tag": "NuclearMapTrails-v0.1.0",
+      "asset": "NuclearMapTrails.zip",
+      "prerelease": false
+    },
+    {
+      "kind": "pack",
+      "name": "full",
+      "version": "1.0.1",
+      "tag": "Modpack-full-v1.0.1",
+      "asset": "nuclear-option-modpack-full.nommpack",
       "prerelease": false
     }
   ]

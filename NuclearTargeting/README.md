@@ -1,3 +1,5 @@
+![NuclearTargeting](docs/assets/cover.png)
+
 # NuclearTargeting
 
 A client-side BepInEx 5 mod for Nuclear Option that provides the alternative HUD target selector formerly included in NuclearTacticalTools.

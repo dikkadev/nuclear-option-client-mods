@@ -1,3 +1,5 @@
+![NuclearDeathBlackout](docs/assets/cover.png)
+
 # NuclearDeathBlackout
 
 `NuclearDeathBlackout` is a client-side `Nuclear Option` mod that makes local pilot death feel more abrupt and physical: the screen cuts to black and game audio mutes briefly when your main pilot actually dies.

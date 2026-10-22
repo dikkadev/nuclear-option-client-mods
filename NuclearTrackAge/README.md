@@ -1,3 +1,5 @@
+![NuclearTrackAge](docs/assets/cover.png)
+
 # NuclearTrackAge
 
 NuclearTrackAge is a client-side Nuclear Option BepInEx mod that annotates stale target tracks with how old the last known position is.

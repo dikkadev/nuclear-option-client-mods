@@ -27,7 +27,7 @@ The parent workspace pins the SDK. No game installation or mod installation is n
 
 `GameBoundaryStubs.cs` supplies small test-only game/Unity boundaries so the real calculations can execute without proprietary client assemblies. Passing these checks does **not** verify game API compatibility, Harmony hooks, Unity UI/layout/lifecycle behavior, audio, networking, or runtime performance. Those require builds against matching client references and an authorized game smoke test.
 
-After building the eleven active plugins, run [ClientApiCheck](ClientApiCheck/README.md) against real client metadata. It checks declared Harmony targets, compiled typed field references and the explicit reflection-field contract, without executing the game. Use [SMOKE-TESTS.md](SMOKE-TESTS.md) for the remaining runtime checks.
+After building the twelve active plugins, run [ClientApiCheck](ClientApiCheck/README.md) against real client metadata. It checks declared Harmony targets, compiled typed field references and the explicit reflection-field contract, without executing the game. Use [SMOKE-TESTS.md](SMOKE-TESTS.md) for the remaining runtime checks.
 
 ## Modpack producer checks
 

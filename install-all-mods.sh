@@ -20,6 +20,7 @@ MOD_DIRS=(
   "NuclearDeathBlackout"
   "NuclearDelivery"
   "NuclearMapPlayerNames"
+  "NuclearMapTrails"
   "NuclearMinimap"
   "NuclearMfdWeapons"
   "NuclearTargeting"

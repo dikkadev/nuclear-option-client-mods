@@ -4,6 +4,34 @@ Source for regular (non-VR) BepInEx 5 client mods for Nuclear Option.
 This repository holds published source snapshots and releases only, not the
 private development history.
 
+[![NuclearConnectivity](NuclearConnectivity/docs/assets/cover.png)](NuclearConnectivity/)
+
+[![NuclearControllerGestures](NuclearControllerGestures/docs/assets/cover.png)](NuclearControllerGestures/)
+
+[![NuclearDeathBlackout](NuclearDeathBlackout/docs/assets/cover.png)](NuclearDeathBlackout/)
+
+[![NuclearDelivery](NuclearDelivery/docs/assets/cover.png)](NuclearDelivery/)
+
+[![NuclearMapPlayerNames](NuclearMapPlayerNames/docs/assets/cover.png)](NuclearMapPlayerNames/)
+
+[![NuclearMapTrails](NuclearMapTrails/docs/assets/cover.png)](NuclearMapTrails/)
+
+[![NuclearMfdWeapons](NuclearMfdWeapons/docs/assets/cover.png)](NuclearMfdWeapons/)
+
+[![NuclearMinimap](NuclearMinimap/docs/assets/cover.png)](NuclearMinimap/)
+
+[![NuclearSounds](NuclearSounds/docs/assets/cover.png)](NuclearSounds/)
+
+[![NuclearTargeting](NuclearTargeting/docs/assets/cover.png)](NuclearTargeting/)
+
+[![NuclearTrackAge](NuclearTrackAge/docs/assets/cover.png)](NuclearTrackAge/)
+
+[![NuclearUnits](NuclearUnits/docs/assets/cover.png)](NuclearUnits/)
+
+**Experimental**, not yet part of these releases:
+
+![NuclearReplay](assets/covers/NuclearReplay.png)
+
 ## Mods
 
 | Mod | Version | Plugin ID | Description |
@@ -13,6 +41,7 @@ private development history.
 | `NuclearDeathBlackout` | 0.2.3 | `dev.dikka.nucleardeathblackout` | Client-side Nuclear Option mod that cuts to black and briefly mutes audio when the local main pilot dies. |
 | `NuclearDelivery` | 0.1.4 | `dev.dikka.nucleardelivery` | Missile and bomb delivery counters on the target camera and cockpit MFD: flight, reported armor contact and lost deliveries. |
 | `NuclearMapPlayerNames` | 0.2.3 | `dev.dikka.nuclearmapplayernames` | Client-side Nuclear Option mod that shows multiplayer usernames next to player-controlled aircraft on the dynamic map. |
+| `NuclearMapTrails` | 0.1.0 | `dev.dikka.nuclearmaptrails` | Client-side Nuclear Option mod that draws fading, altitude-shaded flight trails behind player aircraft on the dynamic map, own team only by default. |
 | `NuclearMfdWeapons` | 0.1.4 | `dev.dikka.nuclearmfdweapons` | Cockpit weapon, ammunition and countermeasure display with a brief loadout preview and optional stock HUD. |
 | `NuclearMinimap` | 0.3.2 | `dev.dikka.nuclearminimap` | Native minimap orientation and hold zoom, with an optional cockpit map display and configurable HUD visibility. |
 | `NuclearSounds` | 0.1.1 | `dev.dikka.nuclearsounds` | Client-side designation tones, voice callouts, and fuel/terrain warnings with estimated fuel time. |

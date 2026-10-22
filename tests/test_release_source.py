@@ -317,6 +317,28 @@ class PublicReadmeTests(unittest.TestCase):
         for forbidden in ('/private/place', 'c:\\', 'users', 'agent', 'forgejo', '.dev', 'claude', 'tailscale', 'jj '):
             self.assertNotIn(forbidden, text)
 
+    def test_cover_gallery_links_mod_folders_and_lists_previews_last(self):
+        self.assertNotIn('docs/assets/cover.png', rs.public_readme(self.MODS, 'o/r').decode())
+        files = {'Zed/docs/assets/cover.png': b'z', 'Alpha/docs/assets/cover.png': b'a',
+                 'assets/covers/NuclearReplay.png': b'r'}
+        text = rs.public_readme(self.MODS, 'o/r', files).decode()
+        alpha = text.index('[![Alpha](Alpha/docs/assets/cover.png)](Alpha/)')
+        zed = text.index('[![Zed](Zed/docs/assets/cover.png)](Zed/)')
+        replay = text.index('![NuclearReplay](assets/covers/NuclearReplay.png)')
+        self.assertLess(alpha, zed)
+        self.assertLess(zed, replay)
+        self.assertLess(replay, text.index('## Mods'))
+        self.assertNotIn('](NuclearReplay/)', text)
+        partial = rs.public_readme(self.MODS, 'o/r', {'Zed/docs/assets/cover.png': b'z'}).decode()
+        self.assertNotIn('Alpha/docs', partial)
+        self.assertNotIn('Experimental', partial)
+
+    def test_preview_cover_is_the_only_export_from_an_unpublished_mod(self):
+        self.assertTrue(rs.is_exportable('assets/covers/NuclearReplay.png', ['Alpha']))
+        self.assertFalse(rs.is_exportable('NuclearReplay/docs/assets/cover.png', ['Alpha']))
+        self.assertFalse(rs.is_exportable('assets/covers/Other.png', ['Alpha']))
+        self.assertTrue(rs.is_exportable('Alpha/docs/assets/cover.png', ['Alpha']))
+
     def test_repository_name_is_validated(self):
         self.assertIn(b'https://example.test/o/r.git', rs.public_readme(self.MODS, 'https://example.test/o/r'))
         for bad in ('', 'no-slash', 'a/b/c', 'a b/c', 'http://insecure/x/y', 'x/y\n# injected'):

@@ -33,6 +33,14 @@ tags = ["QoL", "Map", "Multiplayer"]
 include = ["README.md"]
 project = "NuclearMapPlayerNames/NuclearMapPlayerNames.csproj"
 
+[mods.NuclearMapTrails]
+id = "dev.dikka.nuclearmaptrails"
+display_name = "NuclearMapTrails"
+description = "Client-side Nuclear Option mod that draws fading, altitude-shaded flight trails behind player aircraft on the dynamic map, own team only by default."
+tags = ["QoL", "Map", "Multiplayer"]
+include = ["README.md"]
+project = "NuclearMapTrails/NuclearMapTrails.csproj"
+
 [mods.NuclearMfdWeapons]
 id = "dev.dikka.nuclearmfdweapons"
 display_name = "NuclearMfdWeapons"

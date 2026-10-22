@@ -329,12 +329,15 @@ def mod_input_hashes(files, mods):
     build ID. Shared-source consumers conservatively include all production
     Shared sources, so a helper change cannot slip past an unchanged version.
     """
-    from release_source import source_hash
+    from release_source import COVER, source_hash, strip_cover
     result = {}
     for mod in mods:
         prefix = mod['name'] + '/'
+        # README covers are presentation only and stay out of the fingerprint.
         inputs = {name: data for name, data in files.items()
-                  if name.startswith(prefix) and 'tests' not in Path(name).parts}
+                  if name.startswith(prefix) and 'tests' not in Path(name).parts and name != prefix + COVER}
+        if prefix + 'README.md' in inputs:
+            inputs[prefix + 'README.md'] = strip_cover(inputs[prefix + 'README.md'], mod['name'])
         project = files[mod['name'] + '/' + mod['project'].name].replace(b'\\', b'/')
         if b'Shared/' in project:
             inputs.update({name: data for name, data in files.items()
@@ -557,7 +560,7 @@ def plan(root, names, packs, *, game_version, output, repo=None, offline=False,
                        if p and is_exportable(p.decode('utf-8'), directories)]
     if license_file:
         files['LICENSE'] = Path(license_file).read_bytes().replace(b'\r\n', b'\n')
-    files['README.md'] = public_readme(mods, repo)
+    files['README.md'] = public_readme(mods, repo, files)
     files['tools/nomnom-mirrors.toml'] = sanitized_config(mods)
     # Public tools remain usable without copying private release configuration.
     files['tools/release.toml'] = (

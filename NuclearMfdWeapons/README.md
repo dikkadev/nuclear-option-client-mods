@@ -1,3 +1,5 @@
+![NuclearMfdWeapons](docs/assets/cover.png)
+
 # NuclearMfdWeapons
 
 A regular BepInEx 5 client mod showing the selected weapon icon, name, ammo or reload percentage, flares and jammer charge in the cockpit. The presentation follows Nuclear Option Tactical Tools: the native HUD font, theme-aware text and divider, the stock weapon icon's dimensions, and enlarged bold text for the selected countermeasure. A black, bordered loadout popup sizes itself to its station text and highlights the selected row on entry and station changes. No NOTT installation is required; the source-only NuclearMfd helper is bundled into this DLL.

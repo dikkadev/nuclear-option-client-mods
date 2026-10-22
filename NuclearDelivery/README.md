@@ -1,3 +1,5 @@
+![NuclearDelivery](docs/assets/cover.png)
+
 # NuclearDelivery
 
 Missile, rocket and bomb counters on the cockpit radar, target-camera and landing-camera views. Requires BepInEx 5; no other Nuclear mod is required.

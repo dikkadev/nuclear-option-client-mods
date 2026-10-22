@@ -1,3 +1,5 @@
+![NuclearSounds](docs/assets/cover.png)
+
 # NuclearSounds
 
 Custom warning audio for Nuclear Option with a local fuel-time readout. Requires BepInEx 5.

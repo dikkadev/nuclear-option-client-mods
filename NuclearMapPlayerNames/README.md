@@ -1,3 +1,5 @@
+![NuclearMapPlayerNames](docs/assets/cover.png)
+
 # NuclearMapPlayerNames
 
 `NuclearMapPlayerNames` is a client-side `Nuclear Option` BepInEx mod that shows multiplayer usernames next to player-controlled aircraft on the dynamic map.

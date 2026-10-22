@@ -1,3 +1,5 @@
+![NuclearMinimap](docs/assets/cover.png)
+
 # NuclearMinimap
 
 Adds orientation and hold zoom to the native HUD minimap, plus an optional cockpit display of that same live minimap. Terrain, native icons, grid and enabled map labels stay native. Target and landing camera feeds remain available, and NuclearDelivery's cockpit counters stay above the cockpit map.

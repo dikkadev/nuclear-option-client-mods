@@ -64,6 +64,11 @@ RELEASE_TOOL = re.compile(r'tools/release(?:_[a-z0-9_]+)?\.py')
 SHARED_ROOT = 'Shared'
 TESTS_ROOT = 'tests'
 
+# README cover image inside each mod directory (tools/covers/generate-covers.py).
+COVER = 'docs/assets/cover.png'
+# Covers of unpublished mods, shown in the public README without their source.
+PREVIEW_COVERS = {'NuclearReplay': 'assets/covers/NuclearReplay.png'}
+
 SECRET_PATTERNS = (
     ('private key', re.compile(rb'-----BEGIN [A-Z0-9 ]*PRIVATE KEY(?: BLOCK)?-----')),
     ('GitHub token', re.compile(rb'\bgh[pousr]_[A-Za-z0-9]{30,}')),
@@ -124,6 +129,8 @@ def mod_directories(root: Path, mods: list[dict]) -> list[str]:
 
 def is_exportable(path: str, mod_dirs: list[str]) -> bool:
     """Whether a safe relative path belongs in the public snapshot."""
+    if path in PREVIEW_COVERS.values():
+        return True
     parts = path.split('/')
     name = parts[-1]
     lowered = [part.lower() for part in parts]
@@ -223,7 +230,11 @@ def collect_source(root: Path, mods: list[dict], *, include_untracked: bool = Fa
     root = Path(root).resolve()
     mod_dirs = mod_directories(root, mods)
     files: dict[str, bytes] = {}
-    for path, mode in sorted(list_source_files(root, include_untracked).items()):
+    candidates = list_source_files(root, include_untracked)
+    for name, public in PREVIEW_COVERS.items():
+        if candidates.get(f'{name}/{COVER}') in ('100644', 'untracked'):
+            files[public] = read_regular_file(root, f'{name}/{COVER}')
+    for path, mode in sorted(candidates.items()):
         try:
             check_relative_path(path)
         except SourceError:
@@ -306,7 +317,30 @@ def _cell(value: object) -> str:
     return re.sub(r'\s+', ' ', str(value)).replace('|', '\\|').strip()
 
 
-def public_readme(mods: list[dict], repo: str) -> bytes:
+def cover_line(name: str) -> str:
+    return f'![{name}]({COVER})'
+
+
+def strip_cover(readme: bytes, name: str) -> bytes:
+    """A mod README without its leading cover line, so adding a cover is not a source change."""
+    prefix = cover_line(name).encode() + b'\n\n'
+    return readme[len(prefix):] if readme.startswith(prefix) else readme
+
+
+def _gallery(mods: list[dict], files: dict[str, bytes]) -> list[str]:
+    lines = []
+    for mod in sorted(mods, key=lambda item: item['name']):
+        directory = Path(mod['project']).parent.name
+        if f'{directory}/{COVER}' in files:
+            lines += [f'[![{mod["name"]}]({directory}/{COVER})]({directory}/)', '']
+    previews = [(name, path) for name, path in sorted(PREVIEW_COVERS.items()) if path in files]
+    if previews:
+        lines += ['**Experimental**, not yet part of these releases:', '']
+        lines += [line for name, path in previews for line in (f'![{name}]({path})', '')]
+    return lines
+
+
+def public_readme(mods: list[dict], repo: str, files: dict[str, bytes] | None = None) -> bytes:
     """Consumer-facing build document: all supplied mods, no private details."""
     if re.fullmatch(r'[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+', repo):
         clone = f'https://github.com/{repo}.git'
@@ -327,6 +361,7 @@ def public_readme(mods: list[dict], repo: str) -> bytes:
         'This repository holds published source snapshots and releases only, not the',
         'private development history.',
         '',
+        *_gallery(mods, files or {}),
         '## Mods',
         '',
         '| Mod | Version | Plugin ID | Description |',

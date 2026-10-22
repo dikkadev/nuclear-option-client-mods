@@ -64,7 +64,7 @@ IEnumerable<TypeDefinition> Hierarchy(TypeDefinition type)
         current = current.BaseType.Resolve();
     }
 }
-var mods = new[] { "NuclearConnectivity", "NuclearControllerGestures", "NuclearDeathBlackout", "NuclearDelivery", "NuclearMapPlayerNames", "NuclearMinimap", "NuclearMfdWeapons", "NuclearTargeting", "NuclearSounds", "NuclearTrackAge", "NuclearUnits" };
+var mods = new[] { "NuclearConnectivity", "NuclearControllerGestures", "NuclearDeathBlackout", "NuclearDelivery", "NuclearMapPlayerNames", "NuclearMapTrails", "NuclearMinimap", "NuclearMfdWeapons", "NuclearTargeting", "NuclearSounds", "NuclearTrackAge", "NuclearUnits" };
 foreach (var mod in mods)
 {
     string dll = Path.Combine(root, mod, "bin", "Release", mod + ".dll");

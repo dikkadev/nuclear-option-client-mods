@@ -1,3 +1,5 @@
+![NuclearConnectivity](docs/assets/cover.png)
+
 # NuclearConnectivity
 
 `NuclearConnectivity` is a client-side `Nuclear Option` mod for connectivity and external integration features.

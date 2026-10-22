@@ -355,6 +355,18 @@ class PackVersionConsistency(Fixture):
         self.assertEqual(changed['Beta'], hashes['Beta'])
         self.assertNotEqual(changed['Alpha'], hashes['Alpha'])
 
+    def test_readme_cover_does_not_change_input_hashes(self):
+        value = self.make_plan()
+        files = engine.read_source(self.out / 'plan.json', value)
+        mods = engine.load_builder(self.root).load_mods(self.root)
+        files['Alpha/README.md'] = b'# Alpha\n'
+        hashes = engine.mod_input_hashes(files, mods)
+        files['Alpha/README.md'] = b'![Alpha](docs/assets/cover.png)\n\n# Alpha\n'
+        files['Alpha/docs/assets/cover.png'] = b'png'
+        self.assertEqual(engine.mod_input_hashes(files, mods), hashes)
+        files['Alpha/README.md'] += b'More text.\n'
+        self.assertNotEqual(engine.mod_input_hashes(files, mods)['Alpha'], hashes['Alpha'])
+
     def test_shared_production_changes_affect_consumers(self):
         value = self.make_plan()
         files = engine.read_source(self.out / 'plan.json', value)

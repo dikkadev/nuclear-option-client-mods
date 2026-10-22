@@ -159,5 +159,6 @@ TapHoldChecks.Run(Case);
 ControllerGestureChecks.Run(Case);
 TargetingChecks.Run(Case);
 DeviceZoomChecks.Run(Case);
+MapTrailChecks.Run(Case);
 Console.WriteLine($"{passed} passed; {failed} failed.");
 return failed == 0 ? 0 : 1;
