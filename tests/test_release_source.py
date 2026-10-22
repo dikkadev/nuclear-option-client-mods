@@ -121,6 +121,14 @@ class CollectSourceTests(unittest.TestCase):
         git(self.root, 'add', 'LICENSE')
         self.assertEqual(rs.collect_source(self.root, self.mods)['LICENSE'], b'Some licence text\n')
 
+    def test_satellite_data_is_never_exported(self):
+        for relative in ('Alpha/fixture.nosat', 'Alpha/maps/fixture.nosat',
+                         'Alpha/assets/fixture.nosat', 'Alpha/assets/FIXTURE.NOSAT'):
+            self.write(relative, b'synthetic local data')
+            git(self.root, 'add', '--', relative)
+        files = rs.collect_source(self.root, self.mods)
+        self.assertFalse(any(path.lower().endswith('.nosat') for path in files))
+
     def test_text_is_normalized_to_lf_and_notice_content_preserved(self):
         files = rs.collect_source(self.root, self.mods)
         self.assertEqual(files['Alpha/Plugin.cs'], b'class P {}\nclass Q {}\n')
@@ -375,7 +383,7 @@ class RealRepositoryTests(unittest.TestCase):
             self.assertNotEqual(lowered[-1], 'agents.md', path)
             self.assertNotEqual(path, 'tools/nomnom-mirrors.toml')
             self.assertNotEqual(path, 'README.md')
-            self.assertFalse(path.endswith(('.dll', '.pdb', '.cfg', '.env')), path)
+            self.assertFalse(path.lower().endswith(('.dll', '.pdb', '.cfg', '.env', '.nosat')), path)
 
     def test_hash_is_stable(self):
         self.assertEqual(rs.source_hash(self.files), rs.source_hash(rs.collect_source(REPO_ROOT, self.mods)))

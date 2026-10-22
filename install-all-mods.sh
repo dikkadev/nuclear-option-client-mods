@@ -23,6 +23,7 @@ MOD_DIRS=(
   "NuclearMapTrails"
   "NuclearMinimap"
   "NuclearMfdWeapons"
+  "NuclearSatelliteMap"
   "NuclearTargeting"
   "NuclearSounds"
   "NuclearTrackAge"

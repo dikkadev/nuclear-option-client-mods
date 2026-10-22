@@ -3,6 +3,11 @@
   "description": "Explicit reflection field contracts from active mod FieldRefAccess and Traverse usage; update deliberately with source changes. Cecil FullName type notation.",
   "fields": [
     {
+      "type": "DynamicMap",
+      "name": "mapImage",
+      "fieldType": "UnityEngine.GameObject"
+    },
+    {
       "type": "TargetCam",
       "name": "landingScreenUI",
       "fieldType": "LandingScreenUI"

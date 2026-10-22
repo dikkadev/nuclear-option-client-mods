@@ -4,8 +4,11 @@
     <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="../../NuclearSatelliteMap/SatelliteBlocks.cs" Link="Production/SatelliteBlocks.cs" />
+    <Compile Include="../../NuclearSatelliteMap/SatelliteMapFile.cs" Link="Production/SatelliteMapFile.cs" />
     <Compile Include="../../NuclearMinimap/DeviceZoomBinding.cs" Link="Production/DeviceZoomBinding.cs" />
     <Compile Include="../../NuclearMinimap/CaptureButtonEdges.cs" Link="Production/CaptureButtonEdges.cs" />
     <Compile Include="../../NuclearControllerGestures/DoublePressGesture.cs" Link="Production/DoublePressGesture.cs" />

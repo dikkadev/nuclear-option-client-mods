@@ -64,7 +64,35 @@ IEnumerable<TypeDefinition> Hierarchy(TypeDefinition type)
         current = current.BaseType.Resolve();
     }
 }
-var mods = new[] { "NuclearConnectivity", "NuclearControllerGestures", "NuclearDeathBlackout", "NuclearDelivery", "NuclearMapPlayerNames", "NuclearMapTrails", "NuclearMinimap", "NuclearMfdWeapons", "NuclearTargeting", "NuclearSounds", "NuclearTrackAge", "NuclearUnits" };
+Check("SatelliteMap SceneSingleton<DynamicMap>.i", () =>
+{
+    var singleton = gameTypes["SceneSingleton`1"];
+    var instance = singleton.Fields.Single(f => f.Name == "i");
+    Require(instance.FieldType.FullName == "T" && instance.IsPublic && instance.IsStatic,
+        "Scene singleton instance field contract changed.");
+    Require(gameTypes["DynamicMap"].BaseType.FullName == "SceneSingleton`1<DynamicMap>",
+        "DynamicMap no longer inherits SceneSingleton<DynamicMap>.");
+});
+Check("SatelliteMap DynamicMap.mapMaximized", () =>
+{
+    var property = gameTypes["DynamicMap"].Properties.Single(p => p.Name == "mapMaximized");
+    Require(property.PropertyType.FullName == "System.Boolean" && property.GetMethod is { IsPublic: true, IsStatic: true },
+        "Expanded-map accessor contract changed.");
+});
+using var unity = ModuleDefinition.ReadModule(Path.Combine(managed, "UnityEngine.CoreModule.dll"), new ReaderParameters { AssemblyResolver = resolver });
+var textureType = AllTypes(unity.Types).Single(t => t.FullName == "UnityEngine.Texture2D");
+foreach (var (name, parameters) in new[] {
+    (".ctor", new[] { "System.Int32", "System.Int32", "UnityEngine.TextureFormat", "System.Int32", "System.Boolean" }),
+    ("LoadRawTextureData", new[] { "System.IntPtr", "System.Int32" }),
+    ("Apply", new[] { "System.Boolean", "System.Boolean" }) })
+{
+    Check("SatelliteMap Texture2D." + name + "(" + string.Join(",", parameters) + ")", () => {
+        var method = textureType.Methods.Single(m => m.Name == name && m.Parameters.Select(p => p.ParameterType.FullName).SequenceEqual(parameters));
+        Require(method.IsPublic && !method.IsStatic && method.ReturnType.FullName == "System.Void",
+            "Texture upload API contract changed.");
+    });
+}
+var mods = new[] { "NuclearConnectivity", "NuclearControllerGestures", "NuclearDeathBlackout", "NuclearDelivery", "NuclearMapPlayerNames", "NuclearMapTrails", "NuclearMinimap", "NuclearMfdWeapons", "NuclearSatelliteMap", "NuclearTargeting", "NuclearSounds", "NuclearTrackAge", "NuclearUnits" };
 foreach (var mod in mods)
 {
     string dll = Path.Combine(root, mod, "bin", "Release", mod + ".dll");
@@ -131,12 +159,21 @@ foreach (var mod in mods)
         Require(id == Property("BepInExPluginGuid"), $"DLL plugin ID {id} does not match project.");
         Require(version == Property("Version"), $"DLL plugin version {version} does not match project version {Property("Version")}; rebuild the plugin.");
     });
-    Check(mod + " explicit patch assembly", () =>
+    Check(mod + (mod == "NuclearSatelliteMap" ? " independent patch-free overlay" : " explicit patch assembly"), () =>
     {
         var bootstrap = AllTypes(plugin.Types).Single(t => t.CustomAttributes.Any(a => a.AttributeType.FullName == "BepInEx.BepInPlugin"));
         var awake = bootstrap.Methods.Single(m => m.Name == "Awake" && m.HasBody);
         var registrations = awake.Body.Instructions.Select(i => i.Operand).OfType<MethodReference>()
             .Where(m => m.DeclaringType.FullName == "HarmonyLib.Harmony" && m.Name == "PatchAll").ToArray();
+        if (mod == "NuclearSatelliteMap")
+        {
+            Require(!plugin.AssemblyReferences.Any(reference => reference.Name == "0Harmony" || mods.Contains(reference.Name)),
+                "Satellite overlay must not reference Harmony or another mod DLL.");
+            Require(!bootstrap.CustomAttributes.Any(a => a.AttributeType.FullName == "BepInEx.BepInDependency"),
+                "Satellite overlay must operate independently.");
+            Require(registrations.Length == 0, "Satellite overlay must not register Harmony patches.");
+            return;
+        }
         Require(registrations.Length == 1 && registrations[0].Parameters.Count == 1
             && registrations[0].Parameters[0].ParameterType.FullName == "System.Reflection.Assembly",
             "Awake must explicitly supply its plugin assembly to PatchAll; parameterless registration depends on an inlining-sensitive stack frame.");
@@ -228,7 +265,10 @@ foreach (var mod in mods)
             Require(candidates.Length == 1, $"{target.FullName}.{name}: expected one target, found {candidates.Length}; specify overload types when ambiguous.");
         });
     }
-    Check(mod + " declares Harmony targets", () => Require(patches > before, "No supported Harmony targets found."));
+    if (mod == "NuclearSatelliteMap")
+        Check(mod + " has no Harmony targets", () => Require(patches == before, "Satellite overlay must stay patch-free."));
+    else
+        Check(mod + " declares Harmony targets", () => Require(patches > before, "No supported Harmony targets found."));
 }
 Check("private-field contract", () =>
 {

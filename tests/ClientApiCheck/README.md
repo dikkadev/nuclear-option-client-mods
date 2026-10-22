@@ -1,6 +1,6 @@
 # Client API metadata preflight
 
-After building all twelve active mods in Release against the current client references:
+After building all thirteen active mods in Release against the current client references:
 
 ```powershell
 . ../Open-Workspace.ps1
@@ -11,15 +11,16 @@ Run from the repository root. Optional program arguments are repository root, ma
 
 Checks:
 
-- Every active Release DLL exists and declares Harmony targets.
+- Every active Release DLL exists. Harmony-based mods declare targets; NuclearSatelliteMap is explicitly checked as an independent overlay without Harmony references, registrations or targets.
 - The compiled `BepInPlugin` ID/version match the corresponding project properties, so stale DLLs cannot pass under a newer candidate's metadata.
-- Every plugin bootstrap passes an explicit assembly to `Harmony.PatchAll`; parameterless registration depends on a stack frame and can silently select the wrong assembly when inlined.
+- Every Harmony-based plugin bootstrap passes an explicit assembly to `Harmony.PatchAll`; parameterless registration depends on a stack frame and can silently select the wrong assembly when inlined.
 - Sounds' anti-radiation warning key matches the string actually returned by the current client's `ARMSeeker.GetSeekerType`. Unsupported getter IL fails explicitly; this guards a compile-invisible seeker-name change.
 - Class-level `HarmonyPatch` declarations resolve to one target method in the current game assembly or the explicitly supported Rewired_Core client dependency, including inherited methods. Rewired targets cover temporary map-input reservation save/copy guards. Supported constructor arguments are declaring type, method name, explicit argument types, and normal/getter/setter/constructor/static-constructor method kinds. Missing targets and unspecified ambiguous overloads fail. Unsupported declarations fail explicitly.
 - Compiled literal `AccessTools.FieldRefAccess<T,F>(string)` calls use the exact field type the current game declares. Unsupported call forms fail explicitly.
 - The explicit `tests/api-contract.json` records private field names and types used by active `Traverse` and field-reference code. Update that contract deliberately when reflection use changes; the checker does not automatically discover every arbitrary reflection expression.
+- NuclearSatelliteMap's native map contracts cover `SceneSingleton<DynamicMap>.i`, `DynamicMap.mapImage` and the static `mapMaximized` getter. Unity metadata checks resolve the exact `Texture2D(int,int,TextureFormat,int,bool)`, `LoadRawTextureData(IntPtr,int)` and `Apply(bool,bool)` overloads without creating a texture.
 
-Failure returns exit code 1. Rebuild the mods first: this tool inspects the existing DLLs, not whether they reflect current source. It does not check Harmony parameter injection, arbitrary reflection, direct public API calls, method behavior, Unity UI/lifecycle/audio, timing, or runtime performance. A successful build and preflight still require an authorized client smoke test.
+Failure returns exit code 1. Rebuild the mods first: this tool inspects the existing DLLs, not whether they reflect current source. It does not check Harmony parameter injection, arbitrary reflection, public API calls beyond the explicit contracts above, method behavior, Unity UI/lifecycle/audio, timing, or runtime performance. A successful build and preflight still require an authorized client smoke test.
 
 Negative checks can use an alternate scratch JSON contract: change a field name to a nonexistent name or its type to `System.String`, then pass that file as argument 3. The checker must report the mismatch and exit 1. Keep scratch contracts and results in ignored `.dev/tmp/`.
 

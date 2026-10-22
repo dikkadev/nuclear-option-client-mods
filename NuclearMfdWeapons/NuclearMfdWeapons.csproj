@@ -3,7 +3,7 @@
     <TargetFramework>netstandard2.1</TargetFramework>
     <AssemblyName>NuclearMfdWeapons</AssemblyName>
     <RootNamespace>NuclearMfdWeapons</RootNamespace>
-    <Version>0.1.4</Version>
+    <Version>0.1.5</Version>
     <BepInExPluginGuid>dev.dikka.nuclearmfdweapons</BepInExPluginGuid>
     <BepInExPluginName>NuclearMfdWeapons</BepInExPluginName>
     <Nullable>enable</Nullable>

@@ -3,7 +3,7 @@
     <TargetFramework>netstandard2.1</TargetFramework>
     <AssemblyName>NuclearControllerGestures</AssemblyName>
     <RootNamespace>NuclearControllerGestures</RootNamespace>
-    <Version>0.1.1</Version>
+    <Version>0.1.2</Version>
     <BepInExPluginGuid>dev.dikka.nuclearcontrollergestures</BepInExPluginGuid>
     <BepInExPluginName>NuclearControllerGestures</BepInExPluginName>
     <Nullable>enable</Nullable>

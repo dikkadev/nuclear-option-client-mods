@@ -143,7 +143,8 @@ class ModpackTests(unittest.TestCase):
         with patch.object(builder.subprocess, 'run') as run, patch.object(builder, 'dotnet_executable', return_value='dotnet'):
             builder.verify_build(self.root, builder.load_mods(self.root), {'NO_MANAGED_DIR': str(self.root), 'NO_BEPINEX_CORE_DIR': str(self.root)})
         commands = [call.args[0] for call in run.call_args_list]
-        self.assertEqual(len(commands), 12)
+        # Two fixture mods plus build/execute for each of five check programs.
+        self.assertEqual(len(commands), 2 + 2 * 5)
         self.assertIn(f'-p:NuclearOptionManagedDir={self.root}', commands[0])
         self.assertIn(f'-p:BepInExCoreDir={self.root}', commands[0])
         self.assertEqual(Path(commands[2][2]).name, 'ClientLogic.Tests.csproj')
@@ -164,6 +165,26 @@ class ModpackTests(unittest.TestCase):
             self.assertEqual(process_utils.background_kwargs(), {'creationflags': 0x08000000})
         with patch.object(process_utils.sys, 'platform', 'linux'):
             self.assertEqual(process_utils.background_kwargs(), {})
+
+    def test_satellite_active_entry_and_data_exclusion(self):
+        mods = builder.load_mods(builder.ROOT)
+        self.assertEqual(len(mods), 13)
+        satellite = next(mod for mod in mods if mod['name'] == 'NuclearSatelliteMap')
+        self.assertEqual(satellite['guid'], 'dev.dikka.nuclearsatellitemap')
+        self.assertEqual(satellite['include'], ['README.md'])
+        self.assertEqual(satellite['tags'], ['Map', 'Visual'])
+        # Use synthetic bytes, never a real game-derived data file. Exercise the
+        # real satellite includes against local data in several plausible paths.
+        directory = self.root / 'Active'
+        for relative in ('fixture.nosat', 'maps/fixture.nosat', 'assets/fixture.nosat'):
+            path = directory / relative
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_bytes(b'synthetic local data')
+        fixture = dict(satellite, project=directory / 'Active.csproj', assembly='Active')
+        payload = builder.payload(self.root, [fixture])
+        prefix = 'mods/dev.dikka.nuclearsatellitemap/'
+        self.assertEqual(set(payload), {'modlist.nomm.json', prefix + 'meta.json',
+                                       prefix + 'Active.dll', prefix + 'README.md'})
 
     def test_hidden_child_keeps_diagnostics_and_failure_status(self):
         output = io.StringIO()

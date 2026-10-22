@@ -1,0 +1,49 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>netstandard2.1</TargetFramework>
+    <AssemblyName>NuclearSatelliteMap</AssemblyName>
+    <RootNamespace>NuclearSatelliteMap</RootNamespace>
+    <Version>0.1.0</Version>
+    <BepInExPluginGuid>dev.dikka.nuclearsatellitemap</BepInExPluginGuid>
+    <BepInExPluginName>NuclearSatelliteMap</BepInExPluginName>
+    <Nullable>enable</Nullable>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <GenerateDependencyFile>false</GenerateDependencyFile>
+    <NuclearOptionManagedDir Condition="'$(NuclearOptionManagedDir)' == ''">$(NO_MANAGED_DIR)</NuclearOptionManagedDir>
+    <BepInExCoreDir Condition="'$(BepInExCoreDir)' == ''">$(NO_BEPINEX_CORE_DIR)</BepInExCoreDir>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="tools/**" />
+    <None Remove="tools/**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="BepInEx.PluginInfoProps" Version="2.1.0" />
+    <Reference Include="BepInEx">
+      <HintPath>$(BepInExCoreDir)/BepInEx.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="Assembly-CSharp">
+      <HintPath>$(NuclearOptionManagedDir)/Assembly-CSharp.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="UnityEngine">
+      <HintPath>$(NuclearOptionManagedDir)/UnityEngine.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="UnityEngine.CoreModule">
+      <HintPath>$(NuclearOptionManagedDir)/UnityEngine.CoreModule.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="UnityEngine.UI">
+      <HintPath>$(NuclearOptionManagedDir)/UnityEngine.UI.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="UnityEngine.UIModule">
+      <HintPath>$(NuclearOptionManagedDir)/UnityEngine.UIModule.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+  </ItemGroup>
+</Project>
