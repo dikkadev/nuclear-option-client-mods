@@ -26,6 +26,11 @@ namespace NuclearMinimap
         private DeviceZoomDrawer? bindingDrawer;
         private ConfigEntry<float> zoomSpeed = null!, holdThreshold = null!;
         private ConfigEntry<bool> consumeBindings = null!;
+        private ConfigEntry<bool> headingTape = null!, northIndicator = null!, attitude = null!, bankReadout = null!;
+        private ConfigEntry<InstrumentCorner> attitudeCorner = null!;
+        private ConfigEntry<float> attitudeSize = null!, instrumentOpacity = null!;
+        private MfdPage? instrumentPage;
+        private FlightInstruments? instruments;
         private readonly LiveMapControls controls = new LiveMapControls();
         private readonly MapInputConsumption input = new MapInputConsumption();
         private static readonly FieldInfo? TargetFeed = AccessTools.Field(typeof(TacScreen), "targetCamDisplay");
@@ -41,7 +46,7 @@ namespace NuclearMinimap
         private MfdSession? session;
         private MfdPage? page;
         private bool captured, rendering;
-        private float retryAfter, nextCapture;
+        private float retryAfter, nextCapture, instrumentRetryAfter;
         private int warnings, readyMessages, renderMessages;
         private float sourceWaitStarted;
         private bool FeatureEnabled => isActiveAndEnabled && enabledSetting.Value;
@@ -71,6 +76,13 @@ namespace NuclearMinimap
                 "Short taps replay their normal game bindings on release; long holds zoom without firing those bindings. Other bindings for the same action still work. Turn off to also allow native actions during zoom holds. Menus and the expanded map keep native controls; saved assignments are preserved.");
             holdThreshold = Config.Bind("Controls", "Zoom Hold Delay", .3f,
                 new ConfigDescription("Seconds before a press becomes map zoom. With Consume Zoom Bindings on, release earlier to trigger the normal game binding; reaching this delay consumes the press instead. Normal taps therefore wait until release.", new AcceptableValueRange<float>(.1f, 1f)));
+            headingTape = Config.Bind("Flight Instruments", "Show Heading Tape", true, "Show a compass tape with the current heading along the top of the cockpit minimap.");
+            northIndicator = Config.Bind("Flight Instruments", "Show North Indicator", true, "Show a small north pointer in the top-left corner of the cockpit minimap. It appears only with HeadingUp orientation, where north rotates.");
+            attitude = Config.Bind("Flight Instruments", "Show Attitude Indicator", true, "Show a small attitude ball (artificial horizon with bank scale) in a corner of the cockpit minimap.");
+            bankReadout = Config.Bind("Flight Instruments", "Show Bank Angle", true, "Show the bank angle in degrees next to the attitude ball, for example R30 or L15.");
+            attitudeCorner = Config.Bind("Flight Instruments", "Attitude Indicator Corner", InstrumentCorner.BottomRight, "Cockpit minimap corner for the attitude ball. NuclearDelivery counters use the bottom-left corner.");
+            attitudeSize = Config.Bind("Flight Instruments", "Attitude Indicator Size", .3f, new ConfigDescription("Attitude ball diameter, as a fraction of the cockpit minimap's shorter side.", new AcceptableValueRange<float>(.15f, .5f)));
+            instrumentOpacity = Config.Bind("Flight Instruments", "Instrument Opacity", .9f, new ConfigDescription("Opacity of the cockpit minimap flight instruments.", new AcceptableValueRange<float>(.1f, 1f)));
             harmony = new Harmony(MyPluginInfo.PLUGIN_GUID);
             harmony.PatchAll(typeof(Plugin).Assembly);
             StartInput();
@@ -130,8 +142,38 @@ namespace NuclearMinimap
                     TryCreate();
                 }
                 if (!PotentiallyVisible()) { captured = false; SetVisible(false); }
+                UpdateInstruments();
             }
             catch (Exception error) { DisposeAll(); retryAfter = Time.unscaledTime + 2f; Report(error); }
+        }
+        private InstrumentOptions Instruments() => new InstrumentOptions
+        {
+            HeadingTape = headingTape.Value, NorthIndicator = northIndicator.Value, Attitude = attitude.Value,
+            BankReadout = bankReadout.Value, Corner = attitudeCorner.Value, Size = attitudeSize.Value,
+            Opacity = instrumentOpacity.Value, Orientation = orientation.Value
+        };
+        // Runs before canvas rebuilds, so instrument meshes and text match this frame's attitude.
+        private void UpdateInstruments()
+        {
+            if (instrumentPage == null || owner == null) return;
+            var options = Instruments();
+            if (!options.Any) return;
+            try
+            {
+                if (instruments == null)
+                {
+                    if (Time.unscaledTime < instrumentRetryAfter) return;
+                    instrumentRetryAfter = Time.unscaledTime + 1f;
+                    instruments = new FlightInstruments(instrumentPage.Root, FlightInstruments.ResolveFont(instrumentPage.Root));
+                }
+                instruments.Update(owner.transform, options);
+            }
+            catch (Exception error)
+            {
+                // Instruments are optional; keep the minimap running without them.
+                instruments?.Dispose(); instruments = null; instrumentRetryAfter = Time.unscaledTime + 5f;
+                Report(error);
+            }
         }
         private void TryCreate()
         {
@@ -157,6 +199,11 @@ namespace NuclearMinimap
                 radar = new NativeRadar(screen, surface.Root);
                 mirror = new NativeMapMirror(map, page.Root);
                 page.SetVisible(false);
+                // Separate page: the mirror keeps reordering its own children to the end.
+                instrumentPage = surface.Attach("minimap-instruments", false);
+                instrumentPage.Root.gameObject.layer = page.Root.gameObject.layer;
+                instrumentPage.Root.SetSiblingIndex(page.Root.GetSiblingIndex() + 1);
+                instrumentPage.SetVisible(false);
                 captured = false; nextCapture = 0; sourceWaitStarted = Time.unscaledTime;
                 // Register after Graphic has initialized CanvasUpdateRegistry so capture sees built meshes.
                 Canvas.willRenderCanvases -= Render; Canvas.willRenderCanvases += Render;
@@ -204,10 +251,16 @@ namespace NuclearMinimap
             catch (Exception error) { hud?.Restore(); captured = false; SetVisible(false); Report(error); }
             finally { rendering = false; }
         }
-        private void SetVisible(bool value) { radar?.SetReplacing(value); page?.SetVisible(value); }
+        private void SetVisible(bool value)
+        {
+            radar?.SetReplacing(value); page?.SetVisible(value);
+            instrumentPage?.SetVisible(value && instruments != null && Instruments().Any);
+        }
         private void DisposeDisplay()
         {
             hud?.Restore(); captured = false;
+            instruments?.Dispose(); instruments = null;
+            instrumentPage?.Dispose(); instrumentPage = null;
             radar?.Dispose(); radar = null;
             mirror?.Dispose(); mirror = null;
             page?.Dispose(); page = null;

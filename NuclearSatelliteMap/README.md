@@ -1,14 +1,14 @@
 # NuclearSatelliteMap
 
-`NuclearSatelliteMap` is a client-side `Nuclear Option` BepInEx mod that replaces the in-game map image with satellite imagery. Water is transparent by default, so the sea shows the map background (expanded map) or the world behind the HUD (minimized map).
+`NuclearSatelliteMap` is a client-side `Nuclear Option` BepInEx mod that replaces the in-game map image with satellite imagery. Water is transparent, so the sea shows the map background (expanded map) or the world behind the HUD (minimized map).
 
-The imagery is rendered from the game's own terrain, roads, buildings and trees. The default data has twice the native map resolution: 10 m per pixel instead of 20 m, so it stays sharper when you zoom in.
+The imagery is rendered from the game's own terrain, roads, buildings and trees. The default data has four times the native map resolution: 5 m per pixel instead of 20 m, so it stays sharp when you zoom in.
 
 ## Features
 
 - Satellite imagery on the expanded map, the minimized HUD map and NuclearMinimap's cockpit copy
-- Water fully transparent by default, with a soft coastline; optional water opacity shows the rendered sea
-- Live tuning: overall opacity per map view, land/water opacity, brightness, contrast, saturation, gamma and tint
+- Water fully transparent, with a soft coastline
+- Separate opacity for the expanded and minimized map, applied live
 - Optional native map behind the imagery, visible through water and transparency
 - Map icons, grid lines, labels and other map mods (trails, player names) stay above the imagery
 - Imagery is chosen by the map's size and native image size; unknown maps keep the native map
@@ -45,39 +45,37 @@ Config file: `BepInEx/config/dev.dikka.nuclearsatellitemap.cfg`. All values appl
 [General]
 Enabled = true
 Data Folder =
+## Full (5 m per pixel) or Half (10 m per pixel, a quarter of the GPU memory)
+Texture Detail = Full
 
 [Visibility]
 Use On Expanded Map = true
 Use On Minimized Map = true
-## Overall opacity, applied immediately
-Expanded Map Opacity = 1
+## Overall opacity of the satellite layer; water is always transparent
+Expanded Map Opacity = 0.8
 Minimized Map Opacity = 1
-## Applied to the texture (about a second for Ignus)
-Land Opacity = 1
-Water Opacity = 0
 ## Native map image behind the satellite layer
 Native Map Opacity = 0
-
-[Color]
-## Applied to the texture
-Brightness = 1
-Contrast = 1
-Saturation = 1
-Gamma = 1
-Tint = FFFFFFFF
 ```
 
 Tuning tips:
 
-- Icons hard to see: lower `Brightness` (for example 0.7) or `Saturation` (0.6).
 - Minimized map hides too much of the view: lower `Minimized Map Opacity`.
-- You want the sea back: raise `Water Opacity`, or raise `Native Map Opacity` to show the native map's sea.
+- You want a sea back: raise `Native Map Opacity` to show the native map's sea through the transparent water.
+- Low on GPU memory or loading stutters: set `Texture Detail` to `Half`.
 
-Color and land/water settings re-read the data file and adjust it on a worker thread, then replace the texture. Slider drags are debounced. The adjustment changes only the two endpoint colors of each compressed 4x4 block. Brightness, contrast, saturation, tint and opacity are exact up to color quantization, as long as no color channel clips at black or white. Gamma, and any clipping, are applied to the endpoints, which is a close approximation. The order is gamma, contrast, brightness, saturation, then tint.
+Version 0.1.1 changes the `Expanded Map Opacity` default from 1 to 0.8. An existing config keeps its saved value. It also removes the land/water opacity and color settings: imagery shows in its original colors, land is opaque and water is transparent. Old entries left in an existing config are ignored.
 
 ## Memory
 
-The texture is BC3 (DXT5) compressed with a full mip chain: about 85 MiB of GPU memory for Heartland and 171 MiB for Ignus. Only the current map is loaded. Loading reads the file on a worker thread, then uploads it on the main thread. That upload can cause a short hitch, normally during mission loading.
+The data files are deflate-compressed: about 103 MiB for Heartland and 24 MiB for Ignus, which is mostly water. When a mission loads its map, a worker thread reads and inflates the file. The main thread then uploads it as BC3 (DXT5) GPU textures with full mip chains.
+
+| Map | Image | Textures | GPU memory, Full | GPU memory, Half |
+|---|---|---|---|---|
+| Heartland | 16384 x 16384 | 1 | 341 MiB | 85 MiB |
+| Ignus | 32768 x 16384 | 2 (west/east halves) | 683 MiB | 171 MiB |
+
+GPUs limit one texture to 16384 pixels per side, so larger maps are split into tiles. The tiles' mip levels are cut from one pyramid of the whole map, so the halves meet without a visible seam. The upload can cause a short hitch, normally during mission loading. Only the current map is kept, and later missions on the same map reuse it. Files from older versions (10 m, one texture) still load.
 
 ## Producing data
 
@@ -87,13 +85,13 @@ The texture is BC3 (DXT5) compressed with a full mip chain: about 85 MiB of GPU 
 uv run --script tools/build_satellite_data.py --map all --preview
 ```
 
-Water is classified from the game's terrain, road, building and pavement geometry at the game's sea level (Y = 0), with 4x4 supersampling for soft coastlines. Bridges and piers above the water stay opaque. Output goes to `dist/satellite-maps/`.
+Water is classified from the game's terrain, road, building and pavement geometry at the game's sea level (Y = 0), with 4x4 supersampling for soft coastlines. Structures in that geometry stay opaque above water; bridges that are not part of it, such as Ignus's long inter-island bridges, become transparent over water. The default is `--scale 4` (5 m per pixel) from source level 6 (4 m per pixel). Output goes to `dist/satellite-maps/`.
 
 The data is derived from game assets. Keep it local: do not commit, package or publish it.
 
 ## Client testing
 
-Offline logic and metadata checks do not establish in-game behavior. Imagery alignment, layering under icons, the minimized/cockpit maps and tuning behavior still require client acceptance.
+On 2026-10-22, the user ran 0.1.0 in their game client and tuned it: the original colors were fine, and 80% opacity suited the expanded map. Version 0.1.1 applies that feedback; 0.2.0 raises the resolution to 5 m at the user's request and has not yet been run in the client. Other cases were not reported individually: imagery alignment, layering under icons, the minimized/cockpit maps and map changes. Offline checks do not establish in-game behavior.
 
 ## Local development install
 

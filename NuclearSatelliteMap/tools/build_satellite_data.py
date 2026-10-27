@@ -47,6 +47,7 @@ import subprocess
 import time
 import urllib.error
 import urllib.request
+import zlib
 
 import etcpak
 import numpy as np
@@ -57,7 +58,11 @@ import psutil
 set_num_threads(4)
 WORKERS = 4
 MAGIC = b"NOSATMP1"
-FIXED = struct.Struct("<8s6I2f2IQ")
+# Version 3 adds the tile grid after v2's compression and stored payload length.
+FIXED = struct.Struct("<8s6I2f2IQIQ2I")
+VERSION = 3
+COMPRESSION_DEFLATE = 1
+MAX_TILE_SIDE = 16384
 WATER_RGB = (18, 78, 101)
 MAPS = {
     "heartland": ("heartland-46396", "Heartland", 81920, 81920, 4096, 4096),
@@ -75,8 +80,32 @@ def bc3_size(width: int, height: int) -> int:
                for i in range(mip_count(width, height)))
 
 
-def make_header(spec: tuple, width: int, height: int, source: str) -> bytes:
+def tile_layout(width: int, height: int) -> tuple[int, int, int, int]:
+    """Smallest power-of-two grid; return columns, rows, tile width, tile height."""
+    if min(width, height) < 1:
+        raise ValueError("Texture dimensions must be positive")
+    columns = rows = 1
+    while width > columns * MAX_TILE_SIDE:
+        columns *= 2
+    while height > rows * MAX_TILE_SIDE:
+        rows *= 2
+    if width % columns or height % rows:
+        raise ValueError("Texture dimensions must divide evenly into the tile grid")
+    tw, th = width // columns, height // rows
+    if columns * rows > 1 and (tw & (tw-1) or th & (th-1)):
+        raise ValueError("Tiled texture dimensions must be powers of two")
+    return columns, rows, tw, th
+
+
+def pyramid_bytes(width: int, height: int, levels: int) -> int:
+    """Resident image arrays: uint8 base, then full-image float32 mips."""
+    return width*height*4 + sum(max(1, width >> k)*max(1, height >> k)*16
+                                for k in range(1, levels))
+
+
+def make_header(spec: tuple, width: int, height: int, source: str, stored_length: int = 0) -> bytes:
     map_id, name, meters_w, meters_h, native_w, native_h = spec
+    columns, rows, tw, th = tile_layout(width, height)
     strings = bytearray()
     for value in (map_id, name, source):
         encoded = value.encode("utf-8")
@@ -85,9 +114,10 @@ def make_header(spec: tuple, width: int, height: int, source: str) -> bytes:
         strings.extend(struct.pack("<H", len(encoded)))
         strings.extend(encoded)
     header_size = (FIXED.size + len(strings) + 15) & ~15
-    fixed = FIXED.pack(MAGIC, header_size, 1, 1, width, height,
-                       mip_count(width, height), meters_w, meters_h,
-                       native_w, native_h, bc3_size(width, height))
+    fixed = FIXED.pack(MAGIC, header_size, VERSION, 1, width, height,
+                       mip_count(tw, th), meters_w, meters_h,
+                       native_w, native_h, columns*rows*bc3_size(tw, th),
+                       COMPRESSION_DEFLATE, stored_length, columns, rows)
     return (fixed + strings).ljust(header_size, b"\0")
 
 
@@ -504,29 +534,60 @@ def next_mip(parent: np.ndarray) -> np.ndarray:
 
 def write_texture(path: Path, spec: tuple, rgba: np.ndarray, source: str) -> None:
     height, width = rgba.shape[:2]
+    columns, rows, tw, th = tile_layout(width, height)
+    levels = mip_count(tw, th)
+    # Leave >1 GiB for strip filters, codec/JIT, and source/terrain buffers.
+    # Defaults need 2.33 GiB (Heartland) / 4.67 GiB (Ignus) of image arrays.
+    if pyramid_bytes(width, height, levels) > 6*1024**3:
+        raise ValueError("Full mip pyramid exceeds the 6 GiB image-array memory bound")
     header = make_header(spec, width, height, source)
     if path.exists():
         raise FileExistsError(f"Preserving existing output: {path}; select another --output-dir")
     output = path.open("xb")  # Failure here must never unlink another producer's file.
     # A failed producer never leaves a file that looks like a completed container.
+    # Raw deflate (no zlib header) matches .NET DeflateStream; the game inflates it on load.
+    compressor = zlib.compressobj(9, zlib.DEFLATED, -15)
+    raw = 0
     try:
         with output:
             output.write(header)
-            parent = rgba
-            for level in range(mip_count(width, height)):
-                h, w = parent.shape[:2]
-                for south in range(0, h, 64):
-                    # Flip before padding/encoding, including pixels inside each block.
-                    strip = parent[max(0,h-south-64):h-south][::-1]
-                    pixels = np.clip(np.rint(strip), 0, 255).astype(np.uint8) if parent.dtype != np.uint8 else strip
-                    data = encode_bc3(pixels)
-                    assert_canonical(data)
-                    output.write(data)
-                print(f"  BC3 mip {level}: {w}x{h}", flush=True)
-                if level+1 < mip_count(width, height):
-                    parent = next_mip(parent)
-            if output.tell() != len(header)+bc3_size(width,height):
+            # Filter the FULL image before cutting tiles, retaining float parents.
+            # Keeping the pyramid allows tile-major streaming without disk scratch.
+            pyramid = [rgba]
+            for level in range(1, levels):
+                pyramid.append(next_mip(pyramid[-1]))
+                h, w = pyramid[-1].shape[:2]
+                print(f"  full-image mip {level}: {w}x{h}", flush=True)
+            for row in range(rows):  # North to south; columns west to east.
+                for column in range(columns):
+                    for level, parent in enumerate(pyramid):
+                        # Clamp only axes already reduced to one pixel (rectangular
+                        # tiles); otherwise these are exactly the shifted boundaries.
+                        x0 = min(parent.shape[1]-1, (column*tw) >> level)
+                        y0 = min(parent.shape[0]-1, (row*th) >> level)
+                        w, h = max(1, tw >> level), max(1, th >> level)
+                        tile = parent[y0:y0+h, x0:x0+w]
+                        if tile.shape[:2] != (h, w):
+                            raise AssertionError("Full-image mip cannot supply the tile region")
+                        for south in range(0, h, 64):
+                            # Each tile/mip is south-first, including pixels within blocks.
+                            strip = tile[max(0,h-south-64):h-south][::-1]
+                            pixels = np.clip(np.rint(strip), 0, 255).astype(np.uint8) if parent.dtype != np.uint8 else strip
+                            data = encode_bc3(pixels)
+                            assert_canonical(data)
+                            raw += len(data)
+                            output.write(compressor.compress(data))
+                        print(f"  BC3 tile ({column},{row}) mip {level}: {w}x{h}", flush=True)
+            output.write(compressor.flush())
+            if raw != columns*rows*bc3_size(tw, th):
                 raise AssertionError("Written mip size does not match SatelliteBlocks.Bc3Size")
+            stored = output.tell() - len(header)
+            output.seek(0)
+            final = make_header(spec, width, height, source, stored)
+            if len(final) != len(header):
+                raise AssertionError("Header size changed while recording the stored length")
+            output.write(final)
+            print(f"  deflate: {raw} -> {stored} bytes ({100*stored/raw:.1f}%)", flush=True)
     except BaseException:
         path.unlink(missing_ok=True)
         raise
@@ -596,15 +657,19 @@ def run(args) -> None:
         start = time.perf_counter()
         spec = MAPS[key]
         w, h = round(spec[4]*args.scale), round(spec[5]*args.scale)
-        if min(w,h) < 4 or max(w,h) > 16384 or w%4 or h%4:
-            raise ValueError(f"Output {w}x{h} must have sides divisible by 4 in 4..16384")
+        if min(w,h) < 4 or w%4 or h%4:
+            raise ValueError(f"Output {w}x{h} must have sides >=4 and divisible by 4")
+        columns, rows, tw, th = tile_layout(w, h)
+        if pyramid_bytes(w, h, mip_count(tw, th)) > 6*1024**3:
+            raise ValueError("Full mip pyramid exceeds the 6 GiB image-array memory bound")
         path = args.output_dir / f"{spec[0]}.nosat"
         if path.exists():
             raise FileExistsError(f"Preserving existing output: {path}; select another --output-dir")
         free = __import__("shutil").disk_usage(args.output_dir).free
-        if free < bc3_size(w,h)+32*1024**2:
+        # Payloads stream directly into deflate; no raw-size disk reservation or cache.
+        if free < 32*1024**2:
             raise OSError(f"Insufficient free disk space for {path}")
-        print(f"{spec[1]}: {w}x{h}, {spec[2]/w:g} m/px; CPU, <=4 workers",flush=True)
+        print(f"{spec[1]}: {w}x{h}, {spec[2]/w:g} m/px; {columns}x{rows} tiles of {tw}x{th}; CPU, <=4 workers",flush=True)
         rgba = np.empty((h,w,4),np.uint8)
         tiles = TileSource(args.map_root,spec,args.source_level,args.tile_origin)
         tiles.render(rgba)
@@ -620,6 +685,9 @@ def run(args) -> None:
         write_texture(path,spec,rgba,source)
         del rgba
         print(json.dumps({"map":spec[0],"path":str(path.resolve()),"width":w,"height":h,
+                          "tile_columns":columns,"tile_rows":rows,"tile_width":tw,"tile_height":th,
+                          "raw_bytes":columns*rows*bc3_size(tw,th),
+                          "stored_bytes":path.stat().st_size-len(make_header(spec,w,h,source)),
                           "bytes":path.stat().st_size,"wall_seconds":round(time.perf_counter()-start,3),
                           "process_peak_memory_MiB":round(peak_memory_mib(),1),
                           "land_percent":round(100*land,4),"water_percent":round(100*(1-land),4)}),flush=True)
@@ -629,8 +697,8 @@ def main() -> None:
     root = Path(__file__).resolve().parents[3]
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--map",choices=["heartland","ignus","all"],default="all")
-    parser.add_argument("--scale",type=float,default=2)
-    parser.add_argument("--source-level",type=int,default=5)
+    parser.add_argument("--scale",type=float,default=4)
+    parser.add_argument("--source-level",type=int,default=6)
     parser.add_argument("--water-level",type=float,default=0.)
     parser.add_argument("--supersample",type=int,default=4)
     parser.add_argument("--tile-origin",default="http://127.0.0.1:47833")

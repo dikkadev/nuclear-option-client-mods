@@ -3,7 +3,7 @@
     <TargetFramework>netstandard2.1</TargetFramework>
     <AssemblyName>NuclearMapTrails</AssemblyName>
     <RootNamespace>NuclearMapTrails</RootNamespace>
-    <Version>0.1.2</Version>
+    <Version>0.1.3</Version>
     <BepInExPluginGuid>dev.dikka.nuclearmaptrails</BepInExPluginGuid>
     <BepInExPluginName>NuclearMapTrails</BepInExPluginName>
     <Nullable>enable</Nullable>

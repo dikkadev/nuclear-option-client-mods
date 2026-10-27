@@ -3,7 +3,7 @@
     <TargetFramework>netstandard2.1</TargetFramework>
     <AssemblyName>NuclearMapPlayerNames</AssemblyName>
     <RootNamespace>NuclearMapPlayerNames</RootNamespace>
-    <Version>0.2.4</Version>
+    <Version>0.2.5</Version>
     <BepInExPluginGuid>dev.dikka.nuclearmapplayernames</BepInExPluginGuid>
     <BepInExPluginName>NuclearMapPlayerNames</BepInExPluginName>
     <Nullable>enable</Nullable>

@@ -60,7 +60,7 @@ project = "NuclearTargeting/NuclearTargeting.csproj"
 [mods.NuclearSatelliteMap]
 id = "dev.dikka.nuclearsatellitemap"
 display_name = "NuclearSatelliteMap"
-description = "Satellite imagery on the native map with adjustable color and opacity; requires separately installed local map data."
+description = "Satellite imagery with transparent water on the native map, with per-view opacity; requires separately installed local map data."
 tags = ["Map", "Visual"]
 include = ["README.md"]
 project = "NuclearSatelliteMap/NuclearSatelliteMap.csproj"

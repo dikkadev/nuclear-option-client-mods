@@ -3,7 +3,7 @@
     <TargetFramework>netstandard2.1</TargetFramework>
     <AssemblyName>NuclearMinimap</AssemblyName>
     <RootNamespace>NuclearMinimap</RootNamespace>
-    <Version>0.3.3</Version>
+    <Version>0.4.0</Version>
     <BepInExPluginGuid>dev.dikka.nuclearminimap</BepInExPluginGuid>
     <BepInExPluginName>NuclearMinimap</BepInExPluginName>
     <Nullable>enable</Nullable>
@@ -53,6 +53,10 @@
     </Reference>
     <Reference Include="UnityEngine.CoreModule">
       <HintPath>$(NuclearOptionManagedDir)/UnityEngine.CoreModule.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="UnityEngine.TextRenderingModule">
+      <HintPath>$(NuclearOptionManagedDir)/UnityEngine.TextRenderingModule.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="Unity.TextMeshPro">

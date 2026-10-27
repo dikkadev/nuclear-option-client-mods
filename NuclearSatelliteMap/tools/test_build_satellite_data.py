@@ -8,6 +8,8 @@ from pathlib import Path
 import struct
 import tempfile
 import unittest
+from unittest.mock import patch
+import zlib
 
 import numpy as np
 from PIL import Image
@@ -19,21 +21,40 @@ _spec.loader.exec_module(sat)
 
 class FormatTests(unittest.TestCase):
     def test_header_bytes_and_utf8_lengths(self):
-        header = sat.make_header(sat.MAPS["heartland"], 8192, 8192, "sea 0 m; é")
+        header = sat.make_header(sat.MAPS["heartland"], 8192, 8192, "sea 0 m; é", 12345)
         self.assertEqual(header[:8], b"NOSATMP1")
-        fields = struct.unpack_from("<8s6I2f2IQ", header)
+        fields = struct.unpack_from("<8s6I2f2IQIQ2I", header)
         self.assertEqual(fields[1] % 16, 0)
         self.assertEqual(fields[1], len(header))
-        self.assertEqual(fields[2:7], (1,1,8192,8192,14))
+        self.assertEqual(fields[2:7], (3,1,8192,8192,14))
         self.assertEqual(fields[7:11], (81920.,81920.,4096,4096))
         self.assertEqual(fields[11], sat.bc3_size(8192,8192))
-        offset = 56
+        self.assertEqual(fields[12:14], (1,12345))
+        self.assertEqual(struct.unpack_from("<2I",header,68),(1,1))
+        self.assertEqual(fields[14:16],(1,1))
+        self.assertEqual(sat.FIXED.size,76)
+        offset = 76
         for expected in ("heartland-46396","Heartland","sea 0 m; é"):
             length, = struct.unpack_from("<H", header, offset)
             offset += 2
             self.assertEqual(header[offset:offset+length], expected.encode("utf-8"))
             offset += length
         self.assertEqual(header[offset:], bytes(len(header)-offset))
+
+    def test_default_size_tile_grids_and_memory_bound(self):
+        self.assertEqual(sat.tile_layout(16384,16384),(1,1,16384,16384))
+        self.assertEqual(sat.tile_layout(32768,16384),(2,1,16384,16384))
+        self.assertEqual(sat.tile_layout(65536,32768),(4,2,16384,16384))
+        for w,h in ((16384,16384),(32768,16384),(16384,32768)):
+            columns,rows,tw,th = sat.tile_layout(w,h)
+            fields = sat.FIXED.unpack_from(sat.make_header(sat.MAPS["ignus"],w,h,"test"))
+            self.assertEqual(fields[4:7],(w,h,sat.mip_count(tw,th)))
+            self.assertEqual(fields[11],columns*rows*sat.bc3_size(tw,th))
+            self.assertEqual(fields[14:16],(columns,rows))
+            self.assertLess(sat.pyramid_bytes(w,h,sat.mip_count(tw,th)),5*1024**3)
+        for w,h in ((0,4),(32772,16384),(32768,12000)):
+            with self.assertRaises(ValueError):
+                sat.tile_layout(w,h)
 
     def test_size_matches_literal_csharp_formula(self):
         for w,h in ((1,1),(2,1),(4,4),(12,8),(8192,8192),(16384,8192)):
@@ -82,8 +103,13 @@ class FormatTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory)/"test.nosat"
             sat.write_texture(path,sat.MAPS["heartland"],image,"unit test")
-            data = path.read_bytes()
-            header_size, = struct.unpack_from("<I",data,8)
+            stored_file = path.read_bytes()
+            header_size, = struct.unpack_from("<I",stored_file,8)
+            data_length, compression, stored = struct.unpack_from("<QIQ",stored_file,48)
+            self.assertEqual((data_length, compression), (sat.bc3_size(12,8), 1))
+            self.assertEqual(len(stored_file),header_size+stored)
+            # Raw deflate, as read by .NET DeflateStream; expand to the uncompressed layout.
+            data = stored_file[:header_size] + zlib.decompress(stored_file[header_size:], -15)
             self.assertEqual(len(data),header_size+sat.bc3_size(12,8))
             decoded = sat.decode_reference(data[header_size:header_size+96],12,8)
             self.assertEqual(tuple(decoded[0,0]),(0,0,255,0))
@@ -95,9 +121,75 @@ class FormatTests(unittest.TestCase):
                 sat.assert_canonical(data[offset:offset+count])
                 offset += count
             self.assertEqual(offset,len(data))
+            # v3's 1x1 payload is exactly the former v2 full-image layout.
+            expected = bytearray()
+            parent = image
+            for _ in range(sat.mip_count(12,8)):
+                pixels = np.clip(np.rint(parent[::-1]),0,255).astype(np.uint8)
+                expected.extend(sat.encode_bc3(pixels))
+                parent = sat.next_mip(parent)
+            self.assertEqual(data[header_size:],expected)
             with self.assertRaises(FileExistsError):
                 sat.write_texture(path,sat.MAPS["heartland"],image,"preserve")
-            self.assertEqual(path.read_bytes(),data)
+            self.assertEqual(path.read_bytes(),stored_file)
+
+    def test_tiled_full_image_mips_halves_and_seam_continuity(self):
+        # Four distinct quadrants verify west/east and north/south independently.
+        image = np.empty((8,16,4),np.uint8)
+        image[:4,:8] = (255,0,0,255)
+        image[4:,:8] = (0,255,0,255)
+        image[:4,8:] = (0,0,255,0)
+        image[4:,8:] = (255,255,255,128)
+        self.check_tiled_container(image,2,1,check_colors=True)
+        # Vary color and alpha near/across the seam. Compare encoder INPUT too,
+        # so lossy BC3 cannot hide a wrong mip filter, crop, or float rounding.
+        rng = np.random.default_rng(179)
+        self.check_tiled_container(rng.integers(0,256,(8,16,4),dtype=np.uint8),2,1)
+        self.check_tiled_container(rng.integers(0,256,(16,16,4),dtype=np.uint8),2,2)
+
+    def check_tiled_container(self,image,columns,rows,check_colors=False):
+        full = [image]
+        for _ in range(3):
+            full.append(sat.next_mip(full[-1]))
+        inputs = []
+        original_encode = sat.encode_bc3
+        def record(pixels):
+            inputs.append(pixels.copy())
+            return original_encode(pixels)
+        with tempfile.TemporaryDirectory() as directory, patch.object(sat,"MAX_TILE_SIDE",8):
+            path = Path(directory)/"tiled.nosat"
+            with patch.object(sat,"encode_bc3",side_effect=record):
+                sat.write_texture(path,sat.MAPS["ignus"],image,"tiled unit test")
+            container = path.read_bytes()
+            fields = sat.FIXED.unpack_from(container)
+            self.assertEqual(fields[4:7],(image.shape[1],image.shape[0],4))
+            self.assertEqual(fields[14:16],(columns,rows))
+            self.assertEqual(fields[11],columns*rows*sat.bc3_size(8,8))
+            self.assertEqual(fields[12],1)
+            self.assertEqual(len(container),fields[1]+fields[13])
+            payload = zlib.decompress(container[fields[1]:],-15)
+            self.assertEqual(len(payload),fields[11])
+            offset = index = 0
+            for row in range(rows):
+                for column in range(columns):
+                    for k,parent in enumerate(full):
+                        side = 8 >> k
+                        region = parent[row*side:(row+1)*side,column*side:(column+1)*side]
+                        pixels = np.clip(np.rint(region[::-1]),0,255).astype(np.uint8)
+                        np.testing.assert_array_equal(inputs[index],pixels)
+                        encoded = original_encode(pixels)
+                        actual = payload[offset:offset+len(encoded)]
+                        self.assertEqual(actual,encoded)
+                        decoded = sat.decode_reference(actual,side,side)[::-1]
+                        expected = sat.decode_reference(encoded,side,side)[::-1]
+                        np.testing.assert_array_equal(decoded,expected)
+                        if k == 0 and check_colors:
+                            # Solid 4x4 quadrants round-trip exact primary RGB.
+                            self.assertLessEqual(int(np.abs(decoded.astype(int)-region.astype(int)).max()),1)
+                        offset += len(encoded)
+                        index += 1
+            self.assertEqual(offset,len(payload))
+            self.assertEqual(index,len(inputs))
 
 
 class RasterTests(unittest.TestCase):

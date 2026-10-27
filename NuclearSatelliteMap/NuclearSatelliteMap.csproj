@@ -3,7 +3,7 @@
     <TargetFramework>netstandard2.1</TargetFramework>
     <AssemblyName>NuclearSatelliteMap</AssemblyName>
     <RootNamespace>NuclearSatelliteMap</RootNamespace>
-    <Version>0.1.0</Version>
+    <Version>0.2.0</Version>
     <BepInExPluginGuid>dev.dikka.nuclearsatellitemap</BepInExPluginGuid>
     <BepInExPluginName>NuclearSatelliteMap</BepInExPluginName>
     <Nullable>enable</Nullable>

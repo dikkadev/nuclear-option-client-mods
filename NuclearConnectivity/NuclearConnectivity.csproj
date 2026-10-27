@@ -3,7 +3,7 @@
     <TargetFramework>netstandard2.1</TargetFramework>
     <AssemblyName>NuclearConnectivity</AssemblyName>
     <RootNamespace>NuclearConnectivity</RootNamespace>
-    <Version>0.2.4</Version>
+    <Version>0.2.5</Version>
     <BepInExPluginGuid>dev.dikka.nuclearconnectivity</BepInExPluginGuid>
     <BepInExPluginName>NuclearConnectivity</BepInExPluginName>
     <Nullable>enable</Nullable>

@@ -25,7 +25,7 @@ dotnet run --project tests/ClientLogic.Tests -c Release
 
 The parent workspace pins the SDK. No game installation or mod installation is needed. Failure returns a nonzero exit code.
 
-SatelliteMapChecks links the production SatelliteBlocks and SatelliteMapFile sources with unsafe blocks enabled. An independent reference decoder covers BC3 four/three-color and eight/six-alpha interpretations, randomized canonical blocks, affine endpoint LUTs (including reversed/collapsed endpoints), mip sizes and synthetic file headers/payloads. No real `.nosat` imagery is read or generated. These checks do not validate Unity texture upload, visual quality or game lifecycle behavior.
+SatelliteMapChecks links the production SatelliteBlocks and SatelliteMapFile sources. It covers BC3 full-mip-chain sizes and synthetic version 1 (uncompressed), version 2 (deflate) and version 3 (tiled) headers and payloads, Half-detail mip offsets, including every rejection path and short/overlong inflated data. No real `.nosat` imagery is read or generated. These checks do not validate Unity texture upload, visual quality or game lifecycle behavior.
 
 `GameBoundaryStubs.cs` supplies small test-only game/Unity boundaries so the real calculations can execute without proprietary client assemblies. Passing these checks does **not** verify game API compatibility, Harmony hooks, Unity UI/layout/lifecycle behavior, audio, networking, or runtime performance. Those require builds against matching client references and an authorized game smoke test.
 

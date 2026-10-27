@@ -16,6 +16,20 @@ The expanded map remains available in every mode. Disable **General / Enabled** 
 
 **Display / Minimap Orientation** selects **NorthUp** (default) or **HeadingUp** (rotates with your aircraft). Both the HUD and MFD use the same orientation and zoom, centered on your aircraft even at high zoom. Existing saved orientation choices are preserved.
 
+## Flight instruments on the cockpit minimap
+
+The cockpit minimap also shows small flight instruments, so it can work as a moving-map display. Each one has its own toggle under **Flight Instruments** in the F1 menu:
+
+- **Show Heading Tape** (on): a compass tape along the top, with the heading as a three-digit number in the centre box.
+- **Show North Indicator** (on): a north arrow in the top-left corner. It appears only with **HeadingUp** orientation, because north is always up in NorthUp.
+- **Show Attitude Indicator** (on): a small attitude ball (artificial horizon) with sky and ground, pitch lines every 10 degrees, a fixed bank scale (10, 20, 30, 45 and 60 degrees), a yellow bank pointer and a fixed aircraft symbol.
+- **Show Bank Angle** (on): the bank angle beside the ball, for example **R30** (right wing down) or **L15**.
+- **Attitude Indicator Corner** (BottomRight), **Attitude Indicator Size** (0.3 of the map's shorter side) and **Instrument Opacity** (0.9).
+
+The bottom-left corner holds NuclearDelivery's counters, so it is not the default. A top-corner ball moves below the heading tape if the two would overlap. The instruments use the HUD's green theme colour and font, and appear only while the cockpit minimap is shown. The HUD minimap is unchanged.
+
+## Zoom controls
+
 Under **Controls / Device Zoom Bindings** in the F1 Configuration Manager menu:
 
 1. Select a connected device.

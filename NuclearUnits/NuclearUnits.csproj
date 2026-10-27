@@ -3,7 +3,7 @@
     <TargetFramework>netstandard2.1</TargetFramework>
     <AssemblyName>NuclearUnits</AssemblyName>
     <RootNamespace>NuclearUnits</RootNamespace>
-    <Version>1.2.5</Version>
+    <Version>1.2.6</Version>
     <BepInExPluginGuid>dev.dikka.nuclearunits</BepInExPluginGuid>
     <BepInExPluginName>NuclearUnits</BepInExPluginName>
     <Nullable>enable</Nullable>

@@ -22,6 +22,7 @@
     <Compile Include="../../NuclearMinimap/MapZoom.cs" Link="Production/MapZoom.cs" />
     <Compile Include="../../NuclearMinimap/MapCenter.cs" Link="Production/MapCenter.cs" />
     <Compile Include="../../NuclearMinimap/TapHoldGesture.cs" Link="Production/TapHoldGesture.cs" />
+    <Compile Include="../../NuclearMinimap/FlightInstrumentMath.cs" Link="Production/FlightInstrumentMath.cs" />
     <Compile Include="../../NuclearMapTrails/TrailHistory.cs" Link="Production/TrailHistory.cs" />
   </ItemGroup>
 </Project>
