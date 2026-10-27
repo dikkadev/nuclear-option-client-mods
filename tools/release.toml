@@ -6,7 +6,7 @@ commit_email = "dikkadev@users.noreply.github.com"
 
 [packs]
 our_version = "1.0.0"
-full_version = "1.0.1"
+full_version = "1.0.2"
 
 [build]
 sdk_version = "10.0.401"
