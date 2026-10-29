@@ -17,25 +17,27 @@ The imagery is rendered from the game's own terrain, roads, buildings and trees.
 
 - `Nuclear Option`
 - `BepInEx 5`
-- Satellite data files (`.nosat`), delivered separately. The mod does nothing without them.
-
 ## Installation
+
+The release ZIP includes the map data for Heartland and Ignus (about 127 MiB). Install it with NOMM, or by hand:
 
 1. Install BepInEx for `Nuclear Option`.
 2. Extract the `NuclearSatelliteMap` folder into `BepInEx/plugins/`.
-3. Copy the `.nosat` data files into `BepInEx/NuclearSatelliteMap/`.
 
 ```text
 BepInEx/
   plugins/
     NuclearSatelliteMap/
       NuclearSatelliteMap.dll
-  NuclearSatelliteMap/
-    heartland-46396.nosat
-    ignus-archipelago-46395.nosat
+      DATA-NOTICE.md
+      maps/
+        heartland-46396.nosat
+        ignus-archipelago-46395.nosat
 ```
 
-The data folder is outside `plugins/`, so mod-manager reinstalls do not remove it. `BepInEx/plugins/NuclearSatelliteMap/maps/` also works, or set `Data Folder`.
+The mod also reads `.nosat` files from `BepInEx/NuclearSatelliteMap/`, or from the folder set in `Data Folder`. If you used that folder for an earlier version, delete the old files there.
+
+The map data is derived from Nuclear Option game data and is not covered by the GPL license of the code. See `DATA-NOTICE.md`.
 
 ## Configuration
 
@@ -87,11 +89,7 @@ uv run --script tools/build_satellite_data.py --map all --preview
 
 Water is classified from the game's terrain, road, building and pavement geometry at the game's sea level (Y = 0), with 4x4 supersampling for soft coastlines. Structures in that geometry stay opaque above water; bridges that are not part of it, such as Ignus's long inter-island bridges, become transparent over water. The default is `--scale 4` (5 m per pixel) from source level 6 (4 m per pixel). Output goes to `dist/satellite-maps/`.
 
-The data is derived from game assets. Keep it local: do not commit, package or publish it.
-
-## Client testing
-
-On 2026-10-22, the user ran 0.1.0 in their game client and tuned it: the original colors were fine, and 80% opacity suited the expanded map. Version 0.1.1 applies that feedback; 0.2.0 raises the resolution to 5 m at the user's request and has not yet been run in the client. Other cases were not reported individually: imagery alignment, layering under icons, the minimized/cockpit maps and map changes. Offline checks do not establish in-game behavior.
+The data is derived from game data. Do not commit it. Only the release ZIP carries it: `tools/nomnom-mirrors.toml` pins each file's SHA-256, and the release tool copies the matching files from `dist/satellite-maps/` into `maps/`. After you rebuild the data, update those pins and bump the mod version.
 
 ## Local development install
 

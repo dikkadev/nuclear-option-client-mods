@@ -10,7 +10,7 @@ import importlib.util
 import io
 import json
 import os
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 import re
 import shutil
 import subprocess
@@ -317,6 +317,10 @@ def sanitized_config(mods):
         for key in ('id', 'display_name', 'description', 'tags', 'include'):
             if key in mod:
                 lines.append(f'{key} = {json.dumps(mod[key], ensure_ascii=False)}')
+        if mod.get('data'):
+            # Pins only: the data itself ships in release ZIPs, never in the source snapshot.
+            lines.append('data = { ' + ', '.join(f'{json.dumps(path)} = {json.dumps(sha)}'
+                                                 for path, sha in sorted(mod['data'].items())) + ' }')
         lines.append('project = ' + json.dumps(mod['name'] + '/' + mod['project'].name))
         lines.append('')
     return '\n'.join(lines).encode()
@@ -344,7 +348,7 @@ def mod_input_hashes(files, mods):
                            if name.startswith('Shared/') and 'tests' not in Path(name).parts
                            and Path(name).suffix in {'.cs', '.props', '.targets', '.txt'}})
         inputs.update({name: files[name] for name in ('global.json', 'NuGet.Config', 'LICENSE', 'LICENSE-NOTICE.md') if name in files})
-        inputs['_package-inputs.json'] = canonical({k: mod[k] for k in ('guid', 'version', 'assembly', 'include') if k in mod})
+        inputs['_package-inputs.json'] = canonical({k: mod[k] for k in ('guid', 'version', 'assembly', 'include', 'data') if k in mod})
         result[mod['name']] = source_hash(inputs)
     return result
 
@@ -581,6 +585,7 @@ def plan(root, names, packs, *, game_version, output, repo=None, offline=False,
         scan_for_secrets(name, data)
     for item in items:
         scan_for_secrets('release notes', item['notes'].encode())
+    bundled = {mod['name']: read_bundled_data(root, mod) for mod in selected if mod.get('data')}
     created = datetime.now(timezone.utc).isoformat(timespec='seconds')
     value = seal({'schema': 1, 'repository': repo, 'branch': settings['publication']['branch'],
         'commitName': settings['publication']['commit_name'], 'commitEmail': settings['publication']['commit_email'],
@@ -593,14 +598,56 @@ def plan(root, names, packs, *, game_version, output, repo=None, offline=False,
                             if m['guid'] in remote.get('registryEntries', {})},
         'modInputHashes': input_hashes, 'packReferences': references,
         'sourceHash': source_hash(files), 'sourceFiles': file_manifest(files), 'gameVersion': game_version,
+        'bundledData': {name: {path: {'sha256': digest(data), 'size': len(data)} for path, data in entries.items()}
+                        for name, entries in bundled.items()},
         'items': items}, 'planHash')
     output = Path(output).resolve()
     if output.exists() and any(output.iterdir()):
         raise ValueError('Output directory is not empty; choose a new --output')
     output.mkdir(parents=True, exist_ok=True)
     write_snapshot(files, output / 'source')
+    for name, entries in bundled.items():
+        for path, data in entries.items():
+            target = output / 'data' / name / path
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_bytes(data)
     write_json(output / 'plan.json', value)
     return value
+
+
+def read_bundled_data(root, mod):
+    """Read a mod's pinned, private data files from its data_source folder."""
+    source = Path(root).resolve() / mod.get('data_source', '')
+    if not mod.get('data_source') or not source.resolve().is_relative_to(Path(root).resolve()):
+        raise ValueError(f'{mod["name"]}: data entries need a data_source inside the repository')
+    result = {}
+    for path, sha256 in sorted(mod['data'].items()):
+        file = source / PurePosixPath(path).name
+        if not file.is_file():
+            raise ValueError(f'{mod["name"]}: missing data file {file}')
+        data = file.read_bytes()
+        if digest(data) != sha256:
+            raise ValueError(f'{mod["name"]}: {file.name} does not match its pinned SHA-256; update the pin and bump the version')
+        result[path] = data
+    return result
+
+
+def plan_data(plan_path, value, mod):
+    """Bundled data copied by plan, checked against the plan and the frozen pins."""
+    folder = Path(plan_path).resolve().parent / 'data' / mod['name']
+    expected = value.get('bundledData', {}).get(mod['name'], {})
+    if set(expected) != set(mod.get('data', {})):
+        raise ValueError(f'{mod["name"]}: planned data differs from the frozen data pins')
+    result = {}
+    for path, entry in expected.items():
+        file = folder / path
+        if file.is_symlink() or not file.resolve().is_relative_to(folder.resolve()) or not file.is_file():
+            raise ValueError(f'{mod["name"]}: prepared data file is missing or unsafe: {path}')
+        data = file.read_bytes()
+        if digest(data) != entry['sha256'] or len(data) != entry['size'] or entry['sha256'] != mod['data'][path]:
+            raise ValueError(f'{mod["name"]}: prepared data changed: {path}')
+        result[path] = data
+    return result
 
 
 def read_plan(path):
@@ -740,6 +787,11 @@ def prepare(plan_path, *, root=ROOT):
                     payload[mod['name'] + '/LICENSE'] = files['LICENSE']
                     if 'LICENSE-NOTICE.md' in files:
                         payload[mod['name'] + '/LICENSE-NOTICE.md'] = files['LICENSE-NOTICE.md']
+                if mod.get('data'):
+                    if mod['name'] + '/DATA-NOTICE.md' not in payload:
+                        raise ValueError(f'{mod["name"]}: bundled data requires DATA-NOTICE.md in its include list')
+                    for path, data in plan_data(plan_path, value, mod).items():
+                        payload[mod['name'] + '/' + path] = data
             else:
                 payload = contents
                 if item['name'] == 'full':

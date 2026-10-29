@@ -168,14 +168,17 @@ class ModpackTests(unittest.TestCase):
 
     def test_satellite_active_entry_and_data_exclusion(self):
         mods = builder.load_mods(builder.ROOT)
-        self.assertEqual(len(mods), 13)
+        self.assertEqual(len(mods), 14)
         satellite = next(mod for mod in mods if mod['name'] == 'NuclearSatelliteMap')
         self.assertEqual(satellite['guid'], 'dev.dikka.nuclearsatellitemap')
-        self.assertEqual(satellite['include'], ['README.md'])
+        self.assertEqual(satellite['include'], ['README.md', 'DATA-NOTICE.md'])
+        self.assertEqual(set(satellite['data']), {'maps/heartland-46396.nosat', 'maps/ignus-archipelago-46395.nosat'})
         self.assertEqual(satellite['tags'], ['Map', 'Visual'])
         # Use synthetic bytes, never a real game-derived data file. Exercise the
         # real satellite includes against local data in several plausible paths.
+        # Modpacks never carry the data; only individual release ZIPs do.
         directory = self.root / 'Active'
+        (directory / 'DATA-NOTICE.md').write_text('Data notice')
         for relative in ('fixture.nosat', 'maps/fixture.nosat', 'assets/fixture.nosat'):
             path = directory / relative
             path.parent.mkdir(parents=True, exist_ok=True)
@@ -184,7 +187,7 @@ class ModpackTests(unittest.TestCase):
         payload = builder.payload(self.root, [fixture])
         prefix = 'mods/dev.dikka.nuclearsatellitemap/'
         self.assertEqual(set(payload), {'modlist.nomm.json', prefix + 'meta.json',
-                                       prefix + 'Active.dll', prefix + 'README.md'})
+                                       prefix + 'Active.dll', prefix + 'README.md', prefix + 'DATA-NOTICE.md'})
 
     def test_hidden_child_keeps_diagnostics_and_failure_status(self):
         output = io.StringIO()

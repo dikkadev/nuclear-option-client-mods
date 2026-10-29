@@ -322,6 +322,52 @@ class LocalPreparation(Fixture):
             self.command('cat-file', '-e', self.private_head, cwd=second)
 
 
+class BundledData(Fixture):
+    def setUp(self):
+        super().setUp()
+        # Synthetic bytes stand in for game-derived data; the folder is ignored like dist/.
+        self.data = b'synthetic map data'
+        self.write('dist/maps/beta.nosat', self.data)
+        self.write('Beta/DATA-NOTICE.md', 'Data notice\n')
+        config = (self.root / 'tools/nomnom-mirrors.toml').read_text()
+        self.write('tools/nomnom-mirrors.toml', config.replace(
+            'description="Beta"\ninclude=["README.md"]\n',
+            'description="Beta"\ninclude=["README.md", "DATA-NOTICE.md"]\ndata_source="dist/maps"\n'
+            f'data={{ "maps/beta.nosat" = "{engine.digest(self.data)}" }}\n'))
+        self.command('add', '--all')
+        self.command('commit', '-m', 'Bundle data')
+
+    def test_release_zip_carries_pinned_data_but_source_does_not(self):
+        value = self.make_plan(['Beta'])
+        files = engine.read_source(self.out / 'plan.json', value)
+        self.assertFalse(any(name.endswith('.nosat') for name in files))
+        config = files['tools/nomnom-mirrors.toml'].decode()
+        self.assertIn(engine.digest(self.data), config)
+        self.assertNotIn('data_source', config)
+        self.prepare_fake()
+        with zipfile.ZipFile(self.out / 'artifacts/Beta.zip') as archive:
+            self.assertEqual(archive.read('Beta/maps/beta.nosat'), self.data)
+            self.assertIn('Beta/DATA-NOTICE.md', archive.namelist())
+
+    def test_data_not_matching_its_pin_is_refused_at_plan(self):
+        self.write('dist/maps/beta.nosat', b'other data')
+        with self.assertRaisesRegex(ValueError, 'pinned SHA-256'):
+            self.make_plan(['Beta'])
+
+    def test_changed_prepared_data_is_refused(self):
+        self.make_plan(['Beta'])
+        (self.out / 'data/Beta/maps/beta.nosat').write_bytes(b'tampered')
+        with self.assertRaisesRegex(ValueError, 'prepared data changed'):
+            self.prepare_fake()
+
+    def test_data_pins_change_the_input_hash(self):
+        mods = engine.load_builder(self.root).load_mods(self.root)
+        before = engine.mod_input_hashes(source.collect_source(self.root, mods), mods)['Beta']
+        changed = [dict(mod, data={'maps/beta.nosat': '0' * 64}) if mod['name'] == 'Beta' else mod for mod in mods]
+        after = engine.mod_input_hashes(source.collect_source(self.root, mods), changed)['Beta']
+        self.assertNotEqual(before, after)
+
+
 class PackVersionConsistency(Fixture):
     def reference(self, dll, input_hash):
         content = io.BytesIO()

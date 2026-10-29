@@ -47,7 +47,7 @@ private development history.
 | `NuclearMapTrails` | 0.1.3 | `dev.dikka.nuclearmaptrails` | Client-side Nuclear Option mod that draws fading, altitude-shaded flight trails behind player aircraft on the dynamic map, own team only by default. |
 | `NuclearMfdWeapons` | 0.1.6 | `dev.dikka.nuclearmfdweapons` | Cockpit weapon, ammunition and countermeasure display with a brief loadout preview and optional stock HUD. |
 | `NuclearMinimap` | 0.4.1 | `dev.dikka.nuclearminimap` | Native minimap orientation and hold zoom, with an optional cockpit map display and configurable HUD visibility. |
-| `NuclearSatelliteMap` | 0.2.0 | `dev.dikka.nuclearsatellitemap` | Satellite imagery with transparent water on the native map, with per-view opacity; requires separately installed local map data. |
+| `NuclearSatelliteMap` | 0.2.1 | `dev.dikka.nuclearsatellitemap` | Satellite imagery with transparent water on the native map, with per-view opacity. Includes the Heartland and Ignus map data. |
 | `NuclearSounds` | 0.1.3 | `dev.dikka.nuclearsounds` | Client-side designation tones, voice callouts, and fuel/terrain warnings with estimated fuel time. |
 | `NuclearTargeting` | 0.2.3 | `dev.dikka.nucleartargeting` | Client-side alternative target selection with optional cycling and tap-selection caps. |
 | `NuclearTrackAge` | 0.1.5 | `dev.dikka.nucleartrackage` | Client-side Nuclear Option mod that annotates stale enemy target tracks with how old the last known position is. |

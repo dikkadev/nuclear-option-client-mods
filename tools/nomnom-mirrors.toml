@@ -68,9 +68,10 @@ project = "NuclearTargeting/NuclearTargeting.csproj"
 [mods.NuclearSatelliteMap]
 id = "dev.dikka.nuclearsatellitemap"
 display_name = "NuclearSatelliteMap"
-description = "Satellite imagery with transparent water on the native map, with per-view opacity; requires separately installed local map data."
+description = "Satellite imagery with transparent water on the native map, with per-view opacity. Includes the Heartland and Ignus map data."
 tags = ["Map", "Visual"]
-include = ["README.md"]
+include = ["README.md", "DATA-NOTICE.md"]
+data = { "maps/heartland-46396.nosat" = "62cdc7c8a473d83a62c40be0d52a5e07b4c9b0ca0d439d9d42aacc61468703cd", "maps/ignus-archipelago-46395.nosat" = "7237559565ba7783ee9066cbfd9a8406983ee68a259438e267a14aa5714ea095" }
 project = "NuclearSatelliteMap/NuclearSatelliteMap.csproj"
 
 [mods.NuclearSounds]

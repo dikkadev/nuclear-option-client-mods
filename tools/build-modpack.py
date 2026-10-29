@@ -83,6 +83,9 @@ def load_mods(root: Path) -> list[dict]:
             raise ValueError(f'{name}: NOMM requires a numeric version')
         if not re.fullmatch(r'[A-Za-z0-9_.-]+', assembly):
             raise ValueError(f'{name}: unsafe assembly name')
+        for path, sha256 in entry.get('data', {}).items():
+            if not re.fullmatch(r'maps/[A-Za-z0-9_.-]+\.nosat', path) or not re.fullmatch(r'[0-9a-f]{64}', sha256):
+                raise ValueError(f'{name}: invalid data entry {path}')
         ids.add(guid)
         mods.append(dict(entry, name=name, project=project, guid=guid, version=version, assembly=assembly))
     if not mods:
@@ -136,7 +139,7 @@ def payload(root: Path, mods: list[dict]) -> dict[str, bytes]:
         result[prefix + 'meta.json'] = json.dumps({'id': mod['guid'], 'artifact': {'version': mod['version']}}, indent=2).encode()
         for include in mod.get('include', []):
             # Deliberately narrow allowlist: no generic globs or build output copying.
-            if include in {'README.md', 'THIRD-PARTY-NOTICES.txt'}:
+            if include in {'README.md', 'THIRD-PARTY-NOTICES.txt', 'DATA-NOTICE.md'}:
                 source = inside(root, directory / include)
                 result[prefix + include] = source.read_bytes()
             elif include == 'assets/**':

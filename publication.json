@@ -53,8 +53,8 @@
     {
       "name": "NuclearSatelliteMap",
       "id": "dev.dikka.nuclearsatellitemap",
-      "version": "0.2.0",
-      "inputHash": "b6f5f1f6d7fd16550ea71b5b553709221ff745cd52514b513fde541dad492e66"
+      "version": "0.2.1",
+      "inputHash": "2fae9ae11a3ef9b01e8cdaaa8171c01a4674477a2a3765adf2f6323b0be66b9d"
     },
     {
       "name": "NuclearSounds",
@@ -90,18 +90,10 @@
   "releases": [
     {
       "kind": "mod",
-      "name": "NuclearMapMarkings",
-      "version": "0.1.2",
-      "tag": "NuclearMapMarkings-v0.1.2",
-      "asset": "NuclearMapMarkings.zip",
-      "prerelease": false
-    },
-    {
-      "kind": "mod",
-      "name": "NuclearMinimap",
-      "version": "0.4.1",
-      "tag": "NuclearMinimap-v0.4.1",
-      "asset": "NuclearMinimap.zip",
+      "name": "NuclearSatelliteMap",
+      "version": "0.2.1",
+      "tag": "NuclearSatelliteMap-v0.2.1",
+      "asset": "NuclearSatelliteMap.zip",
       "prerelease": false
     }
   ]
