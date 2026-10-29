@@ -19,6 +19,7 @@ MOD_DIRS=(
   "NuclearControllerGestures"
   "NuclearDeathBlackout"
   "NuclearDelivery"
+  "NuclearMapMarkings"
   "NuclearMapPlayerNames"
   "NuclearMapTrails"
   "NuclearMinimap"

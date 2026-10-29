@@ -24,6 +24,7 @@ namespace NuclearMinimap
             if (!ReferenceEquals(controlled, map) || !ReferenceEquals(aircraft, current))
             {
                 Restore(); controlled = map; aircraft = current;
+                map.onMapMaximized += OnMapMaximized;
                 // Expanded-map zoom belongs to the native map. A later Minimize resets it to 2.
                 originalZoom = DynamicMap.mapMaximized ? MapZoom.Default : map.GetZoomLevel();
                 desiredZoom = MapZoom.Step(originalZoom, false, false, 0, 1);
@@ -73,9 +74,17 @@ namespace NuclearMinimap
             foreach (var icon in new List<MapIcon>(map.mapIcons))
                 if (icon != null) icon.UpdateIcon(map.mapDisplayFactor, inverseScale, map.mapImage.transform, false);
         }
+        // Native Maximize keeps the current scale. Open the expanded map at its native zoom, not the minimap's.
+        private void OnMapMaximized()
+        {
+            var map = controlled;
+            if (map != null && map.mapScaleCenter != null && !Mathf.Approximately(map.GetZoomLevel(), originalZoom))
+                map.SetZoomLevel(originalZoom);
+        }
         internal void Restore()
         {
             var value = controlled; controlled = null; aircraft = null; lastOrientation = null;
+            if (value != null) value.onMapMaximized -= OnMapMaximized;
             if (value == null || DynamicMap.mapMaximized || value.mapScaleCenter == null || value.mapScaleProxy == null || value.mapImage == null || value.mapBackground == null) return;
             // Do not change fullscreen navigation. Native Minimize already restores its normal scale.
             value.SetZoomLevel(originalZoom);

@@ -92,7 +92,7 @@ foreach (var (name, parameters) in new[] {
             "Texture upload API contract changed.");
     });
 }
-var mods = new[] { "NuclearConnectivity", "NuclearControllerGestures", "NuclearDeathBlackout", "NuclearDelivery", "NuclearMapPlayerNames", "NuclearMapTrails", "NuclearMinimap", "NuclearMfdWeapons", "NuclearSatelliteMap", "NuclearTargeting", "NuclearSounds", "NuclearTrackAge", "NuclearUnits" };
+var mods = new[] { "NuclearConnectivity", "NuclearControllerGestures", "NuclearDeathBlackout", "NuclearDelivery", "NuclearMapMarkings", "NuclearMapPlayerNames", "NuclearMapTrails", "NuclearMinimap", "NuclearMfdWeapons", "NuclearSatelliteMap", "NuclearTargeting", "NuclearSounds", "NuclearTrackAge", "NuclearUnits" };
 foreach (var mod in mods)
 {
     string dll = Path.Combine(root, mod, "bin", "Release", mod + ".dll");

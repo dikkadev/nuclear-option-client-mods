@@ -19,6 +19,7 @@ Prioritize these hook/member boundaries:
 | Units | CombatHUD, HUD flight readouts, MFD/landing and target display update hooks; layout objects |
 | TrackAge | TrackingInfo.lastSpottedTime, faction tracking/accuracy APIs and four display refresh hooks |
 | MapPlayerNames | UnitMapIcon lifecycle, aircraft pilot/player name access, map maximize state |
+| MapMarkings | DynamicMap.Update postfix, FactionRegistry airbase lookup, Airbase runways (Start/End/Landing/Reversable/width), map icon list and selections, CombatHUD target list, HQ tracking data, theme map icon colors |
 | MapTrails | DynamicMap.Update postfix, map icon list, faction mode, HQ tracking data, theme map icon colors |
 | Targeting | Target-selection hooks and newest-first target list ordering; alternative selector configuration and optional designation event |
 | Sounds | Gauge Initialize/Refresh and reflected voice/aircraft/TMP label fields; fuel and terrain APIs; Unity audio modules; optional Targeting event subscription |
@@ -42,6 +43,7 @@ Installing or launching a game requires an explicit request. Use a separate test
 | Units | Mixed speed/altitude/range units across HUD, MFD and landing screen; secondary speed on/off/same-unit; no duplicate line or leftover shifted layout |
 | TrackAge | Enemy track at 3/4/34/35/60 seconds, reacquire it, friendly track, each surface off/on; age/stale changes once and removed labels stay removed |
 | MapPlayerNames | Two player aircraft and AI; local-name toggle, maximized-only toggle, hide/show map, despawn/respawn; no orphan labels, names with markup display literally |
+| MapMarkings | Runways at true scale under icons on full map and minimap, approach centerlines on the correct landing ends (both ends only for reversible runways), 2 km ticks, carrier runways follow the ship, friendly/neutral bases by default; range rings centred on your aircraft on the minimap only by default; long paths with dots on your aircraft, selected units and HUD targets, short paths on other moving aircraft/vehicles/ships, none on missiles; enemy paths only while observed; each per-view switch applies live; constant width while zooming; cockpit minimap copy; team and scene change leave no stale paths or orphan layer |
 | MapTrails | Own and friendly player trails on minimized and maximized maps, beneath icons and name labels, constant width while zooming, fade/altitude shading, no enemy trails by default, enemy trails break on lost tracks with AllVisible, team change clears, despawn fades out, scene change leaves no orphan layer, cockpit minimap mirror |
 | Targeting | Existing tap/hold/cycle/cap behavior, Targeting alone and with Sounds; no selector changes or duplicate patches |
 | Sounds | All warning types, default/disabled/missing audio assets, aircraft initializes while clips preload; exactly one stock or replacement gear/overspeed/stall voice, fuel HUD works on first spawn; with Targeting, designation gained/lost tones occur once |

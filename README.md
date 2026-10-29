@@ -12,6 +12,8 @@ private development history.
 
 [![NuclearDelivery](NuclearDelivery/docs/assets/cover.png)](NuclearDelivery/)
 
+[![NuclearMapMarkings](NuclearMapMarkings/docs/assets/cover.png)](NuclearMapMarkings/)
+
 [![NuclearMapPlayerNames](NuclearMapPlayerNames/docs/assets/cover.png)](NuclearMapPlayerNames/)
 
 [![NuclearMapTrails](NuclearMapTrails/docs/assets/cover.png)](NuclearMapTrails/)
@@ -40,10 +42,11 @@ private development history.
 | `NuclearControllerGestures` | 0.1.3 | `dev.dikka.nuclearcontrollergestures` | Configurable additive controller double-press bindings for native button actions; original controls remain available. |
 | `NuclearDeathBlackout` | 0.2.5 | `dev.dikka.nucleardeathblackout` | Client-side Nuclear Option mod that cuts to black and briefly mutes audio when the local main pilot dies. |
 | `NuclearDelivery` | 0.1.6 | `dev.dikka.nucleardelivery` | Missile and bomb delivery counters on the target camera and cockpit MFD: flight, reported armor contact and lost deliveries. |
+| `NuclearMapMarkings` | 0.1.2 | `dev.dikka.nuclearmapmarkings` | Client-side Nuclear Option mod that adds pilot markings to the dynamic map and minimap: runways with approach centerlines, range rings and predicted paths, each with its own full-map and minimap switch. |
 | `NuclearMapPlayerNames` | 0.2.5 | `dev.dikka.nuclearmapplayernames` | Client-side Nuclear Option mod that shows multiplayer usernames next to player-controlled aircraft on the dynamic map. |
 | `NuclearMapTrails` | 0.1.3 | `dev.dikka.nuclearmaptrails` | Client-side Nuclear Option mod that draws fading, altitude-shaded flight trails behind player aircraft on the dynamic map, own team only by default. |
 | `NuclearMfdWeapons` | 0.1.6 | `dev.dikka.nuclearmfdweapons` | Cockpit weapon, ammunition and countermeasure display with a brief loadout preview and optional stock HUD. |
-| `NuclearMinimap` | 0.4.0 | `dev.dikka.nuclearminimap` | Native minimap orientation and hold zoom, with an optional cockpit map display and configurable HUD visibility. |
+| `NuclearMinimap` | 0.4.1 | `dev.dikka.nuclearminimap` | Native minimap orientation and hold zoom, with an optional cockpit map display and configurable HUD visibility. |
 | `NuclearSatelliteMap` | 0.2.0 | `dev.dikka.nuclearsatellitemap` | Satellite imagery with transparent water on the native map, with per-view opacity; requires separately installed local map data. |
 | `NuclearSounds` | 0.1.3 | `dev.dikka.nuclearsounds` | Client-side designation tones, voice callouts, and fuel/terrain warnings with estimated fuel time. |
 | `NuclearTargeting` | 0.2.3 | `dev.dikka.nucleartargeting` | Client-side alternative target selection with optional cycling and tap-selection caps. |

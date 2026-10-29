@@ -33,6 +33,14 @@ tags = ["QoL", "Map", "Multiplayer"]
 include = ["README.md"]
 project = "NuclearMapPlayerNames/NuclearMapPlayerNames.csproj"
 
+[mods.NuclearMapMarkings]
+id = "dev.dikka.nuclearmapmarkings"
+display_name = "NuclearMapMarkings"
+description = "Client-side Nuclear Option mod that adds pilot markings to the dynamic map and minimap: runways with approach centerlines, range rings and predicted paths, each with its own full-map and minimap switch."
+tags = ["QoL", "Map"]
+include = ["README.md"]
+project = "NuclearMapMarkings/NuclearMapMarkings.csproj"
+
 [mods.NuclearMapTrails]
 id = "dev.dikka.nuclearmaptrails"
 display_name = "NuclearMapTrails"

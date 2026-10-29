@@ -44,7 +44,7 @@ Custom rows replace the older zoom defaults **on that device only**. Remove all 
 
 The zoom range extends eight times farther out and 60% closer in than earlier versions. Hold past **Zoom Hold Delay** (default **0.3 seconds**) to zoom continuously; release stops immediately. Opposing directions cancel. **Zoom Speed** adjusts the rate.
 
-These controls work on the minimized map whether shown in the HUD, MFD, or both. They pause during menus, text entry, the F1 configuration window and loss of focus. The expanded map keeps its native orientation and controls; returning to the minimap restores your chosen zoom.
+These controls work on the minimized map whether shown in the HUD, MFD, or both. They pause during menus, text entry, the F1 configuration window and loss of focus. The expanded map keeps its native orientation, controls and opening zoom; returning to the minimap restores your chosen zoom.
 
 **Controls / Consume Zoom Bindings** defaults to **on**: a **short tap** triggers the normal game binding on release; a **long hold** zooms without triggering that binding, including when released. For example, tap D-pad down for gear and hold it for zoom out. Normal taps wait until release so the mod can distinguish them from holds. **Zoom Hold Delay** is adjustable from 0.1 to 1 second. Other controls bound to the same action still work. Keyboard chords reserve their main key during the press; modifiers remain available. Turn consumption off to allow the native action during zoom holds too. Saved game assignments are preserved, and menus and the expanded map use their normal bindings.
 

@@ -3,7 +3,7 @@
     <TargetFramework>netstandard2.1</TargetFramework>
     <AssemblyName>NuclearMinimap</AssemblyName>
     <RootNamespace>NuclearMinimap</RootNamespace>
-    <Version>0.4.0</Version>
+    <Version>0.4.1</Version>
     <BepInExPluginGuid>dev.dikka.nuclearminimap</BepInExPluginGuid>
     <BepInExPluginName>NuclearMinimap</BepInExPluginName>
     <Nullable>enable</Nullable>

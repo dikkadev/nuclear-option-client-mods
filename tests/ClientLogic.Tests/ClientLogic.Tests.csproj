@@ -24,5 +24,6 @@
     <Compile Include="../../NuclearMinimap/TapHoldGesture.cs" Link="Production/TapHoldGesture.cs" />
     <Compile Include="../../NuclearMinimap/FlightInstrumentMath.cs" Link="Production/FlightInstrumentMath.cs" />
     <Compile Include="../../NuclearMapTrails/TrailHistory.cs" Link="Production/TrailHistory.cs" />
+    <Compile Include="../../NuclearMapMarkings/MarkingsGeometry.cs" Link="Production/MarkingsGeometry.cs" />
   </ItemGroup>
 </Project>
