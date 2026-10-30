@@ -5,7 +5,9 @@ using System.Reflection;
 using BepInEx;
 using BepInEx.Configuration;
 using HarmonyLib;
+using NuclearBindings;
 using NuclearMfd;
+using Rewired;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -20,10 +22,7 @@ namespace NuclearMinimap
         private ConfigEntry<bool> cockpitMinimap = null!;
         private ConfigEntry<HudMinimapMode> hudMode = null!;
         private ConfigEntry<MapOrientation> orientation = null!;
-        private ConfigEntry<KeyboardShortcut> zoomIn = null!, zoomOut = null!;
-        private ConfigEntry<ControllerMapBinding> controllerIn = null!, controllerOut = null!;
-        private ConfigEntry<string> deviceBindings = null!;
-        private DeviceZoomDrawer? bindingDrawer;
+        private InputBinding zoomIn = null!, zoomOut = null!;
         private ConfigEntry<float> zoomSpeed = null!, holdThreshold = null!;
         private ConfigEntry<bool> consumeBindings = null!;
         private ConfigEntry<bool> headingTape = null!, northIndicator = null!, attitude = null!, bankReadout = null!;
@@ -45,7 +44,7 @@ namespace NuclearMinimap
         private NativeRadar? radar;
         private MfdSession? session;
         private MfdPage? page;
-        private bool captured, rendering;
+        private bool captured, rendering, wasVisible, spectating;
         private float retryAfter, nextCapture, instrumentRetryAfter;
         private int warnings, readyMessages, renderMessages;
         private float sourceWaitStarted;
@@ -62,15 +61,7 @@ namespace NuclearMinimap
                 "AlwaysShow keeps the HUD minimap; AlwaysHide hides it; HideWhenMfdVisible hides it only while the cockpit map is successfully shown. The expanded map remains available in all modes.");
             orientation = Config.Bind("Display", "Minimap Orientation", MapOrientation.NorthUp,
                 "HeadingUp rotates the minimap with your aircraft; NorthUp keeps north at the top. Applies to both the HUD and cockpit minimap. The expanded map keeps its native orientation and controls.");
-            zoomIn = Config.Bind("Controls", "Hold Zoom In", new KeyboardShortcut(KeyCode.None), "Optional keyboard shortcut: a long hold zooms in. None leaves keyboard input unbound.");
-            zoomOut = Config.Bind("Controls", "Hold Zoom Out", new KeyboardShortcut(KeyCode.None), "Optional keyboard shortcut: a long hold zooms out. Release stops zoom immediately.");
-            controllerIn = Config.Bind("Controls", "Controller Hold Zoom In", ControllerMapBinding.DPadUp, "Held gamepad control for minimap zoom in. Defaults to D-pad up; Unbound disables it. Named D-pad/POV hats are supported on other assigned controllers.");
-            controllerOut = Config.Bind("Controls", "Controller Hold Zoom Out", ControllerMapBinding.DPadDown, "Held gamepad control for minimap zoom out. Defaults to D-pad down. Holding both directions cancels zoom.");
-            var drawerAttributes = new ConfigurationManagerAttributes();
-            deviceBindings = Config.Bind("Controls", "Device Zoom Bindings", "",
-                new ConfigDescription("Select a connected device and press or move a control to add a zoom binding. Multiple bindings per device are supported. Custom bindings replace the older generic defaults on that device. Disconnected bindings are retained.", null, drawerAttributes));
-            bindingDrawer = new DeviceZoomDrawer(deviceBindings);
-            drawerAttributes.CustomDrawer = bindingDrawer.Draw;
+            BindZoomControls();
             zoomSpeed = Config.Bind("Controls", "Zoom Speed", 1f, new ConfigDescription("Zoom doublings per second of held input. Applies to the shared HUD/cockpit minimap; menus, text entry and unfocused windows suspend input.", new AcceptableValueRange<float>(.1f, 5f)));
             consumeBindings = Config.Bind("Controls", "Consume Zoom Bindings", true,
                 "Short taps replay their normal game bindings on release; long holds zoom without firing those bindings. Other bindings for the same action still work. Turn off to also allow native actions during zoom holds. Menus and the expanded map keep native controls; saved assignments are preserved.");
@@ -88,6 +79,50 @@ namespace NuclearMinimap
             StartInput();
             Canvas.willRenderCanvases += Render;
             Logger.LogInfo("Loaded NuclearMinimap " + MyPluginInfo.PLUGIN_VERSION + " build=" + typeof(Plugin).Assembly.ManifestModule.ModuleVersionId + " owned patches=" + harmony.GetPatchedMethods().Count());
+        }
+
+        // 0.4.x and older kept each zoom direction in a keyboard shortcut, a generic controller
+        // control and shared device rows. They move once into one binding per direction.
+        private void BindZoomControls()
+        {
+            bool saved = BindingMigration.IsSaved(Config, "Controls", "Zoom In") || BindingMigration.IsSaved(Config, "Controls", "Zoom Out");
+            bool converted = MinimapBindingMigration.Convert(
+                BindingMigration.TakeLegacy(Config, "Controls", "Hold Zoom In"), BindingMigration.TakeLegacy(Config, "Controls", "Hold Zoom Out"),
+                BindingMigration.TakeLegacy(Config, "Controls", "Controller Hold Zoom In"), BindingMigration.TakeLegacy(Config, "Controls", "Controller Hold Zoom Out"),
+                BindingMigration.TakeLegacy(Config, "Controls", "Device Zoom Bindings"), out var inText, out var outText, out var problem);
+            zoomIn = InputBinding.Bind(Config, Logger, "Controls", "Zoom In", "Gamepad:DPadUp",
+                "Hold to zoom the HUD and cockpit minimap in. Defaults to gamepad D-pad up (or the hat of another assigned controller). A joystick binding replaces the gamepad defaults on that joystick.");
+            zoomOut = InputBinding.Bind(Config, Logger, "Controls", "Zoom Out", "Gamepad:DPadDown",
+                "Hold to zoom the HUD and cockpit minimap out. Defaults to gamepad D-pad down. Holding both directions cancels zoom.");
+            zoomIn.RowNote = zoomOut.RowNote = AxisNote;
+            if (converted && !saved)
+            {
+                zoomIn.Entry.Value = inText; zoomOut.Entry.Value = outText;
+                Logger.LogInfo("Moved saved zoom controls into Zoom In = '" + inText + "' and Zoom Out = '" + outText + "'.");
+            }
+            if (problem.Length > 0) Logger.LogWarning("Minimap zoom bindings: " + problem);
+            if (converted) Config.Save();
+        }
+
+        // Consumption cannot take full-axis or analog game controls on a zoom axis; say so in F1.
+        private static string AxisNote(BindingRow row)
+        {
+            if (row.Kind != RowKind.Device || !row.IsAxis || !ReInput.isReady) return "";
+            var controller = BindingInput.Resolve(row, BindingInput.Devices());
+            var player = ReInput.players.GetPlayer(0);
+            if (controller == null || player == null) return "";
+            foreach (var map in player.controllers.maps.GetAllMaps())
+            {
+                if (!map.enabled || map.controllerType != controller.type || map.controllerId != controller.id) continue;
+                foreach (var element in map.AllMaps)
+                {
+                    if (!element.enabled || element.elementIdentifierId != row.ElementId || element.elementType != ControllerElementType.Axis) continue;
+                    var action = ReInput.mapping.GetAction(element.actionId);
+                    if (element.axisRange == AxisRange.Full || action == null || action.type != InputActionType.Button)
+                        return "This axis also has game controls. Those controls remain active while zooming.";
+                }
+            }
+            return "";
         }
 
         internal void ScreenInitialized(TacScreen value, Aircraft aircraft) { screens[value] = aircraft; retryAfter = 0; }
@@ -116,17 +151,28 @@ namespace NuclearMinimap
             var value = SceneSingleton<CombatHUD>.i != null ? SceneSingleton<CombatHUD>.i.aircraft : null;
             return value != null && !value.disabled && !value.HasEjected() ? value : null;
         }
+        // While you have no aircraft and watch another aircraft from its cockpit, use a
+        // cockpit screen that another mod (NuclearSpectator) initialized for it.
+        private Aircraft? SpectatedAircraft()
+        {
+            if (GameManager.GetLocalAircraft(out _)) return null;
+            var camera = SceneSingleton<CameraStateManager>.i;
+            if (camera == null || camera.currentState == null || camera.currentState != camera.cockpitState) return null;
+            if (!(camera.followingUnit is Aircraft followed) || followed == null || followed.disabled) return null;
+            foreach (var item in screens)
+                if (item.Key != null && ReferenceEquals(item.Value, followed)) return followed;
+            return null;
+        }
         // Restore before native UI changes, so native fades and culling see their own state.
         private void Update() => hud?.Restore();
         private void LateUpdate()
         {
-            // Observe the manager's final window state after its Update handles F1.
-            try { bindingDrawer?.Update(); }
-            catch (Exception error) { bindingDrawer?.Cancel("Capture failed. Select Add to try again."); Report(error); }
             try
             {
                 if (!FeatureEnabled) { RestoreControls(); DisposeAll(); return; }
                 var current = LocalAircraft(); var native = SceneSingleton<DynamicMap>.i;
+                spectating = current == null && CockpitEnabled && (current = SpectatedAircraft()) != null;
+                controls.Spectated = spectating ? current : null;
                 if (!ReferenceEquals(map, native))
                 {
                     DisposeAll(); map = native;
@@ -217,8 +263,9 @@ namespace NuclearMinimap
             bool active = session != null && session.CanvasRoot != null && session.CanvasRoot.gameObject.activeInHierarchy &&
                 session.CanvasRoot.GetComponent<Canvas>() is Canvas canvas && canvas.enabled &&
                 page != null && page.Root != null && page.Root.rect.width > 0 && page.Root.rect.height > 0 && page.Root.parent.gameObject.activeInHierarchy;
+            // A spectated pilot cannot switch the screen, so the map stays on over camera feeds.
             return MapPresentation.MfdVisible(mirror != null && mirror.SourceReady, CameraStateManager.cameraMode == CameraMode.cockpit,
-                active, FeedVisible(TargetFeed), FeedVisible(LandingFeed), DynamicMap.mapMaximized);
+                active, !spectating && FeedVisible(TargetFeed), !spectating && FeedVisible(LandingFeed), DynamicMap.mapMaximized);
         }
         private void Render()
         {
@@ -228,8 +275,10 @@ namespace NuclearMinimap
             {
                 hud?.Restore();
                 bool potential = CockpitEnabled && owner != null && PotentiallyVisible();
+                bool capturedNow = false;
                 if (potential && mirror != null && Time.unscaledTime >= nextCapture)
                 {
+                    capturedNow = true;
                     nextCapture = Time.unscaledTime + .05f; // Match live UI at 20 Hz without another camera/render target.
                     captured = mirror.Capture();
                     if (captured)
@@ -245,10 +294,13 @@ namespace NuclearMinimap
                 }
                 bool visible = potential && captured;
                 SetVisible(visible);
-                if (visible && page != null) page.Root.GetComponent<RectMask2D>().PerformClipping();
+                // Copies change only when captured, after this frame's native clipping pass; between captures
+                // that pass keeps their unchanged cull state.
+                if (visible && page != null && (capturedNow || !wasVisible)) page.Root.GetComponent<RectMask2D>().PerformClipping();
+                wasVisible = visible;
                 if (MapPresentation.ShouldHideHud(hudMode.Value, CockpitEnabled, DynamicMap.mapMaximized, visible)) hud?.Hide();
             }
-            catch (Exception error) { hud?.Restore(); captured = false; SetVisible(false); Report(error); }
+            catch (Exception error) { hud?.Restore(); captured = false; wasVisible = false; SetVisible(false); Report(error); }
             finally { rendering = false; }
         }
         private void SetVisible(bool value)
@@ -278,16 +330,17 @@ namespace NuclearMinimap
         {
             var native = SceneSingleton<DynamicMap>.i;
             return FeatureEnabled && !DynamicMap.mapMaximized &&
-                CameraStateManager.cameraMode == CameraMode.cockpit && LocalAircraft() != null &&
-                native != null && native.isActiveAndEnabled && bindingDrawer?.Capturing != true && !MapHoldInput.IsBlocked();
+                CameraStateManager.cameraMode == CameraMode.cockpit && (LocalAircraft() != null || controls.Spectated != null) &&
+                native != null && native.isActiveAndEnabled && !zoomIn.Capturing && !zoomOut.Capturing && !MapHoldInput.IsBlocked();
         }
-        private void StartInput() => input.Start(InputAvailable, () => zoomIn.Value, () => zoomOut.Value,
-            () => controllerIn.Value, () => controllerOut.Value, () => deviceBindings.Value, () => consumeBindings.Value, () => holdThreshold.Value, Report);
+        private void StartInput() => input.Start(InputAvailable, () => zoomIn.Rows, () => zoomOut.Rows, () => consumeBindings.Value, () => holdThreshold.Value,
+            (inward, source) => (inward ? zoomIn : zoomOut).LogFired(source), Report);
+        private void CancelCapture() { zoomIn?.CancelCapture(); zoomOut?.CancelCapture(); }
         private void OnEnable() { if (harmony != null) StartInput(); }
-        private void OnDisable() { bindingDrawer?.Cancel(); input.Dispose(); RestoreControls(); DisposeAll(); }
+        private void OnDisable() { CancelCapture(); input.Dispose(); RestoreControls(); DisposeAll(); }
         private void OnDestroy()
         {
-            Canvas.willRenderCanvases -= Render; bindingDrawer?.Cancel(); input.Dispose(); RestoreControls(); DisposeAll(); screens.Clear(); harmony?.UnpatchSelf(); Instance = null;
+            Canvas.willRenderCanvases -= Render; CancelCapture(); input.Dispose(); RestoreControls(); DisposeAll(); screens.Clear(); harmony?.UnpatchSelf(); Instance = null;
         }
     }
     [HarmonyPatch(typeof(TacScreen), "Initialize")]

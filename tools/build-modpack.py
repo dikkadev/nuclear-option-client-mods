@@ -122,7 +122,8 @@ def verify_build(root: Path, mods: list[dict], env: dict[str, str], *, source_re
         ('Shared/NuclearMfd/tests', 'LayoutChecks', []),
         ('Shared/NuclearModMigration/tests', 'MigrationChecks', []),
         ('NuclearMinimap/tests', 'MinimapMigrationChecks', []),
-        ('tests/ClientApiCheck', 'ClientApiCheck', [str(root), managed]),
+        ('Shared/NuclearBindings/tests', 'BindingChecks', []),
+        ('tests/ClientApiCheck', 'ClientApiCheck', [str(root), managed, str(root / 'tests/api-contract.json'), ','.join(m['name'] for m in mods)]),
     ]:
         run([dotnet, 'build', str(root / directory / (assembly + '.csproj')), '-c', 'Release', *props])
         # Launch the DLL directly: dotnet run otherwise launches another console apphost.

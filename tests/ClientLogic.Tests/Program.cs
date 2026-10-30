@@ -154,14 +154,15 @@ Case("empty remaining fuel with measurable burn yields zero", () => Near(0, Fuel
 
 DeliveryChecks.Run(Case);
 MfdMapChecks.Run(Case);
+MirrorMathChecks.Run(Case);
 MapZoomChecks.Run(Case);
 FlightInstrumentChecks.Run(Case);
 TapHoldChecks.Run(Case);
 ControllerGestureChecks.Run(Case);
 TargetingChecks.Run(Case);
-DeviceZoomChecks.Run(Case);
 MapTrailChecks.Run(Case);
 MapMarkingsChecks.Run(Case);
+SpectatorChecks.Run(Case);
 SatelliteMapChecks.Run(Case);
 Console.WriteLine($"{passed} passed; {failed} failed.");
 return failed == 0 ? 0 : 1;

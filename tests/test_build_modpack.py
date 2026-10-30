@@ -143,16 +143,17 @@ class ModpackTests(unittest.TestCase):
         with patch.object(builder.subprocess, 'run') as run, patch.object(builder, 'dotnet_executable', return_value='dotnet'):
             builder.verify_build(self.root, builder.load_mods(self.root), {'NO_MANAGED_DIR': str(self.root), 'NO_BEPINEX_CORE_DIR': str(self.root)})
         commands = [call.args[0] for call in run.call_args_list]
-        # Two fixture mods plus build/execute for each of five check programs.
-        self.assertEqual(len(commands), 2 + 2 * 5)
+        # Two fixture mods plus build/execute for each of six check programs.
+        self.assertEqual(len(commands), 2 + 2 * 6)
         self.assertIn(f'-p:NuclearOptionManagedDir={self.root}', commands[0])
         self.assertIn(f'-p:BepInExCoreDir={self.root}', commands[0])
         self.assertEqual(Path(commands[2][2]).name, 'ClientLogic.Tests.csproj')
         self.assertEqual(Path(commands[4][2]).name, 'LayoutChecks.csproj')
         self.assertEqual(Path(commands[6][2]).name, 'MigrationChecks.csproj')
         self.assertEqual(Path(commands[8][2]).name, 'MinimapMigrationChecks.csproj')
-        self.assertEqual(Path(commands[10][2]).name, 'ClientApiCheck.csproj')
-        self.assertEqual(commands[11][-2:], [str(self.root), str(self.root)])
+        self.assertEqual(Path(commands[10][2]).name, 'BindingChecks.csproj')
+        self.assertEqual(Path(commands[12][2]).name, 'ClientApiCheck.csproj')
+        self.assertEqual(commands[13][-2:], [str(self.root), str(self.root)])
         self.assertTrue(all('run' not in cmd for cmd in commands))
         for call in run.call_args_list:
             self.assertEqual(call.kwargs['stdout'], subprocess.PIPE)
@@ -168,7 +169,7 @@ class ModpackTests(unittest.TestCase):
 
     def test_satellite_active_entry_and_data_exclusion(self):
         mods = builder.load_mods(builder.ROOT)
-        self.assertEqual(len(mods), 14)
+        self.assertEqual(len(mods), 16)
         satellite = next(mod for mod in mods if mod['name'] == 'NuclearSatelliteMap')
         self.assertEqual(satellite['guid'], 'dev.dikka.nuclearsatellitemap')
         self.assertEqual(satellite['include'], ['README.md', 'DATA-NOTICE.md'])

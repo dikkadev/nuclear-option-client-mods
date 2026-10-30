@@ -27,6 +27,7 @@ MOD_DIRS=(
   "NuclearSatelliteMap"
   "NuclearTargeting"
   "NuclearSounds"
+  "NuclearSpectator"
   "NuclearTrackAge"
   "NuclearUnits"
 )

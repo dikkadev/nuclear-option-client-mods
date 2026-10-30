@@ -116,21 +116,21 @@ namespace NuclearMapMarkings
             }
         }
 
-        // Closed ring as a polyline; the last point repeats the first.
-        internal static void Circle(MapPoint center, float radius, int segments, List<MapPoint> output)
+        // Dashes around a ring of the given circumference, rounded so the pattern closes without a seam.
+        // 0 means a solid ring. Very large rings keep maximum dashes, which grow longer instead.
+        internal static int RingDashCount(float circumference, float dash, float gap, int maximum)
         {
-            output.Clear();
-            if (!(radius > 0f) || segments < 3)
+            if (!(dash > 0f) || !(gap > 0f) || !(circumference > 0f) || float.IsInfinity(circumference) || maximum < 4)
             {
-                return;
+                return 0;
             }
 
-            for (int i = 0; i <= segments; i++)
-            {
-                double angle = 2.0 * Math.PI * i / segments;
-                output.Add(new MapPoint(center.X + radius * (float)Math.Cos(angle), center.Z + radius * (float)Math.Sin(angle)));
-            }
+            double count = Math.Round(circumference / (dash + gap));
+            return (int)Math.Max(4.0, Math.Min(maximum, count));
         }
+
+        // Each ring outward from the first gets a wider gap, so rings read apart at a glance.
+        internal static float RingGap(float firstGap, int index) => firstGap * (1 + Math.Max(0, index));
 
         // Heading change after t seconds when the turn rate fades exponentially with time constant fade.
         // fade <= 0 means straight; infinity keeps the turn constant. The total change never exceeds turnRate * fade.
@@ -142,6 +142,25 @@ namespace NuclearMapMarkings
             }
 
             return float.IsPositiveInfinity(fade) ? turnRate * t : turnRate * fade * (1.0 - Math.Exp(-t / fade));
+        }
+
+        // Prediction time for a path of at most maxLength metres. The length, maxLength * (1 - exp(-speed * seconds / maxLength)),
+        // grows almost linearly at low speed and levels off towards maxLength, so fast aircraft do not draw very long paths.
+        // maxLength <= 0 means no limit.
+        internal static float PathHorizon(float speed, float seconds, float maxLength)
+        {
+            if (!(seconds > 0f) || float.IsInfinity(seconds))
+            {
+                return 0f;
+            }
+
+            if (!(speed > 0f) || !(maxLength > 0f) || float.IsInfinity(speed) || float.IsInfinity(maxLength))
+            {
+                return seconds;
+            }
+
+            double length = maxLength * (1.0 - Math.Exp(-speed * seconds / maxLength));
+            return (float)(length / speed);
         }
 
         // Constant speed with a fading turn, sampled every step seconds, including the start point.

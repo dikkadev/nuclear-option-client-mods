@@ -105,6 +105,7 @@ def parser():
     selection = plan.add_mutually_exclusive_group()
     selection.add_argument('--mod', action='append', default=[], help='Release this active mod, repeatable; other source is still exported')
     selection.add_argument('--all', action='store_true', help='Release all active regular mods')
+    plan.add_argument('--exclude-source-mod', action='append', default=[], help='Omit this mod from this plan only, including source and packs; repeatable')
     plan.add_argument('--pack', choices=['mine', 'full', 'both', 'our'], help='Separately versioned pack: mine bundles your mods, full adds external registry references; our is a mine alias')
     plan.add_argument('--game-version', required=True, help='Actual supported client game version, for example 0.34.2; no stale default')
     plan.add_argument('--output', type=Path, required=True, help='New or empty release directory for plan.json and source/')
@@ -265,6 +266,7 @@ def main(argv=None):
                                 output=args.output, repo=args.repo, offline=args.offline,
                                 prerelease=args.prerelease, include_untracked=args.include_untracked,
                                 license_file=args.license_file,
+                                exclude_source_mods=args.exclude_source_mod,
                                 notes=args.notes_file.read_text('utf-8-sig') if args.notes_file else '')
         elif args.command == 'prepare':
             value = engine.prepare(args.plan)

@@ -29,7 +29,7 @@ SatelliteMapChecks links the production SatelliteBlocks and SatelliteMapFile sou
 
 `GameBoundaryStubs.cs` supplies small test-only game/Unity boundaries so the real calculations can execute without proprietary client assemblies. Passing these checks does **not** verify game API compatibility, Harmony hooks, Unity UI/layout/lifecycle behavior, audio, networking, or runtime performance. Those require builds against matching client references and an authorized game smoke test.
 
-After building the fourteen active plugins, run [ClientApiCheck](ClientApiCheck/README.md) against real client metadata. It checks declared Harmony targets, compiled typed field references and the explicit reflection-field contract, without executing the game. Use [SMOKE-TESTS.md](SMOKE-TESTS.md) for the remaining runtime checks.
+After building the sixteen active plugins, run [ClientApiCheck](ClientApiCheck/README.md) against real client metadata. It checks declared Harmony targets, compiled typed field references and the explicit reflection-field contract, without executing the game. Use [SMOKE-TESTS.md](SMOKE-TESTS.md) for the remaining runtime checks.
 
 ## Modpack producer checks
 
@@ -48,7 +48,7 @@ uv run --python 3.11 python -m unittest discover -s tests -p test_build_modpack.
 uv run --python 3.11 --with py7zr==1.1.3 python -m unittest discover -s tests -p "test_*modpack*.py"
 ```
 
-Fixture tests cover NOMM layout/metadata, DLL/media selection, retired-mod rejection, invalid ID/version rejection, build failure and missing-payload preservation, environment handling, and truthful hash provenance. Full-pack tests add source/pin/dependency checks, archive path/type/size/collision safety, media/notices retention, changed registry independence, cached hash rejection, and preservation of both previous outputs on staging failure. Refresh tests cover origins, URL normalization/redirects, download bounds, hashes, dependencies/extends and preservation of the old lock on failure. They do not launch NOMM or the game. `uv run --script tools/build-modpack.py` builds and runs all five .NET verification programs once before producing both packs; use that default command for a new candidate.
+Fixture tests cover NOMM layout/metadata, DLL/media selection, retired-mod rejection, invalid ID/version rejection, build failure and missing-payload preservation, environment handling, and truthful hash provenance. Full-pack tests add source/pin/dependency checks, archive path/type/size/collision safety, media/notices retention, changed registry independence, cached hash rejection, and preservation of both previous outputs on staging failure. Refresh tests cover origins, URL normalization/redirects, download bounds, hashes, dependencies/extends and preservation of the old lock on failure. They do not launch NOMM or the game. `uv run --script tools/build-modpack.py` builds and runs all six .NET verification programs once before producing both packs; use that default command for a new candidate.
 
 ## Configuration migration checks
 
@@ -71,4 +71,6 @@ NuclearMinimap policy checks cover minimized HUD presentation independently of e
 
 ControllerGestureChecks links the pure production DoublePressGesture: 15 grouped sequence cases cover second-release firing, exact timing limits, late second release after timely down, slow-tap restart, long presses, neutral/release gates, triple bursts, cooldown, focus cancellation, invalid/backwards clocks, invalid settings and physical-control isolation. Controller actions and native replay still require client acceptance.
 
-NuclearMinimap/tests/MinimapMigrationChecks.csproj checks legacy configuration migration and destination preservation with real BepInEx configuration files; the producer runs it alongside the four existing verification programs.
+NuclearMinimap/tests/MinimapMigrationChecks.csproj checks legacy configuration migration and destination preservation with real BepInEx configuration files; the producer runs it alongside the other verification programs.
+
+`Shared/NuclearBindings/tests/BindingChecks.csproj` checks the shared binding rows: parsing and naming, BepInEx `KeyboardShortcut` text conversion (including `JoystickButtonN`), device identity, capture thresholds, the NuclearMinimap 0.5.0 and NuclearControllerGestures 0.2.0 migrations (with the user's saved VKB rows) and real BepInEx configuration files. It replaces the earlier device-zoom cases in ClientLogic.Tests. It does not show that a controller press reaches a mod in the game; the mod's `Binding ... fired from` log line does.

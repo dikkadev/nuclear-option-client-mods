@@ -16,6 +16,12 @@ The expanded map remains available in every mode. Disable **General / Enabled** 
 
 **Display / Minimap Orientation** selects **NorthUp** (default) or **HeadingUp** (rotates with your aircraft). Both the HUD and MFD use the same orientation and zoom, centered on your aircraft even at high zoom. Existing saved orientation choices are preserved.
 
+Version 0.4.2 makes the cockpit map cheaper to draw: it no longer re-sorts its copy of every map icon on each update, only when icons appear or disappear.
+
+Version 0.4.3 makes the cockpit map much cheaper again. Each copied icon keeps its shape and is only moved when the map pans, turns or zooms; an icon's shape is reread only when the game redraws it, and every copy is refreshed once a second as a safety net. Copies outside the cockpit map's frame are skipped when the screen is drawn.
+
+Version 0.4.4 also shows the cockpit map while you spectate. With NuclearSpectator, which builds the cockpit screens of an aircraft you watch from its cockpit, the map appears on that aircraft's screen, centered on it and with its heading. It stays on the whole time, because the pilot you watch cannot switch the screen to a camera feed. Hold zoom works there too.
+
 ## Flight instruments on the cockpit minimap
 
 The cockpit minimap also shows small flight instruments, so it can work as a moving-map display. Each one has its own toggle under **Flight Instruments** in the F1 menu:
@@ -30,18 +36,13 @@ The bottom-left corner holds NuclearDelivery's counters, so it is not the defaul
 
 ## Zoom controls
 
-Under **Controls / Device Zoom Bindings** in the F1 Configuration Manager menu:
+**Controls / Zoom In** and **Controls / Zoom Out** are bindings in the F1 Configuration Manager menu, with the same editor as every other key and button setting in these mods (see `Shared/NuclearBindings/README.md`). Defaults are gamepad **D-pad up** and **D-pad down**; on an assigned controller without a gamepad layout they use its D-pad or POV hat.
 
-1. Select a connected device.
-2. Select **Add zoom in** or **Add zoom out**.
-3. Let its axes settle. Then press a key/button, use a hat direction, or move a joystick axis past halfway in the required direction. Maintained switches can stay on. A button already held when capture starts, or pressed before capture is ready, must be released and pressed again.
+Select **Add binding** and press the control: a key (with Ctrl, Shift or Alt for a combination), a mouse button, a gamepad control, or a joystick button, hat direction or axis direction past halfway. Several controls per direction and several devices work together, including a stick and throttle. Let axes settle first; a button already held when capture starts must be released and pressed again, so maintained switches can stay on. Relative mouse movement and wheel pulses cannot be held and are not captured. Axis zoom uses a fixed halfway threshold; it does not scale the zoom rate with deflection.
 
-You can save multiple bindings on each device and use several devices together, including a stick and throttle. Keyboard keys, mouse buttons, and any joystick buttons, hats and signed axes exposed by Rewired are available. Relative mouse movement and wheel pulses are excluded because they cannot express a held input. Axis zoom uses a fixed halfway threshold; it does not scale the zoom rate with deflection. Recenter an already deflected axis before moving it in that same direction for capture. A trigger that rests at an endpoint must move past the midpoint.
+Each row shows its device and control. **Remove** deletes that row; the reset button restores the D-pad defaults. A joystick row belongs to that device (Rewired's persistent device GUID, or a unique hardware match without one) and stays saved while it is disconnected. A joystick row replaces the gamepad defaults **on that joystick only**. The same control cannot zoom in and out.
 
-Each row shows its device, control and zoom direction. **Remove** deletes that row. Disconnected rows stay saved. Devices use Rewired's persistent device GUID when available. Without one, only a unique hardware match is accepted; indistinguishable devices remain inactive. Capture cancels after 15 seconds, on disconnect, or when the binding menu closes or loses focus.
-
-Custom rows replace the older zoom defaults **on that device only**. Remove all its custom rows to restore those defaults. Existing saved settings remain unchanged: **Hold Zoom In / Out** accept keyboard shortcuts and start unbound; **Controller Hold Zoom In / Out** default to **DPadUp / DPadDown**. Assigned gamepads use their named Rewired template controls, with D-pad/POV support on other assigned joysticks.
-
+Version 0.5.0 moved the earlier **Hold Zoom In / Out**, **Controller Hold Zoom In / Out** and **Device Zoom Bindings** settings into these two bindings once, keeping every saved control.
 The zoom range extends eight times farther out and 60% closer in than earlier versions. Hold past **Zoom Hold Delay** (default **0.3 seconds**) to zoom continuously; release stops immediately. Opposing directions cancel. **Zoom Speed** adjusts the rate.
 
 These controls work on the minimized map whether shown in the HUD, MFD, or both. They pause during menus, text entry, the F1 configuration window and loss of focus. The expanded map keeps its native orientation, controls and opening zoom; returning to the minimap restores your chosen zoom.

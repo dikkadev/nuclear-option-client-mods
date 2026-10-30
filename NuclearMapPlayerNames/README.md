@@ -16,6 +16,7 @@ The stock game already shows a player's username in the hover tooltip. This mod 
 - Option to hide your own aircraft label, enabled by default
 - Usernames render as literal text; labels hide when their aircraft map icon is disabled
 - Uses the game's player-name font and display-name preferences, including its name filter and optional player indices/server tags
+- Light on frame time: only player aircraft get a label, and labels change only what moved or changed
 
 ## Requirements
 

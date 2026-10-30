@@ -23,6 +23,16 @@
       "fieldType": "TargetScreenUI"
     },
     {
+      "type": "TargetCam",
+      "name": "camMountForward",
+      "fieldType": "UnityEngine.Transform"
+    },
+    {
+      "type": "TargetCam",
+      "name": "camMountRear",
+      "fieldType": "UnityEngine.Transform"
+    },
+    {
       "type": "TargetScreenUI",
       "name": "targetBoxes",
       "fieldType": "System.Collections.Generic.List`1<UnityEngine.UI.Image>"

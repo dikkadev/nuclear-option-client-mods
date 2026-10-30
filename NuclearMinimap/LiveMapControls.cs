@@ -11,11 +11,15 @@ namespace NuclearMinimap
         private float originalZoom = MapZoom.Default, desiredZoom = MapZoom.Default;
         private MapOrientation? lastOrientation;
 
-        private static Aircraft? ControlledAircraft()
+        // The aircraft you watch from its cockpit while you have none, set by the plugin.
+        internal Aircraft? Spectated;
+
+        private Aircraft? ControlledAircraft()
         {
             var hud = SceneSingleton<CombatHUD>.i;
             var value = hud != null ? hud.aircraft : null;
-            return value != null && !value.disabled && !value.HasEjected() ? value : null;
+            if (value != null && !value.disabled && !value.HasEjected()) return value;
+            return Spectated != null && !Spectated.disabled ? Spectated : null;
         }
         internal void Update(DynamicMap map, MapOrientation orientation, bool inHeld, bool outHeld, float speed)
         {

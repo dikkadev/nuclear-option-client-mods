@@ -151,6 +151,26 @@ class Fixture(unittest.TestCase):
 
 
 class LocalPreparation(Fixture):
+    def test_source_exclusion_is_per_plan_and_keeps_build_metadata_consistent(self):
+        value = self.make_plan(exclude_source_mods=['Beta'])
+        files = engine.read_source(self.out / 'plan.json', value)
+        self.assertEqual(value['excludedSourceMods'], ['Beta'])
+        self.assertFalse(any(p.startswith('Beta/') for p in files))
+        self.assertNotIn(b'Beta', files['README.md'])
+        self.assertNotIn(b'Beta', files['tools/nomnom-mirrors.toml'])
+        self.assertEqual(set(value['modInputHashes']), {'Alpha'})
+        engine.read_plan(self.out / 'plan.json')
+        self.out = self.out.parent / 'next'
+        next_plan = self.make_plan()
+        self.assertIn('Beta/Plugin.cs', next_plan['sourceFiles'])
+
+    def test_source_exclusion_rejects_selected_unknown_and_pack_mods(self):
+        for kwargs in ({'exclude_source_mods': ['Alpha']},
+                       {'exclude_source_mods': ['Missing']},
+                       {'exclude_source_mods': ['Beta'], 'packs': ['full']}):
+            with self.assertRaises(ValueError):
+                self.make_plan(**kwargs)
+
     def test_plan_freezes_whole_public_source_and_preserves_worktree(self):
         before = self.command('status', '--porcelain')
         value = self.make_plan()

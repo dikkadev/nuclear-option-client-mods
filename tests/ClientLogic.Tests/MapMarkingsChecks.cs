@@ -42,13 +42,24 @@ internal static class MapMarkingsChecks
             MarkingsGeometry.TickDistances(15000f, 0f, ticks);
             Expect(ticks.Count == 0);
         });
-        test("map markings range rings are closed circles at the radius", () => {
-            var points = new List<MapPoint>();
-            MarkingsGeometry.Circle(new MapPoint(100f, 200f), 10000f, 64, points);
-            Expect(points.Count == 65);
-            foreach (var point in points) Near(10000f, (point - new MapPoint(100f, 200f)).Length, 0.5f);
-            Near(points[0].X, points[64].X, 0.01f);
-            Near(points[0].Z, points[64].Z, 0.01f);
+        test("map markings range ring dashes close evenly and stay bounded", () => {
+            // 1400 px round with an 8 + 6 px pattern: exactly 100 dashes.
+            Expect(MarkingsGeometry.RingDashCount(1400f, 8f, 6f, 2048) == 100);
+            Expect(MarkingsGeometry.RingDashCount(1410f, 8f, 6f, 2048) == 101);
+            // Tiny rings keep a few dashes; huge rings stop at the cap.
+            Expect(MarkingsGeometry.RingDashCount(10f, 8f, 6f, 2048) == 4);
+            Expect(MarkingsGeometry.RingDashCount(1e7f, 8f, 6f, 2048) == 2048);
+            // No gap, no dash or no size means a solid ring.
+            Expect(MarkingsGeometry.RingDashCount(1400f, 8f, 0f, 2048) == 0);
+            Expect(MarkingsGeometry.RingDashCount(1400f, 0f, 6f, 2048) == 0);
+            Expect(MarkingsGeometry.RingDashCount(0f, 8f, 6f, 2048) == 0);
+            Expect(MarkingsGeometry.RingDashCount(float.PositiveInfinity, 8f, 6f, 2048) == 0);
+        });
+        test("map markings outer range rings get wider gaps", () => {
+            Near(6f, MarkingsGeometry.RingGap(6f, 0));
+            Near(12f, MarkingsGeometry.RingGap(6f, 1));
+            Near(18f, MarkingsGeometry.RingGap(6f, 2));
+            Near(6f, MarkingsGeometry.RingGap(6f, -1));
         });
         test("map markings ring distances parse, sort, dedupe and bound", () => {
             var values = MarkingsGeometry.ParseDistances("40, 10;20 x -5 10 900", 500f);
@@ -62,6 +73,20 @@ internal static class MapMarkingsChecks
             Expect(points.Count == 61);
             Near(12000f, points[60].X);
             Near(0f, points[60].Z);
+        });
+        test("map markings path length levels off below its maximum", () => {
+            // Slow: nearly linear (50 m/s for 60 s would be 3 km).
+            float slow = 50f * MarkingsGeometry.PathHorizon(50f, 60f, 8000f);
+            Expect(slow > 2400f && slow < 3000f);
+            // Mach 1 for 60 s would be 20.4 km; the path stays under 8 km.
+            float fast = 340f * MarkingsGeometry.PathHorizon(340f, 60f, 8000f);
+            Expect(fast > 7000f && fast < 8000f);
+            float faster = 600f * MarkingsGeometry.PathHorizon(600f, 60f, 8000f);
+            Expect(faster > fast && faster < 8000f);
+            // No limit, no speed and invalid time.
+            Near(60f, MarkingsGeometry.PathHorizon(340f, 60f, 0f));
+            Near(60f, MarkingsGeometry.PathHorizon(0f, 60f, 8000f));
+            Near(0f, MarkingsGeometry.PathHorizon(340f, 0f, 8000f));
         });
         test("map markings constant-turn prediction follows an exact arc", () => {
             var points = new List<MapPoint>();

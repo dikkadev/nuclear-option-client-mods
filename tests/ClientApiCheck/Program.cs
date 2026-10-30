@@ -35,6 +35,35 @@ foreach (var (typeName, methodName, returnType) in new[] {
             "Native laser capacity or target-order notification API changed.");
     });
 }
+// Spectator rotor warm start replays these private initializers after the first network position.
+foreach (var (typeName, methodName) in new[] {
+    ("RotorShaft", "RotorShaft_OnSpawnedInPosition"),
+    ("ConstantSpeedProp", "ConstantSpeedProp_OnInitialize") })
+{
+    Check("Spectator warm start " + typeName + "." + methodName, () => {
+        var method = gameTypes[typeName].Methods.Single(m => m.Name == methodName && m.Parameters.Count == 0);
+        Require(!method.IsStatic && method.ReturnType.FullName == "System.Void", "Native rotor/propeller start initializer changed.");
+    });
+}
+// Spectator HUD transpilers rewrite exactly these native local-aircraft reads.
+foreach (var (typeName, methodName, localCall) in new[] {
+    ("HUDAppManager", "Start", false), ("MFDAppManager", "Start", false), ("ArtificialHorizon", "Refresh", false),
+    ("EngineTelemetry", "Start", false), ("RadarWarning", "Start", false), ("HeadMountedDisplay", "Start", false),
+    ("HeadMountedDisplay", "Update", false), ("PylonIndicator", "Start", true) })
+{
+    Check("Spectator HUD read " + typeName + "." + methodName, () => {
+        var method = gameTypes[typeName].Methods.Single(m => m.Name == methodName && m.Parameters.Count == 0 && m.HasBody);
+        Require(method.Body.Instructions.Any(i => localCall
+            ? i.OpCode == Mono.Cecil.Cil.OpCodes.Call && i.Operand is MethodReference call && call.DeclaringType.FullName == "GameManager" && call.Name == "GetLocalAircraft"
+            : i.OpCode == Mono.Cecil.Cil.OpCodes.Ldfld && i.Operand is FieldReference field && field.DeclaringType.FullName == "CombatHUD" && field.Name == "aircraft"),
+            "The native local-aircraft read moved; the spectator rewrite would no longer apply.");
+    });
+}
+Check("Spectator TacScreen target-camera subscription", () => {
+    var method = gameTypes["TacScreen"].Methods.Single(m => m.Name == "Initialize" && m.HasBody);
+    Require(method.Body.Instructions.Any(i => i.Operand is MethodReference call && call.DeclaringType.FullName == "TargetCam" && call.Name == "add_onCamToggle"),
+        "TacScreen.Initialize no longer subscribes to TargetCam.onCamToggle; review the spectator guard.");
+});
 // Input reservation save guards patch the client's Rewired dependency as well.
 using var rewired = ModuleDefinition.ReadModule(Path.Combine(managed, "Rewired_Core.dll"), new ReaderParameters { AssemblyResolver = resolver });
 var rewiredTypes = AllTypes(rewired.Types).ToDictionary(t => t.FullName);
@@ -92,9 +121,11 @@ foreach (var (name, parameters) in new[] {
             "Texture upload API contract changed.");
     });
 }
-var mods = new[] { "NuclearConnectivity", "NuclearControllerGestures", "NuclearDeathBlackout", "NuclearDelivery", "NuclearMapMarkings", "NuclearMapPlayerNames", "NuclearMapTrails", "NuclearMinimap", "NuclearMfdWeapons", "NuclearSatelliteMap", "NuclearTargeting", "NuclearSounds", "NuclearTrackAge", "NuclearUnits" };
+var mods = new[] { "NuclearConnectivity", "NuclearControllerGestures", "NuclearDeathBlackout", "NuclearDelivery", "NuclearLiveFeed", "NuclearMapMarkings", "NuclearMapPlayerNames", "NuclearMapTrails", "NuclearMinimap", "NuclearMfdWeapons", "NuclearSatelliteMap", "NuclearTargeting", "NuclearSounds", "NuclearSpectator", "NuclearTrackAge", "NuclearUnits" };
 foreach (var mod in mods)
 {
+    // Release snapshots can omit private mods. The build runner passes its exact set.
+    if (args.Length > 3 && !args[3].Split(',').Contains(mod)) continue;
     string dll = Path.Combine(root, mod, "bin", "Release", mod + ".dll");
     Check(mod + " built assembly", () => Require(File.Exists(dll), $"Build Release first: {dll}"));
     if (!File.Exists(dll)) continue;
@@ -104,6 +135,21 @@ foreach (var mod in mods)
         Require(!plugin.AssemblyReferences.Any(reference => mods.Contains(reference.Name) || reference.Name is "NuclearMfdMap" or "NuclearMfd" or "NuclearTacticalTools"), "Controller gestures must not reference another mod DLL.");
         var bootstrap = AllTypes(plugin.Types).Single(t => t.CustomAttributes.Any(a => a.AttributeType.FullName == "BepInEx.BepInPlugin"));
         Require(!bootstrap.CustomAttributes.Any(a => a.AttributeType.FullName == "BepInEx.BepInDependency"), "Controller gestures must operate independently.");
+    });
+    // Legacy KeyboardShortcut reads Unity input, which never sees the game's controllers.
+    Check(mod + " bindings use the shared binding editor", () =>
+    {
+        Require(!plugin.GetTypeReferences().Any(t => t.FullName == "BepInEx.Configuration.KeyboardShortcut"),
+            "Bind keys and buttons with Shared/NuclearBindings InputBinding, not BepInEx KeyboardShortcut.");
+        Require(!plugin.AssemblyReferences.Any(reference => reference.Name == "NuclearBindings"), "The binding helper must be compiled in as source.");
+        bool consumer = AllTypes(plugin.Types).Any(t => t.FullName == "NuclearBindings.InputBinding");
+        Require(consumer == (mod is "NuclearMinimap" or "NuclearControllerGestures" or "NuclearMfdWeapons" or "NuclearTargeting" or "NuclearSpectator"),
+            "Unexpected shared binding consumer set; update this check deliberately when a mod gains or loses bindings.");
+        if (!consumer) return;
+        // ConfigurationManager discovers the drawer by this exact tag type and field name.
+        var tag = AllTypes(plugin.Types).Single(t => t.FullName == "NuclearBindings.ConfigurationManagerAttributes");
+        Require(tag.Fields.Any(f => f.IsPublic && f.Name == "CustomDrawer" && f.FieldType.FullName == "System.Action`1<BepInEx.Configuration.ConfigEntryBase>"),
+            "ConfigurationManager must discover the binding drawer by exact tag type/field names.");
     });
     if (mod is "NuclearDelivery" or "NuclearMinimap") Check(mod + " standalone MFD consumer", () =>
     {
@@ -115,13 +161,6 @@ foreach (var mod in mods)
             Require(bootstrap.CustomAttributes.Any(a => a.AttributeType.FullName == "BepInEx.BepInIncompatibility" &&
                 a.ConstructorArguments.Count == 1 && (string)a.ConstructorArguments[0].Value == "dev.dikka.nuclearmfdmap"),
                 "Renamed minimap must reject the legacy plugin to prevent duplicate input/display patches.");
-            var attributes = AllTypes(plugin.Types).Single(t => t.Name == "ConfigurationManagerAttributes");
-            Require(attributes.Fields.Any(f => f.IsPublic && f.Name == "CustomDrawer" &&
-                f.FieldType.FullName == "System.Action`1<BepInEx.Configuration.ConfigEntryBase>"),
-                "ConfigurationManager must discover the device-binding custom drawer by exact tag type/field names.");
-            foreach (string name in new[] { "HideDefaultButton", "HideSettingName" })
-                Require(attributes.Fields.Any(f => f.IsPublic && f.Name == name && f.FieldType.FullName == "System.Nullable`1<System.Boolean>"),
-                    "ConfigurationManager custom drawer layout tag changed: " + name);
         }
         Require(AllTypes(plugin.Types).Any(t => t.FullName == "NuclearMfd.MfdSession"), "Source-only MFD helper was not embedded.");
     });

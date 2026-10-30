@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <BepInExCoreDir Condition="'$(BepInExCoreDir)' == ''">$(NO_BEPINEX_CORE_DIR)</BepInExCoreDir>
+    <NuclearOptionManagedDir Condition="'$(NuclearOptionManagedDir)' == ''">$(NO_MANAGED_DIR)</NuclearOptionManagedDir>
+  </PropertyGroup>
+  <ItemGroup>
+    <!-- Engine-independent production sources only; Rewired/IMGUI parts need the game. -->
+    <Compile Include="../BindingRow.cs" Link="Production/BindingRow.cs" />
+    <Compile Include="../BindingMigration.cs" Link="Production/BindingMigration.cs" />
+    <Compile Include="../../../NuclearMinimap/MinimapBindingMigration.cs" Link="Production/MinimapBindingMigration.cs" />
+    <Compile Include="../../../NuclearControllerGestures/GestureMigration.cs" Link="Production/GestureMigration.cs" />
+    <Reference Include="BepInEx"><HintPath>$(BepInExCoreDir)/BepInEx.dll</HintPath></Reference>
+    <!-- KeyCode only: an enum, so no Unity engine code runs. -->
+    <Reference Include="UnityEngine.CoreModule"><HintPath>$(NuclearOptionManagedDir)/UnityEngine.CoreModule.dll</HintPath></Reference>
+  </ItemGroup>
+</Project>

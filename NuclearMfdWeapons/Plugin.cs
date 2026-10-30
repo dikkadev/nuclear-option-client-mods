@@ -3,6 +3,7 @@ using System.Linq;
 using BepInEx;
 using BepInEx.Configuration;
 using HarmonyLib;
+using NuclearBindings;
 using UnityEngine;
 namespace NuclearMfdWeapons
 {
@@ -12,7 +13,7 @@ namespace NuclearMfdWeapons
         internal static Plugin? Instance;
         internal ConfigEntry<bool> Enabled = null!, Stock = null!, Replace = null!, Preview = null!, Capacitor = null!;
         internal ConfigEntry<float> Duration = null!;
-        internal ConfigEntry<KeyboardShortcut> Toggle = null!;
+        internal InputBinding Toggle = null!;
         private Harmony? harmony;
         private DisplayController? display;
         private TacScreen? screen;
@@ -29,8 +30,8 @@ namespace NuclearMfdWeapons
             Replace = Config.Bind("Display", "Replace Cockpit Content", true, "Replace the selected cockpit panel; Chicane keeps its flight instruments.");
             Preview = Config.Bind("Display", "Loadout Preview", true, "Briefly show all stations on initial display and weapon changes.");
             Duration = Config.Bind("Display", "Loadout Preview Duration", 1f, new ConfigDescription("Seconds to show loadout preview.", new AcceptableValueRange<float>(0.1f, 10f)));
-            Toggle = Config.Bind("Controls", "Toggle Cockpit Page", new KeyboardShortcut(KeyCode.F8), "Switch custom/stock cockpit page.");
-            Enabled.SettingChanged += Changed; Stock.SettingChanged += Changed; Capacitor.SettingChanged += Changed; Replace.SettingChanged += Changed; Preview.SettingChanged += Changed; Duration.SettingChanged += Changed; Toggle.SettingChanged += Changed;
+            Toggle = InputBinding.Bind(Config, Logger, "Controls", "Toggle Cockpit Page", "F8", "Switch custom/stock cockpit page.");
+            Enabled.SettingChanged += Changed; Stock.SettingChanged += Changed; Capacitor.SettingChanged += Changed; Replace.SettingChanged += Changed; Preview.SettingChanged += Changed; Duration.SettingChanged += Changed; Toggle.Entry.SettingChanged += Changed;
             harmony = new Harmony(MyPluginInfo.PLUGIN_GUID); harmony.PatchAll(typeof(Plugin).Assembly);
             Logger.LogInfo("Loaded NuclearMfdWeapons " + MyPluginInfo.PLUGIN_VERSION + " build=" + typeof(Plugin).Assembly.ManifestModule.ModuleVersionId + " owned patches=" + harmony.GetPatchedMethods().Count());
         }
@@ -54,7 +55,7 @@ namespace NuclearMfdWeapons
                 if (dirty) { DisposeDisplay(); dirty = false; Create(); }
                 if (!Enabled.Value) { DisposeDisplay(); return; }
                 if (display == null && !failed) Create();
-                if (Toggle.Value.IsDown()) custom = !custom;
+                if (Toggle.IsDown()) custom = !custom;
                 display?.Refresh(custom);
             }
             catch (Exception e) { Fail(e); }
@@ -74,7 +75,7 @@ namespace NuclearMfdWeapons
         private void OnDestroy()
         {
             Enabled.SettingChanged -= Changed; Stock.SettingChanged -= Changed; Capacitor.SettingChanged -= Changed; Replace.SettingChanged -= Changed;
-            Preview.SettingChanged -= Changed; Duration.SettingChanged -= Changed; Toggle.SettingChanged -= Changed;
+            Preview.SettingChanged -= Changed; Duration.SettingChanged -= Changed; Toggle.Entry.SettingChanged -= Changed;
             Clear(); harmony?.UnpatchSelf(); Instance = null;
         }
     }

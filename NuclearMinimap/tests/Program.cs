@@ -42,16 +42,6 @@ try
     File.Delete(target);
     Check(!MinimapConfigMigration.Import(new ConfigFile(target, false), log, legacy + ".missing"), "missing old configuration uses defaults");
     Check(File.ReadAllBytes(legacy).SequenceEqual(original), "all paths preserve legacy bytes");
-    var devicePath = Path.Combine(directory, "devices.cfg");
-    var deviceConfig = new ConfigFile(devicePath, true);
-    var row = new DeviceZoomBinding { Inward = true, DeviceKind = DeviceKind.Joystick, DeviceGuid = Guid.NewGuid().ToString("D"), HardwareGuid = Guid.NewGuid().ToString("D"), HardwareIdentifier = "Stick; |= %", DeviceName = "Flight stick", ElementId = 14, IsAxis = true, AxisSign = -1, ControlName = "Axis;Left" };
-    var serialized = DeviceZoomBindings.Serialize(new[] { row });
-    deviceConfig.Bind("Controls", "Device Zoom Bindings", "v1").Value = serialized;
-    deviceConfig.Save();
-    var deviceReload = new ConfigFile(devicePath, false);
-    var restoredText = deviceReload.Bind("Controls", "Device Zoom Bindings", "v1").Value;
-    var restoredRows = DeviceZoomBindings.Parse(restoredText, out var bindingError);
-    Check(restoredText == serialized && bindingError == "" && restoredRows.Count == 1 && restoredRows[0].Key == row.Key && restoredRows[0].ControlName == row.ControlName, "BepInEx device binding text and labels roundtrip exactly");
     Console.WriteLine($"{passed} minimap migration checks passed.");
 }
 finally { Directory.Delete(directory, true); }

@@ -25,7 +25,7 @@ Settings are generated in `BepInEx/config/dev.dikka.nucleartargeting.cfg`. Match
 - Selection Radius: 200 by default.
 - Use Fixed Tap Target Cap: disabled by default; enable to override native capacity on every aircraft.
 - Fixed Tap Target Cap: 1 by default, configurable from 1 to the native synchronization limit of 128.
-- Toggle Fixed Tap Target Cap: keyboard shortcut, unbound by default. Switches between native capacity and the fixed override, updating the same saved setting. Ignored in menus, text entry, outside a valid aircraft and without game focus. A shortcut shared with a stock game action does not consume that action.
+- Toggle Fixed Tap Target Cap: binding (key, gamepad button or joystick button; Add binding in F1), unbound by default. Switches between native capacity and the fixed override, updating the same saved setting. Ignored in menus, text entry, on the full map, outside a valid aircraft and without game focus. A control shared with a stock game action does not consume that action.
 
 The settings menu shows whether the fixed override is active. This mod adds no HUD indicator and requires no other mod or HUD integration framework.
 

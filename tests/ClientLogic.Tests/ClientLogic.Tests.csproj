@@ -9,8 +9,6 @@
   <ItemGroup>
     <Compile Include="../../NuclearSatelliteMap/SatelliteBlocks.cs" Link="Production/SatelliteBlocks.cs" />
     <Compile Include="../../NuclearSatelliteMap/SatelliteMapFile.cs" Link="Production/SatelliteMapFile.cs" />
-    <Compile Include="../../NuclearMinimap/DeviceZoomBinding.cs" Link="Production/DeviceZoomBinding.cs" />
-    <Compile Include="../../NuclearMinimap/CaptureButtonEdges.cs" Link="Production/CaptureButtonEdges.cs" />
     <Compile Include="../../NuclearControllerGestures/DoublePressGesture.cs" Link="Production/DoublePressGesture.cs" />
     <Compile Include="../../NuclearTargeting/TapTargetBuffer.cs" Link="Production/TapTargetBuffer.cs" />
     <Compile Include="../../NuclearUnits/HudUnitFormatter.cs" Link="Production/HudUnitFormatter.cs" />
@@ -23,7 +21,9 @@
     <Compile Include="../../NuclearMinimap/MapCenter.cs" Link="Production/MapCenter.cs" />
     <Compile Include="../../NuclearMinimap/TapHoldGesture.cs" Link="Production/TapHoldGesture.cs" />
     <Compile Include="../../NuclearMinimap/FlightInstrumentMath.cs" Link="Production/FlightInstrumentMath.cs" />
+    <Compile Include="../../NuclearMinimap/Affine2.cs" Link="Production/Affine2.cs" />
     <Compile Include="../../NuclearMapTrails/TrailHistory.cs" Link="Production/TrailHistory.cs" />
     <Compile Include="../../NuclearMapMarkings/MarkingsGeometry.cs" Link="Production/MarkingsGeometry.cs" />
+    <Compile Include="../../NuclearSpectator/SpectatorCycle.cs" Link="Production/SpectatorCycle.cs" />
   </ItemGroup>
 </Project>

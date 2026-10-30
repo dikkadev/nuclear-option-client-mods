@@ -4,7 +4,7 @@
 
 A regular BepInEx 5 client mod showing the selected weapon icon, name, ammo or reload percentage, flares and jammer charge in the cockpit. The presentation follows Nuclear Option Tactical Tools: the native HUD font, theme-aware text and divider, the stock weapon icon's dimensions, and enlarged bold text for the selected countermeasure. A black, bordered loadout popup sizes itself to its station text and highlights the selected row on entry and station changes. No NOTT installation is required; the source-only NuclearMfd helper is bundled into this DLL.
 
-Press **F8** to switch between the custom and stock cockpit page. Switching back restores the stock weapon HUD. Config changes apply during flight.
+Press **F8** (or the control you bind to **Controls / Toggle Cockpit Page**) to switch between the custom and stock cockpit page. Switching back restores the stock weapon HUD. Config changes apply during flight.
 
 | Config | Default | Effect |
 |---|---|---|
@@ -14,7 +14,7 @@ Press **F8** to switch between the custom and stock cockpit page. Switching back
 | Display / Replace Cockpit Content | true | Replace the mapped cockpit panel. Chicane retains its flight instruments. |
 | Display / Loadout Preview | true | Show weapon stations briefly. |
 | Display / Loadout Preview Duration | 1 second | Preview duration, 0.1–10 seconds. |
-| Controls / Toggle Cockpit Page | F8 | Configurable BepInEx keyboard shortcut. |
+| Controls / Toggle Cockpit Page | F8 | Binding: add a key, gamepad button or joystick button in F1 (Add binding). Ignored while typing, in menus and on the full map. |
 
 The config file is `BepInEx/config/dev.dikka.nuclearmfdweapons.cfg`. The mod hides the complete stock weapon HUD container, including its gray backing, countermeasure readouts and the separate aircraft outline while a working custom display is active. The capacitor indicator is off by default; enable it separately to show it against the top edge. On VT-7, the native cockpit nozzle label moves beside its glyph when the measured panel has room. Damage overlays, failure indicators and damage audio keep running. Stock HUD, capacitor and nozzle placement, and Chicane instrument transforms are restored on page changes, disable, ejection, aircraft changes and teardown. Missing or unrecognized cockpit layouts retain stock content.
 

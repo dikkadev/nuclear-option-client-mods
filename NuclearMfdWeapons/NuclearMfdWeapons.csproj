@@ -3,7 +3,7 @@
     <TargetFramework>netstandard2.1</TargetFramework>
     <AssemblyName>NuclearMfdWeapons</AssemblyName>
     <RootNamespace>NuclearMfdWeapons</RootNamespace>
-    <Version>0.1.6</Version>
+    <Version>0.1.7</Version>
     <BepInExPluginGuid>dev.dikka.nuclearmfdweapons</BepInExPluginGuid>
     <BepInExPluginName>NuclearMfdWeapons</BepInExPluginName>
     <Nullable>enable</Nullable>
@@ -51,6 +51,23 @@
       <HintPath>$(NuclearOptionManagedDir)/UnityEngine.UIModule.dll</HintPath>
       <Private>False</Private>
     </Reference>
+    <Reference Include="Assembly-CSharp-firstpass">
+      <HintPath>$(NuclearOptionManagedDir)/Assembly-CSharp-firstpass.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="Rewired_Core">
+      <HintPath>$(NuclearOptionManagedDir)/Rewired_Core.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="UnityEngine.InputLegacyModule">
+      <HintPath>$(NuclearOptionManagedDir)/UnityEngine.InputLegacyModule.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="UnityEngine.IMGUIModule">
+      <HintPath>$(NuclearOptionManagedDir)/UnityEngine.IMGUIModule.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
   </ItemGroup>
   <Import Project="../Shared/NuclearMfd/NuclearMfd.props" />
+  <Import Project="../Shared/NuclearBindings/NuclearBindings.props" />
 </Project>

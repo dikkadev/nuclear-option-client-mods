@@ -74,7 +74,7 @@ Custom Enemy Color = FF594DFF
 
 All values apply live through Configuration Manager. Disabling `Show Trails` or changing `Teams` clears the recorded trails.
 
-Version 0.1.1 raises the defaults to 90 seconds and 0.60 low-altitude brightness. Existing saved settings are preserved; change these two values in Configuration Manager to use the new defaults with an existing config.
+Version 0.1.1 raises the defaults to 90 seconds and 0.60 low-altitude brightness. Existing saved settings are preserved; change these two values in Configuration Manager to use the new defaults with an existing config. Version 0.1.4 costs less frame time: it scans the map for player aircraft 10 times per second and rebuilds the stored trails 5 times per second (at once when you zoom or change a setting); only the short piece from each trail to its aircraft updates every frame.
 
 ## Client testing
 

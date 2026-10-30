@@ -24,32 +24,31 @@ private development history.
 
 [![NuclearSounds](NuclearSounds/docs/assets/cover.png)](NuclearSounds/)
 
+[![NuclearSpectator](NuclearSpectator/docs/assets/cover.png)](NuclearSpectator/)
+
 [![NuclearTargeting](NuclearTargeting/docs/assets/cover.png)](NuclearTargeting/)
 
 [![NuclearTrackAge](NuclearTrackAge/docs/assets/cover.png)](NuclearTrackAge/)
 
 [![NuclearUnits](NuclearUnits/docs/assets/cover.png)](NuclearUnits/)
 
-**Experimental**, not yet part of these releases:
-
-![NuclearReplay](assets/covers/NuclearReplay.png)
-
 ## Mods
 
 | Mod | Version | Plugin ID | Description |
 | --- | --- | --- | --- |
 | `NuclearConnectivity` | 0.2.5 | `dev.dikka.nuclearconnectivity` | Client-side Nuclear Option mod for external integrations, currently Steam Timeline combat markers. |
-| `NuclearControllerGestures` | 0.1.3 | `dev.dikka.nuclearcontrollergestures` | Configurable additive controller double-press bindings for native button actions; original controls remain available. |
+| `NuclearControllerGestures` | 0.2.0 | `dev.dikka.nuclearcontrollergestures` | Configurable additive controller double-press bindings for native button actions; original controls remain available. |
 | `NuclearDeathBlackout` | 0.2.5 | `dev.dikka.nucleardeathblackout` | Client-side Nuclear Option mod that cuts to black and briefly mutes audio when the local main pilot dies. |
 | `NuclearDelivery` | 0.1.6 | `dev.dikka.nucleardelivery` | Missile and bomb delivery counters on the target camera and cockpit MFD: flight, reported armor contact and lost deliveries. |
-| `NuclearMapMarkings` | 0.1.2 | `dev.dikka.nuclearmapmarkings` | Client-side Nuclear Option mod that adds pilot markings to the dynamic map and minimap: runways with approach centerlines, range rings and predicted paths, each with its own full-map and minimap switch. |
-| `NuclearMapPlayerNames` | 0.2.5 | `dev.dikka.nuclearmapplayernames` | Client-side Nuclear Option mod that shows multiplayer usernames next to player-controlled aircraft on the dynamic map. |
-| `NuclearMapTrails` | 0.1.3 | `dev.dikka.nuclearmaptrails` | Client-side Nuclear Option mod that draws fading, altitude-shaded flight trails behind player aircraft on the dynamic map, own team only by default. |
-| `NuclearMfdWeapons` | 0.1.6 | `dev.dikka.nuclearmfdweapons` | Cockpit weapon, ammunition and countermeasure display with a brief loadout preview and optional stock HUD. |
-| `NuclearMinimap` | 0.4.1 | `dev.dikka.nuclearminimap` | Native minimap orientation and hold zoom, with an optional cockpit map display and configurable HUD visibility. |
+| `NuclearMapMarkings` | 0.1.5 | `dev.dikka.nuclearmapmarkings` | Client-side Nuclear Option mod that adds pilot markings to the dynamic map and minimap: runways with approach centerlines, range rings and predicted paths, each with its own full-map and minimap switch. |
+| `NuclearMapPlayerNames` | 0.2.6 | `dev.dikka.nuclearmapplayernames` | Client-side Nuclear Option mod that shows multiplayer usernames next to player-controlled aircraft on the dynamic map. |
+| `NuclearMapTrails` | 0.1.4 | `dev.dikka.nuclearmaptrails` | Client-side Nuclear Option mod that draws fading, altitude-shaded flight trails behind player aircraft on the dynamic map, own team only by default. |
+| `NuclearMfdWeapons` | 0.1.7 | `dev.dikka.nuclearmfdweapons` | Cockpit weapon, ammunition and countermeasure display with a brief loadout preview and optional stock HUD. |
+| `NuclearMinimap` | 0.5.0 | `dev.dikka.nuclearminimap` | Native minimap orientation and hold zoom, with an optional cockpit map display and configurable HUD visibility. |
 | `NuclearSatelliteMap` | 0.2.1 | `dev.dikka.nuclearsatellitemap` | Satellite imagery with transparent water on the native map, with per-view opacity. Includes the Heartland and Ignus map data. |
 | `NuclearSounds` | 0.1.3 | `dev.dikka.nuclearsounds` | Client-side designation tones, voice callouts, and fuel/terrain warnings with estimated fuel time. |
-| `NuclearTargeting` | 0.2.3 | `dev.dikka.nucleartargeting` | Client-side alternative target selection with optional cycling and tap-selection caps. |
+| `NuclearSpectator` | 0.1.7 | `dev.dikka.nuclearspectator` | Client-side Nuclear Option mod that improves spectating: the HUD, cockpit screens and moving stick in the cockpit view of the aircraft you watch, correctly spinning rotors on helicopters already in flight, an info panel and next/previous aircraft keys. |
+| `NuclearTargeting` | 0.2.4 | `dev.dikka.nucleartargeting` | Client-side alternative target selection with optional cycling and tap-selection caps. |
 | `NuclearTrackAge` | 0.1.5 | `dev.dikka.nucleartrackage` | Client-side Nuclear Option mod that annotates stale enemy target tracks with how old the last known position is. |
 | `NuclearUnits` | 1.2.6 | `dev.dikka.nuclearunits` | Client-side Nuclear Option mod that lets players choose units per HUD readout instead of relying only on the game's global metric/imperial setting. |
 

@@ -36,7 +36,13 @@ namespace NuclearMapMarkings
         private const float GapPixels = 4f;
         private const float TickPixels = 4f;
         private const float DotPixels = 2f;
-        private const int RingSegments = 128;
+        private const float RingDashPixels = 8f;
+        private const float RingGapPixels = 6f;    // first ring; each further ring adds this again
+        private const float RingGray = 0.7f;
+        private const float MinimapRingWidthScale = 1.5f;
+        private const float PathInterval = 0.1f;   // predicted paths and motion scan, 10 Hz
+        private const float RunwayInterval = 1f;   // base ownership changes
+        private const float RingInterval = 1f;
 
         private sealed class Track
         {
@@ -52,6 +58,10 @@ namespace NuclearMapMarkings
         private readonly ApproachEnd[] ends = new ApproachEnd[2];
         private readonly List<float> ticks = new List<float>();
         private readonly List<MapPoint> points = new List<MapPoint>();
+        private readonly HashSet<Airbase.Runway> reportedRunways = new HashSet<Airbase.Runway>();
+        private View lastView;
+        private bool ringAircraft;
+        private float nextRunways, nextRings, nextPaths, nextRecord;
         private DynamicMap map = null!;
         private FactionHQ? hq;
         private MarkingsGraphic runways = null!;
@@ -125,6 +135,19 @@ namespace NuclearMapMarkings
             return graphic;
         }
 
+        // Everything that changes mesh geometry or on-screen line widths without a new frame of data.
+        private struct View
+        {
+            internal float Factor;
+            internal float Pixel;
+            internal bool Full;
+            internal int Revision;
+
+            internal bool Same(View other) =>
+                Factor == other.Factor && Full == other.Full && Revision == other.Revision &&
+                Mathf.Abs(Pixel - other.Pixel) <= 1e-4f * Mathf.Abs(Pixel);
+        }
+
         private void Refresh(Plugin config)
         {
             // A team change must not keep motion recorded with another team's knowledge.
@@ -132,6 +155,7 @@ namespace NuclearMapMarkings
             {
                 tracks.Clear();
                 hq = map.HQ;
+                nextPaths = 0f;
             }
 
             bool full = DynamicMap.mapMaximized;
@@ -141,9 +165,51 @@ namespace NuclearMapMarkings
             bool showPaths = enabled && (full ? config.PathsOnFullMap.Value : config.PathsOnMinimap.Value);
             float width = config.LineWidth.Value;
             float factor = map.mapDisplayFactor;
+            float now = Time.unscaledTime;
 
-            Run(runways, showRunways, "runways", () => DrawRunways(config, factor, width));
-            Run(rings, showRings, "rings", () => DrawRings(config, factor, width));
+            // Rebuilding meshes every frame costs main-thread time in the canvas update, so each marking redraws
+            // only when the view changes, its data is due, or it was hidden.
+            var canvas = runways.canvas;
+            float scale = transform.lossyScale.x;
+            var view = new View
+            {
+                Factor = factor,
+                Pixel = canvas != null && scale > 0f ? canvas.scaleFactor / scale : 0f,
+                Full = full,
+                Revision = config.SettingsRevision,
+            };
+            bool viewChanged = !view.Same(lastView);
+            lastView = view;
+
+            if (Due(runways, showRunways, viewChanged, ref nextRunways, now, RunwayInterval))
+            {
+                Run(runways, "runways", () => DrawRunways(config, factor, width));
+            }
+
+            // Rings are drawn around their own origin and follow the aircraft by transform, without a mesh rebuild.
+            var aircraft = showRings ? LocalAircraft() : null;
+            bool hasAircraft = aircraft != null;
+            if (hasAircraft != ringAircraft)
+            {
+                ringAircraft = hasAircraft;
+                nextRings = 0f;
+            }
+
+            if (Due(rings, showRings, viewChanged, ref nextRings, now, RingInterval))
+            {
+                // The minimap, and its smaller cockpit copy, needs heavier rings to stay readable.
+                Run(rings, "rings", () => DrawRings(config, factor, full ? width : width * MinimapRingWidthScale, hasAircraft));
+            }
+
+            if (aircraft != null)
+            {
+                var position = Layer(Flat(aircraft.GlobalPosition().AsVector3()), factor);
+                var ringTransform = rings.rectTransform;
+                if (((Vector2)ringTransform.localPosition - position).sqrMagnitude > 1e-6f)
+                {
+                    ringTransform.localPosition = new Vector3(position.x, position.y, 0f);
+                }
+            }
 
             // Keep sampling motion while paths are hidden, so they are ready when the view changes.
             bool recordPaths = enabled && (config.PathsOnFullMap.Value || config.PathsOnMinimap.Value);
@@ -152,8 +218,10 @@ namespace NuclearMapMarkings
                 tracks.Clear();
             }
 
-            else
+            else if (now >= nextRecord)
             {
+                // Motion estimates keep a sample at most every 0.25 s, so a 10 Hz scan loses nothing.
+                nextRecord = now + PathInterval;
                 try
                 {
                     Record(Time.timeSinceLevelLoad);
@@ -165,18 +233,35 @@ namespace NuclearMapMarkings
                 }
             }
 
-            Run(paths, showPaths, "paths", () => DrawPaths(config, factor, width));
+            if (Due(paths, showPaths, viewChanged, ref nextPaths, now, PathInterval))
+            {
+                Run(paths, "paths", () => DrawPaths(config, factor, width));
+            }
         }
 
-        // Each marking has its own failure scope so one bad object cannot remove the others.
-        private static void Run(MarkingsGraphic graphic, bool visible, string name, System.Action draw)
+        // Shows or hides a marking and reports whether its mesh should be rebuilt now.
+        private static bool Due(MarkingsGraphic graphic, bool visible, bool viewChanged, ref float next, float now, float interval)
         {
             graphic.enabled = visible;
             if (!visible)
             {
-                return;
+                // Redraw as soon as it shows again; its mesh may be stale.
+                next = 0f;
+                return false;
             }
 
+            if (!viewChanged && now < next)
+            {
+                return false;
+            }
+
+            next = now + interval;
+            return true;
+        }
+
+        // Each marking has its own failure scope so one bad object cannot remove the others.
+        private static void Run(MarkingsGraphic graphic, string name, System.Action draw)
+        {
             try
             {
                 graphic.Begin();
@@ -223,8 +308,12 @@ namespace NuclearMapMarkings
                     var end = Flat(runway.End.GlobalPosition().AsVector3());
                     runways.Band(Layer(start, factor), Layer(end, factor), Mathf.Max(runway.GetWidth(), 20f) * factor, 3f, color);
                     float runwayLength = (end - start).Length;
-                    MarkingsDiagnostics.Once("runway-" + airbase.GetInstanceID() + "-" + runway.index,
-                        $"runway at {BaseName(airbase)}: length {runwayLength:F0} m, width {runway.GetWidth():F0} m, landing={runway.Landing}, reversible={runway.Reversable}.");
+                    // Build the log text only once per runway, not on every redraw.
+                    if (reportedRunways.Add(runway))
+                    {
+                        MarkingsDiagnostics.Once("runway-" + airbase.GetInstanceID() + "-" + runway.index,
+                            $"runway at {BaseName(airbase)}: length {runwayLength:F0} m, width {runway.GetWidth():F0} m, landing={runway.Landing}, reversible={runway.Reversable}.");
+                    }
                     if (!config.ShowApproaches.Value)
                     {
                         continue;
@@ -253,23 +342,20 @@ namespace NuclearMapMarkings
             }
         }
 
-        private void DrawRings(Plugin config, float factor, float width)
+        // Around the graphic's own origin; Refresh places the graphic on the aircraft every frame.
+        private void DrawRings(Plugin config, float factor, float width, bool hasAircraft)
         {
-            var aircraft = LocalAircraft();
-            if (aircraft == null)
+            if (!hasAircraft)
             {
                 return;
             }
 
-            var center = Flat(aircraft.GlobalPosition().AsVector3());
-            var color = new Color(1f, 1f, 1f, config.RingOpacity.Value);
-            foreach (float kilometres in config.RingDistancesKm)
+            // Gray dashes: present for range checks without competing with icons and paths.
+            var color = new Color(RingGray, RingGray, RingGray, config.RingOpacity.Value);
+            var distances = config.RingDistancesKm;
+            for (int i = 0; i < distances.Count; i++)
             {
-                MarkingsGeometry.Circle(center, kilometres * 1000f, RingSegments, points);
-                for (int i = 1; i < points.Count; i++)
-                {
-                    rings.Line(Layer(points[i - 1], factor), Layer(points[i], factor), width, color);
-                }
+                rings.Ring(Vector2.zero, distances[i] * 1000f * factor, width, color, RingDashPixels, MarkingsGeometry.RingGap(RingGapPixels, i));
             }
         }
 
@@ -342,7 +428,9 @@ namespace NuclearMapMarkings
                 }
 
                 float surface = kind == UnitMotionKind.Aircraft ? 1f : 3f;
-                float horizon = (isLong ? config.LongPathSeconds.Value : config.ShortPathSeconds.Value) * surface;
+                float seconds = (isLong ? config.LongPathSeconds.Value : config.ShortPathSeconds.Value) * surface;
+                float maxLength = (isLong ? config.LongPathMaxLength.Value : config.ShortPathMaxLength.Value) * 1000f;
+                float horizon = MarkingsGeometry.PathHorizon(velocity.Length, seconds, maxLength);
                 float step = surface;
                 MarkingsGeometry.PredictPath(entry.Value.Position, velocity, turnRate, config.TurnFadeSeconds.Value * surface, horizon, step, points);
 

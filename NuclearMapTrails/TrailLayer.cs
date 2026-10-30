@@ -40,7 +40,13 @@ namespace NuclearMapTrails
             internal Color Color = Color.white;
             internal bool HasHead;
             internal Vector3 Head;
+            internal TrailRelation Relation;
+            // Time of the newest sample in the history mesh; the head mesh draws everything after it.
+            internal float DrawnTime = float.NegativeInfinity;
         }
+
+        private const float ScanInterval = 0.1f;     // icon scan for new samples, 10 Hz
+        private const float HistoryInterval = 0.2f;  // stored trail mesh rebuild, 5 Hz
 
         private static TrailLayer? current;
 
@@ -49,6 +55,11 @@ namespace NuclearMapTrails
         private DynamicMap map = null!;
         private FactionHQ? hq;
         private TrailGraphic graphic = null!;
+        // Short segments from each trail's newest drawn sample to the aircraft, rebuilt every frame.
+        private TrailGraphic heads = null!;
+        private float nextScan, nextHistory;
+        private float lastFactor, lastPixel;
+        private int lastRevision = -1;
 
         internal static void Tick(DynamicMap map)
         {
@@ -116,6 +127,17 @@ namespace NuclearMapTrails
             layer.hq = map.HQ;
             layer.graphic = layerObject.AddComponent<TrailGraphic>();
             layer.graphic.raycastTarget = false;
+
+            var headObject = new GameObject("Heads", typeof(RectTransform));
+            var headTransform = (RectTransform)headObject.transform;
+            headTransform.SetParent(rectTransform, false);
+            headTransform.anchorMin = headTransform.anchorMax = headTransform.pivot = new Vector2(0.5f, 0.5f);
+            headTransform.localPosition = Vector3.zero;
+            headTransform.localRotation = Quaternion.identity;
+            headTransform.localScale = Vector3.one;
+            headTransform.sizeDelta = Vector2.zero;
+            layer.heads = headObject.AddComponent<TrailGraphic>();
+            layer.heads.raycastTarget = false;
             TrailDiagnostics.Once("created", "Trail layer created under the native icon layer.");
             return layer;
         }
@@ -125,6 +147,7 @@ namespace NuclearMapTrails
             if (!config.ShowTrails.Value)
             {
                 graphic.enabled = false;
+                heads.enabled = false;
                 return;
             }
 
@@ -133,32 +156,86 @@ namespace NuclearMapTrails
             {
                 trails.Clear();
                 hq = map.HQ;
+                nextHistory = 0f;
             }
 
             float now = Time.timeSinceLevelLoad;
+            float clock = Time.unscaledTime;
             float duration = config.TrailDuration.Value;
-            Record(config, now);
-
-            expired.Clear();
-            foreach (var entry in trails)
+            if (clock >= nextScan)
             {
-                entry.Value.History.Prune(now, duration);
-                if (entry.Value.History.IsEmpty)
+                // Scanning every map icon is the costly part; samples are at least 0.1 s apart anyway.
+                nextScan = clock + ScanInterval;
+                Record(config, now);
+
+                expired.Clear();
+                foreach (var entry in trails)
                 {
-                    expired.Add(entry.Key);
+                    entry.Value.History.Prune(now, duration);
+                    if (entry.Value.History.IsEmpty)
+                    {
+                        expired.Add(entry.Key);
+                    }
+                }
+
+                foreach (var unit in expired)
+                {
+                    trails.Remove(unit);
                 }
             }
-
-            foreach (var unit in expired)
+            else
             {
-                trails.Remove(unit);
+                UpdateHeads();
             }
 
             bool visible = !config.ShowOnlyOnMaximizedMap.Value || DynamicMap.mapMaximized;
             graphic.enabled = visible;
-            if (visible)
+            heads.enabled = visible;
+            if (!visible)
             {
-                Draw(config, now, duration);
+                // Rebuild as soon as the trails show again.
+                nextHistory = 0f;
+                return;
+            }
+
+            // The long stored trails rebuild at 5 Hz, or at once when zoom, scale or settings change;
+            // only the short head segments to the aircraft rebuild every frame.
+            float factor = map.mapDisplayFactor;
+            float scale = transform.lossyScale.x;
+            float pixel = graphic.canvas != null && scale > 0f ? graphic.canvas.scaleFactor / scale : 0f;
+            bool viewChanged = factor != lastFactor || config.SettingsRevision != lastRevision ||
+                Mathf.Abs(pixel - lastPixel) > 1e-4f * Mathf.Abs(pixel);
+            lastFactor = factor;
+            lastPixel = pixel;
+            lastRevision = config.SettingsRevision;
+            if (viewChanged || clock >= nextHistory)
+            {
+                nextHistory = clock + HistoryInterval;
+                Draw(config, now, duration, false);
+            }
+
+            Draw(config, now, duration, true);
+        }
+
+        // Between icon scans: move each known trail's head to its aircraft's current visible position.
+        private void UpdateHeads()
+        {
+            foreach (var trail in trails.Values)
+            {
+                if (!trail.HasHead)
+                {
+                    continue;
+                }
+
+                var aircraft = trail.Aircraft;
+                if (aircraft == null || aircraft.disabled || !TryGetVisiblePosition(aircraft, trail.Relation, out var position))
+                {
+                    // The next scan records the loss and breaks the trail.
+                    trail.HasHead = false;
+                    continue;
+                }
+
+                trail.Head = position;
             }
         }
 
@@ -200,6 +277,7 @@ namespace NuclearMapTrails
                 }
 
                 trail.Color = TrailColor(config, relation, isLocal, unitHq);
+                trail.Relation = relation;
                 if (!TryGetVisiblePosition(aircraft, relation, out var position))
                 {
                     // Enemy track is not currently observed: never draw through the unknown section.
@@ -287,8 +365,10 @@ namespace NuclearMapTrails
             }
         }
 
-        private void Draw(Plugin config, float now, float duration)
+        // headsOnly false: every stored sample. headsOnly true: from each trail's newest drawn sample to its aircraft.
+        private void Draw(Plugin config, float now, float duration, bool headsOnly)
         {
+            var target = headsOnly ? heads : graphic;
             float factor = map.mapDisplayFactor;
             bool fade = config.FadeOut.Value;
             float newest = config.NewestOpacity.Value;
@@ -298,35 +378,56 @@ namespace NuclearMapTrails
             float highAltitude = config.HighAltitude.Value;
             float lowBrightness = config.LowAltitudeBrightness.Value;
 
-            graphic.BeginStrokes();
+            target.BeginStrokes();
             foreach (var trail in trails.Values)
             {
                 var samples = trail.History.Samples;
-                for (int i = 0; i < samples.Count; i++)
+                bool joinHead = trail.HasHead && samples.Count > 0 && trail.Aircraft != null && !trail.Aircraft.disabled;
+                int first = 0;
+                if (headsOnly)
                 {
-                    var sample = samples[i];
-                    if (sample.StartsRun || i == 0)
+                    if (!joinHead)
                     {
-                        graphic.EndRun();
+                        continue;
                     }
 
-                    graphic.AddPoint(
+                    // Start at the newest sample already in the history mesh, so the two meshes meet.
+                    first = samples.Count - 1;
+                    while (first > 0 && samples[first].Time > trail.DrawnTime)
+                    {
+                        first--;
+                    }
+                }
+
+                for (int i = first; i < samples.Count; i++)
+                {
+                    var sample = samples[i];
+                    if (sample.StartsRun || i == first)
+                    {
+                        target.EndRun();
+                    }
+
+                    target.AddPoint(
                         new Vector2(sample.X * factor, sample.Z * factor),
                         PointColor(trail.Color, now - sample.Time, sample.Altitude));
                 }
 
-                // Join the newest stored point to the aircraft's current map position.
-                if (trail.HasHead && samples.Count > 0 && trail.Aircraft != null && !trail.Aircraft.disabled)
+                if (headsOnly)
                 {
-                    graphic.AddPoint(
+                    // Join the newest stored point to the aircraft's current map position.
+                    target.AddPoint(
                         new Vector2(trail.Head.x * factor, trail.Head.z * factor),
                         PointColor(trail.Color, 0f, trail.Head.y));
                 }
+                else
+                {
+                    trail.DrawnTime = samples.Count > 0 ? samples[samples.Count - 1].Time : float.NegativeInfinity;
+                }
 
-                graphic.EndRun();
+                target.EndRun();
             }
 
-            graphic.EndStrokes(config.LineWidth.Value);
+            target.EndStrokes(config.LineWidth.Value);
 
             Color PointColor(Color baseColor, float age, float altitude)
             {

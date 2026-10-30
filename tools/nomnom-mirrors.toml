@@ -82,6 +82,14 @@ tags = ["QoL", "HUD", "Audio"]
 include = ["README.md", "assets/**"]
 project = "NuclearSounds/NuclearSounds.csproj"
 
+[mods.NuclearSpectator]
+id = "dev.dikka.nuclearspectator"
+display_name = "NuclearSpectator"
+description = "Client-side Nuclear Option mod that improves spectating: the HUD, cockpit screens and moving stick in the cockpit view of the aircraft you watch, correctly spinning rotors on helicopters already in flight, an info panel and next/previous aircraft keys."
+tags = ["QoL", "HUD", "Multiplayer"]
+include = ["README.md"]
+project = "NuclearSpectator/NuclearSpectator.csproj"
+
 [mods.NuclearTrackAge]
 id = "dev.dikka.nucleartrackage"
 display_name = "NuclearTrackAge"

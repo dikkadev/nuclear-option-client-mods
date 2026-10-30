@@ -47,6 +47,8 @@ namespace NuclearMapMarkings
         internal ConfigEntry<bool> ShortPathsForAll { get; private set; } = null!;
         internal ConfigEntry<float> ShortPathSeconds { get; private set; } = null!;
         internal ConfigEntry<float> LongPathSeconds { get; private set; } = null!;
+        internal ConfigEntry<float> ShortPathMaxLength { get; private set; } = null!;
+        internal ConfigEntry<float> LongPathMaxLength { get; private set; } = null!;
         internal ConfigEntry<float> TurnFadeSeconds { get; private set; } = null!;
         internal ConfigEntry<float> PathOpacity { get; private set; } = null!;
 
@@ -95,9 +97,9 @@ namespace NuclearMapMarkings
                 "Which airbases get runway markings. Spectators always see every base.");
             ShowApproaches = Config.Bind(runways, "Show Approach Lines", true,
                 "Draw dashed approach centerlines. When disabled, only the runways are drawn.");
-            MinApproachLength = Config.Bind(runways, "Min Approach Length", 3f,
+            MinApproachLength = Config.Bind(runways, "Min Approach Length", 2f,
                 new ConfigDescription("Approach centerline length in kilometres for runways up to Short Runway.", new AcceptableValueRange<float>(0.5f, 20f)));
-            MaxApproachLength = Config.Bind(runways, "Max Approach Length", 7.5f,
+            MaxApproachLength = Config.Bind(runways, "Max Approach Length", 5f,
                 new ConfigDescription("Approach centerline length in kilometres for runways from Long Runway on. Lines between grow with runway length, more slowly for longer runways.", new AcceptableValueRange<float>(0.5f, 20f)));
             ShortRunway = Config.Bind(runways, "Short Runway", 600f,
                 new ConfigDescription("Runway length in metres at and below which the approach uses Min Approach Length.", new AcceptableValueRange<float>(100f, 5000f)));
@@ -108,13 +110,13 @@ namespace NuclearMapMarkings
             RunwayOpacity = Config.Bind(runways, "Opacity", 0.8f,
                 new ConfigDescription("Runway and approach line opacity.", new AcceptableValueRange<float>(0.05f, 1f)));
 
-            RingsOnFullMap = Config.Bind(rings, "Show On Full Map", false,
+            RingsOnFullMap = Config.Bind(rings, "Show On Full Map", true,
                 "Draw range rings around your aircraft on the full map.");
             RingsOnMinimap = Config.Bind(rings, "Show On Minimap", true,
-                "Draw range rings around your aircraft on the minimap.");
-            RingDistances = Config.Bind(rings, "Distances", "10, 20, 40",
-                "Ring radii in kilometres, separated by commas. Up to 8 rings, each at most 500 km.");
-            RingOpacity = Config.Bind(rings, "Opacity", 0.35f,
+                "Draw range rings around your aircraft on the minimap, with lines 1.5 times as wide.");
+            RingDistances = Config.Bind(rings, "Distances", "10, 20",
+                "Ring radii in kilometres, separated by commas, for example 10, 20, 40. Up to 8 rings, each at most 500 km. Rings are gray dashed lines; each ring further out has wider gaps.");
+            RingOpacity = Config.Bind(rings, "Opacity", 0.5f,
                 new ConfigDescription("Range ring opacity.", new AcceptableValueRange<float>(0.05f, 1f)));
 
             PathsOnFullMap = Config.Bind(paths, "Show On Full Map", true,
@@ -127,13 +129,71 @@ namespace NuclearMapMarkings
                 new ConfigDescription("Prediction length for other aircraft in seconds. Vehicles and ships use three times this.", new AcceptableValueRange<float>(2f, 60f)));
             LongPathSeconds = Config.Bind(paths, "Long Path Seconds", 60f,
                 new ConfigDescription("Prediction length for your aircraft, selected map units and your HUD targets, with a dot every 10 seconds. Vehicles and ships use three times this, with a dot every 30 seconds.", new AcceptableValueRange<float>(10f, 180f)));
+            ShortPathMaxLength = Config.Bind(paths, "Short Path Max Length", 2.5f,
+                new ConfigDescription("Upper limit for short paths in kilometres. Paths grow with speed almost linearly when slow and level off towards this length. 0 means no limit.", new AcceptableValueRange<float>(0f, 100f)));
+            LongPathMaxLength = Config.Bind(paths, "Long Path Max Length", 8f,
+                new ConfigDescription("Upper limit for long paths in kilometres. Paths grow with speed almost linearly when slow and level off towards this length; dots stay 10 seconds apart, so faster units show fewer dots. 0 means no limit.", new AcceptableValueRange<float>(0f, 100f)));
             TurnFadeSeconds = Config.Bind(paths, "Turn Fade Seconds", 6f,
                 new ConfigDescription("How quickly a predicted turn eases out, in seconds. The path bends by at most the current turn rate times this value, so a sustained turn is not drawn as a loop. 0 draws straight lines. Vehicles and ships use three times this.", new AcceptableValueRange<float>(0f, 30f)));
             PathOpacity = Config.Bind(paths, "Opacity", 0.8f,
                 new ConfigDescription("Predicted path opacity.", new AcceptableValueRange<float>(0.05f, 1f)));
 
+            UpgradeDefaults();
+
             RingDistancesKm = MarkingsGeometry.ParseDistances(RingDistances.Value, 500f);
             RingDistances.SettingChanged += (sender, args) => RingDistancesKm = MarkingsGeometry.ParseDistances(RingDistances.Value, 500f);
+            // Markings redraw only when something changes; any setting change counts.
+            Config.SettingChanged += (sender, args) => SettingsRevision++;
         }
+
+        internal int SettingsRevision { get; private set; }
+
+        // 0.1.3 and 0.1.5 changed defaults after client tests. Saved settings that still hold the previous default
+        // move to the new default once; values the player changed are kept.
+        private void UpgradeDefaults()
+        {
+            var revision = Config.Bind("Internal", "Defaults Revision", 0,
+                new ConfigDescription("Marks which default changes were applied to this file. Do not edit.", null,
+                    new ConfigurationManagerAttributes { Browsable = false }));
+            if (revision.Value < 1)
+            {
+                Replace(MinApproachLength, 3f, 2f);
+                Replace(MaxApproachLength, 7.5f, 5f);
+                Replace(RingOpacity, 0.35f, 0.6f);
+                if (!RingsOnFullMap.Value)
+                {
+                    RingsOnFullMap.Value = true;
+                }
+
+                revision.Value = 1;
+                Logger.LogInfo("Moved settings that still held 0.1.2 defaults to the 0.1.3 defaults.");
+            }
+
+            if (revision.Value < 2)
+            {
+                if (MarkingsGeometry.ParseDistances(RingDistances.Value, 500f).SequenceEqual(new[] { 10f, 20f, 40f }))
+                {
+                    RingDistances.Value = "10, 20";
+                }
+
+                Replace(RingOpacity, 0.6f, 0.5f);
+                revision.Value = 2;
+                Logger.LogInfo("Moved settings that still held 0.1.4 range ring defaults to the 0.1.5 defaults.");
+            }
+        }
+
+        private static void Replace(ConfigEntry<float> entry, float previous, float current)
+        {
+            if (Mathf.Abs(entry.Value - previous) < 1e-4f)
+            {
+                entry.Value = current;
+            }
+        }
+    }
+
+    // Read by name by BepInEx Configuration Manager.
+    internal sealed class ConfigurationManagerAttributes
+    {
+        public bool? Browsable;
     }
 }

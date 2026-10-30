@@ -3,7 +3,7 @@
     <TargetFramework>netstandard2.1</TargetFramework>
     <AssemblyName>NuclearMapMarkings</AssemblyName>
     <RootNamespace>NuclearMapMarkings</RootNamespace>
-    <Version>0.1.2</Version>
+    <Version>0.1.5</Version>
     <BepInExPluginGuid>dev.dikka.nuclearmapmarkings</BepInExPluginGuid>
     <BepInExPluginName>NuclearMapMarkings</BepInExPluginName>
     <Nullable>enable</Nullable>

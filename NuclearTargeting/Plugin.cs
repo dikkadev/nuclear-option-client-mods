@@ -3,11 +3,9 @@ using System.Linq;
 using BepInEx;
 using BepInEx.Configuration;
 using HarmonyLib;
+using NuclearBindings;
 using NuclearModMigration;
-using NuclearOption.MissionEditorScripts;
 using UnityEngine;
-using UnityEngine.EventSystems;
-using UnityEngine.UI;
 
 namespace NuclearTargeting
 {
@@ -25,8 +23,7 @@ namespace NuclearTargeting
         internal ConfigEntry<float> TargetSelectionThreshold { get; private set; } = null!;
         internal ConfigEntry<bool> UseFixedTapTargetCap { get; private set; } = null!;
         internal ConfigEntry<int> FixedTapTargetCap { get; private set; } = null!;
-        internal ConfigEntry<KeyboardShortcut> ToggleTapTargetCap { get; private set; } = null!;
-        private bool shortcutReady;
+        internal InputBinding ToggleTapTargetCap { get; private set; } = null!;
 
         private void Awake()
         {
@@ -44,23 +41,13 @@ namespace NuclearTargeting
 
         private void Update()
         {
-            var shortcut = ToggleTapTargetCap.Value;
             var hud = SceneSingleton<CombatHUD>.i;
-            if (!EnableAlternativeTargeting.Value || shortcut.MainKey == KeyCode.None ||
-                !Application.isFocused || Cursor.visible || CursorManager.GetFlags() != CursorFlags.None ||
-                InputFieldChecker.InsideInputField || hud == null || hud.aircraft == null ||
-                hud.aircraft.disabled || hud.aircraft.HasEjected())
-            {
-                shortcutReady = false;
+            // Skipped frames make the binding wait for release, so a press held into flight cannot toggle.
+            if (!EnableAlternativeTargeting.Value || Cursor.visible || CursorManager.GetFlags() != CursorFlags.None ||
+                hud == null || hud.aircraft == null || hud.aircraft.disabled || hud.aircraft.HasEjected())
                 return;
-            }
-            var selected = EventSystem.current != null ? EventSystem.current.currentSelectedGameObject : null;
-            var input = selected != null ? selected.GetComponentInParent<InputField>() : null;
-            if (input != null && input.isFocused) { shortcutReady = false; return; }
-            if (!shortcut.IsPressed()) shortcutReady = true;
-            if (shortcutReady && shortcut.IsDown())
+            if (ToggleTapTargetCap.IsDown())
             {
-                shortcutReady = false;
                 UseFixedTapTargetCap.Value = !UseFixedTapTargetCap.Value;
                 Logger.LogInfo("Tap target cap: " + (UseFixedTapTargetCap.Value ? "fixed " : "laser capacity ") + GetTapTargetCap(hud.aircraft));
             }
@@ -103,8 +90,8 @@ namespace NuclearTargeting
             FixedTapTargetCap = Config.Bind("Targeting", "Fixed Tap Target Cap", 1,
                 new ConfigDescription("Tap-selection limit for every aircraft while the fixed override is enabled. Native target synchronization supports up to 128 targets.", new AcceptableValueRange<int>(1, 128)));
             capMigration.Apply(UseFixedTapTargetCap, FixedTapTargetCap);
-            ToggleTapTargetCap = Config.Bind("Controls", "Toggle Fixed Tap Target Cap", new KeyboardShortcut(KeyCode.None),
-                "Optional keyboard shortcut to switch between native laser capacity and the fixed override. Unbound by default; ignored in menus, text entry and without focus. Does not change existing selections until the next tap.");
+            ToggleTapTargetCap = InputBinding.Bind(Config, Logger, "Controls", "Toggle Fixed Tap Target Cap", "",
+                "Optional binding to switch between native laser capacity and the fixed override. Unbound by default; ignored in menus, text entry, the full map and without focus. Does not change existing selections until the next tap.");
         }
     }
 }

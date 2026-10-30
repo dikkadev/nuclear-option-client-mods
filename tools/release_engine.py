@@ -518,13 +518,20 @@ def check_pack_dlls(mods, contents, references):
 
 
 def plan(root, names, packs, *, game_version, output, repo=None, offline=False,
-         prerelease=False, notes='', include_untracked=False, license_file=None):
+         prerelease=False, notes='', include_untracked=False, license_file=None, exclude_source_mods=None):
     packs = ['our' if name == 'mine' else name for name in packs]
     from release_source import (collect_source, source_hash, file_manifest, write_snapshot,
                                 public_readme, scan_for_secrets, list_source_files,
                                 is_exportable, mod_directories)
     builder = load_builder(root)
     mods = builder.load_mods(root)
+    excluded = select_mods(mods, exclude_source_mods)
+    excluded_names = {m['name'] for m in excluded}
+    if excluded_names.intersection(names):
+        raise ValueError('A selected release cannot also be excluded from source')
+    if excluded and packs:
+        raise ValueError('Source exclusions cannot be used with packs; packs must contain all active mods')
+    mods = [m for m in mods if m['name'] not in excluded_names]
     selected = select_mods(mods, names)
     if not selected and not packs:
         raise ValueError('Select --mod, --all, or --pack')
@@ -557,6 +564,11 @@ def plan(root, names, packs, *, game_version, output, repo=None, offline=False,
         item['prerelease'] = prerelease
         item['notes'] = notes.strip() or f'{release_title(item)} for Nuclear Option {game_version}.'
     files = collect_source(root, mods, include_untracked=include_untracked)
+    if excluded and 'install-all-mods.sh' in files:
+        script = files['install-all-mods.sh'].decode()
+        for name in excluded_names:
+            script = re.sub(r'^\s*"' + re.escape(name) + r'"\s*\n', '', script, flags=re.MULTILINE)
+        files['install-all-mods.sh'] = script.encode()
     directories = mod_directories(root, mods)
     new_source = [p for p, mode in list_source_files(root, True).items()
                   if mode == 'untracked' and is_exportable(p, directories)]
@@ -597,6 +609,7 @@ def plan(root, names, packs, *, game_version, output, repo=None, offline=False,
         'registryEntries': {m['guid']: remote.get('registryEntries', {})[m['guid']] for m in selected
                             if m['guid'] in remote.get('registryEntries', {})},
         'modInputHashes': input_hashes, 'packReferences': references,
+        'excludedSourceMods': sorted(excluded_names),
         'sourceHash': source_hash(files), 'sourceFiles': file_manifest(files), 'gameVersion': game_version,
         'bundledData': {name: {path: {'sha256': digest(data), 'size': len(data)} for path, data in entries.items()}
                         for name, entries in bundled.items()},

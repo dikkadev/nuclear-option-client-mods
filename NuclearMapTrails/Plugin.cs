@@ -181,6 +181,10 @@ namespace NuclearMapTrails
 
             ShowTrails.SettingChanged += (sender, args) => TrailLayer.ClearCurrentIfDisabled();
             Teams.SettingChanged += (sender, args) => TrailLayer.ClearCurrent();
+            // Trails redraw at a bounded rate; any setting change redraws at once.
+            Config.SettingChanged += (sender, args) => SettingsRevision++;
         }
+
+        internal int SettingsRevision { get; private set; }
     }
 }

@@ -1,0 +1,8 @@
+<Project>
+  <!-- Compile into the consuming plugin; there is no runtime library DLL or plugin dependency.
+       Consumers reference Rewired_Core, Assembly-CSharp-firstpass, Unity.TextMeshPro, UnityEngine.UI,
+       UnityEngine.InputLegacyModule and UnityEngine.IMGUIModule. -->
+  <ItemGroup>
+    <Compile Include="$(MSBuildThisFileDirectory)*.cs" Link="NuclearBindings/%(Filename)%(Extension)" />
+  </ItemGroup>
+</Project>

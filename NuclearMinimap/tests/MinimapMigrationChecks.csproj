@@ -7,7 +7,6 @@
     <BepInExCoreDir Condition="'$(BepInExCoreDir)' == ''">$(NO_BEPINEX_CORE_DIR)</BepInExCoreDir>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="../DeviceZoomBinding.cs" Link="DeviceZoomBinding.cs" />
     <Compile Include="../MinimapConfigMigration.cs" Link="MinimapConfigMigration.cs" />
     <Reference Include="BepInEx"><HintPath>$(BepInExCoreDir)/BepInEx.dll</HintPath></Reference>
   </ItemGroup>
