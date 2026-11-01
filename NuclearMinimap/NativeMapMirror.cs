@@ -100,16 +100,19 @@ namespace NuclearMinimap
             for (int i = 0; i < order.Count; i++)
             {
                 var entry = order[i];
+                var copy = entry.Copy;
+                // Destroying a visible source reports nothing: Graphic.OnDisable skips the dirty callbacks and
+                // RectMask2D reports only culled graphics. Native icons die with their units between rescans;
+                // reading a dead transform would throw and drop the whole cockpit map for this capture.
+                if (!entry.Source) { entry.Active = false; rescanRequested = true; copy.SetCanvasBounds(false, default); continue; }
                 bool scheduled = (i >= refreshFrom && i < refreshTo) || (refreshTo > order.Count && i < refreshTo - order.Count);
                 if (entry.Polled) entry.StateDirty = true;
                 if (scheduled) { entry.StateDirty = true; entry.MaterialDirty = true; if (entry.Dirty < 1) entry.Dirty = 1; }
                 if (entry.StateDirty)
                 {
                     entry.StateDirty = false;
-                    if (!entry.Source) { entry.Active = false; rescanRequested = true; }
-                    else entry.Active = entry.Source.isActiveAndEnabled && !entry.Source.canvasRenderer.cull;
+                    entry.Active = entry.Source.isActiveAndEnabled && !entry.Source.canvasRenderer.cull;
                 }
-                var copy = entry.Copy;
                 if (!entry.Active || entry.Segment < 0) { copy.SetCanvasBounds(false, default); continue; }
 
                 var relative = Affine2Of(anchorWorldToLocal[entry.Anchor] * entry.SourceTransform.localToWorldMatrix);

@@ -112,7 +112,7 @@ namespace NuclearSounds
         {
             private static void Postfix()
             {
-                if (!Plugin.Instance.EnableMissileVoiceWarnings.Value)
+                if (!Plugin.Instance.EnableMissileVoiceWarnings.Value || Spectating.Muted)
                 {
                     return;
                 }

@@ -7,10 +7,12 @@
     <BepInExCoreDir Condition="'$(BepInExCoreDir)' == ''">$(NO_BEPINEX_CORE_DIR)</BepInExCoreDir>
     <NuclearOptionManagedDir Condition="'$(NuclearOptionManagedDir)' == ''">$(NO_MANAGED_DIR)</NuclearOptionManagedDir>
   </PropertyGroup>
+  <!-- The same package version as the mods, without compiling it all: the Rewired/IMGUI parts need the game. -->
+  <Import Project="../NuclearBindings.props" />
   <ItemGroup>
-    <!-- Engine-independent production sources only; Rewired/IMGUI parts need the game. -->
-    <Compile Include="../BindingRow.cs" Link="Production/BindingRow.cs" />
-    <Compile Include="../BindingMigration.cs" Link="Production/BindingMigration.cs" />
+    <PackageReference Update="NuclearOption.Bindings" ExcludeAssets="contentFiles" GeneratePathProperty="true" />
+    <Compile Include="$(PkgNuclearOption_Bindings)/contentFiles/cs/any/NuclearBindings/BindingRow.cs" Link="Production/BindingRow.cs" />
+    <Compile Include="$(PkgNuclearOption_Bindings)/contentFiles/cs/any/NuclearBindings/BindingMigration.cs" Link="Production/BindingMigration.cs" />
     <Compile Include="../../../NuclearMinimap/MinimapBindingMigration.cs" Link="Production/MinimapBindingMigration.cs" />
     <Compile Include="../../../NuclearControllerGestures/GestureMigration.cs" Link="Production/GestureMigration.cs" />
     <Reference Include="BepInEx"><HintPath>$(BepInExCoreDir)/BepInEx.dll</HintPath></Reference>

@@ -18,22 +18,28 @@ namespace NuclearSounds
 
         // Swap only for this Refresh. The game's own warning conditions and timers
         // decide when to speak; failed loads and disabled options retain stock audio.
+        // While spectating is muted, the stock voice is silent too.
         private static AudioClip? Replace(object gauge, string field, bool enabled, AudioClip? replacement)
         {
             var voice = Traverse.Create(gauge).Field(field);
             var original = voice.GetValue<AudioClip>();
-            if (enabled && replacement != null) voice.SetValue(replacement);
+            if (Spectating.Muted) voice.SetValue(Spectating.Silence);
+            else if (enabled && replacement != null) voice.SetValue(replacement);
             return original;
         }
 
         [HarmonyPatch(typeof(GearIndicator), nameof(GearIndicator.Refresh))]
         private static class GearIndicatorRefreshPatch
         {
-            private static void Prefix(GearIndicator __instance, out AudioClip? __state)
-                => __state = Replace(__instance, "lowerGearVoice", Plugin.Instance.EnableLowerGearVoice.Value, _lowerGearClip);
+            private static void Prefix(GearIndicator __instance, out (AudioClip? lower, AudioClip? raise) __state)
+                => __state = (Replace(__instance, "lowerGearVoice", Plugin.Instance.EnableLowerGearVoice.Value, _lowerGearClip),
+                    Replace(__instance, "raiseGearVoice", false, null));
 
-            private static void Finalizer(GearIndicator __instance, AudioClip? __state)
-                => Traverse.Create(__instance).Field("lowerGearVoice").SetValue(__state);
+            private static void Finalizer(GearIndicator __instance, (AudioClip? lower, AudioClip? raise) __state)
+            {
+                Traverse.Create(__instance).Field("lowerGearVoice").SetValue(__state.lower);
+                Traverse.Create(__instance).Field("raiseGearVoice").SetValue(__state.raise);
+            }
         }
 
         [HarmonyPatch(typeof(SpeedGauge), nameof(SpeedGauge.Refresh))]

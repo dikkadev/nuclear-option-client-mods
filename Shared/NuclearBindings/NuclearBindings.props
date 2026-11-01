@@ -1,8 +1,9 @@
 <Project>
-  <!-- Compile into the consuming plugin; there is no runtime library DLL or plugin dependency.
+  <!-- The public source-only package NuclearOption.Bindings (github.com/clankagent/nuclear-option-bindings).
+       Its files compile into the consuming plugin; there is no runtime library DLL or plugin dependency.
        Consumers reference Rewired_Core, Assembly-CSharp-firstpass, Unity.TextMeshPro, UnityEngine.UI,
-       UnityEngine.InputLegacyModule and UnityEngine.IMGUIModule. -->
+       UnityEngine.InputLegacyModule and UnityEngine.IMGUIModule. Change the version only here. -->
   <ItemGroup>
-    <Compile Include="$(MSBuildThisFileDirectory)*.cs" Link="NuclearBindings/%(Filename)%(Extension)" />
+    <PackageReference Include="NuclearOption.Bindings" Version="0.1.0" />
   </ItemGroup>
 </Project>

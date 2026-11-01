@@ -90,9 +90,9 @@ namespace NuclearSpectator
             if (!(cam.followingUnit is Aircraft target) || target == null) return Skip("the cockpit view follows no aircraft");
             if (target.disabled) return Skip("the followed aircraft is disabled");
             if (target.cockpit == null) return Skip("the followed aircraft has no cockpit part");
-            if (GameManager.GetLocalAircraft(out _)) return Skip("you have an aircraft of your own");
+            if (OwnAircraft.Flying()) return Skip("you have an aircraft of your own");
             var hud = SceneSingleton<CombatHUD>.i;
-            if (hud != null && hud.aircraft != null) return Skip("CombatHUD still holds an aircraft");
+            if (hud != null && OwnAircraft.OnHud(hud)) return Skip("CombatHUD still holds a live aircraft");
             if (target.pilots == null || target.pilots.Length == 0 || target.pilots[0] == null || target.pilots[0].dead) return Skip("the pilot is dead");
             return target;
         }
@@ -238,7 +238,7 @@ namespace NuclearSpectator
         private static void HideHudIfStillSpectating()
         {
             var cam = SceneSingleton<CameraStateManager>.i;
-            if (cam == null || cam.currentState != cam.cockpitState || GameManager.GetLocalAircraft(out _)) return;
+            if (cam == null || cam.currentState != cam.cockpitState || OwnAircraft.Flying()) return;
             FlightHud.EnableCanvas(enable: false);
         }
 

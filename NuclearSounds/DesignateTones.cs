@@ -34,7 +34,7 @@ namespace NuclearSounds
 
         internal static void OnTargetListChanged(int previousCount, int currentCount)
         {
-            if (!Plugin.Instance.EnableDesignateTones.Value)
+            if (!Plugin.Instance.EnableDesignateTones.Value || Spectating.Muted)
             {
                 return;
             }

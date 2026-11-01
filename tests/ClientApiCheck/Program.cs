@@ -140,7 +140,7 @@ foreach (var mod in mods)
     Check(mod + " bindings use the shared binding editor", () =>
     {
         Require(!plugin.GetTypeReferences().Any(t => t.FullName == "BepInEx.Configuration.KeyboardShortcut"),
-            "Bind keys and buttons with Shared/NuclearBindings InputBinding, not BepInEx KeyboardShortcut.");
+            "Bind keys and buttons with the NuclearOption.Bindings InputBinding (Shared/NuclearBindings), not BepInEx KeyboardShortcut.");
         Require(!plugin.AssemblyReferences.Any(reference => reference.Name == "NuclearBindings"), "The binding helper must be compiled in as source.");
         bool consumer = AllTypes(plugin.Types).Any(t => t.FullName == "NuclearBindings.InputBinding");
         Require(consumer == (mod is "NuclearMinimap" or "NuclearControllerGestures" or "NuclearMfdWeapons" or "NuclearTargeting" or "NuclearSpectator"),

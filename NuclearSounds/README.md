@@ -10,6 +10,8 @@ The fuel-time readout follows the stock fuel gauge's visibility, font and warnin
 
 Install the `NuclearSounds` folder containing `NuclearSounds.dll` and the complete `assets/` directory into `BepInEx/plugins/`. Disable the former NuclearTacticalTools plugin before enabling NuclearSounds; they are incompatible because their warning hooks would overlap. NuclearSounds preserves the existing sound settings through the legacy configuration migration helper. Its config file is `BepInEx/config/dev.dikka.nuclearsounds.cfg`.
 
+While you spectate (in a mission without an aircraft of your own), the mod is silent by default: no missile, fuel, terrain or designation sounds, and the gear, overspeed and stall voices of a spectated cockpit are silent too, including the game's own. Turn on **Spectating → Play While Spectating** to hear them. The aircraft-loss callout for your own aircraft still plays. This needs no other mod.
+
 NuclearTargeting is optional. When installed, its target-selection event supplies the same designation-gained tone trigger as the former combined plugin. Deselection hooks remain available independently. NuclearSounds does not change target selection or add weapon-delivery controls.
 
 Audio clips load asynchronously after warning hooks, generated designation tones and fuel tracking are initialized. Stock built-in warning clips remain available until their replacements are ready, and when replacements are disabled or unavailable. Custom playback uses the game's Interface audio channel and respects its mixer/mute settings.

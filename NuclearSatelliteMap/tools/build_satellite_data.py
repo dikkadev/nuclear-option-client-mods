@@ -302,13 +302,15 @@ class TileSource:
     def fetch(self, xy: tuple[int, int]) -> tuple[tuple[int, int], Image.Image, bool]:
         x, y = xy
         url = self.url(x, y)
-        remote = url.startswith("/maps/candidate-v8/")
+        remote = url.startswith(("/maps/candidate-v8/", "https://", "http://"))
         missing = False
         if remote:
-            url = self.origin + "/" + url.removeprefix("/maps/candidate-v8/")
+            if url.startswith("/maps/candidate-v8/"):
+                url = self.origin + "/" + url.removeprefix("/maps/candidate-v8/")
             for attempt in range(4):
                 try:
-                    with urllib.request.urlopen(url, timeout=18) as response:
+                    request = urllib.request.Request(url, headers={"User-Agent": "NuclearSatelliteMap/0.2.0"})
+                    with urllib.request.urlopen(request, timeout=18) as response:
                         data = response.read(8 * 1024 * 1024 + 1)
                     if len(data) > 8 * 1024 * 1024:
                         raise ValueError(f"Tile exceeds 8 MiB: {url}")
@@ -701,7 +703,7 @@ def main() -> None:
     parser.add_argument("--source-level",type=int,default=6)
     parser.add_argument("--water-level",type=float,default=0.)
     parser.add_argument("--supersample",type=int,default=4)
-    parser.add_argument("--tile-origin",default="http://127.0.0.1:47833")
+    parser.add_argument("--tile-origin",default="https://map.scramd.com/maps/candidate-v8")
     parser.add_argument("--map-root",type=Path,default=root/"nuclear-option-map")
     parser.add_argument("--output-dir",type=Path,default=root/"nuclear_option_mods/dist/satellite-maps")
     parser.add_argument("--preview",action="store_true")

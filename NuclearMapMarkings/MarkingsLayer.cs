@@ -35,7 +35,6 @@ namespace NuclearMapMarkings
         private const float DashPixels = 6f;
         private const float GapPixels = 4f;
         private const float TickPixels = 4f;
-        private const float DotPixels = 2f;
         private const float RingDashPixels = 8f;
         private const float RingGapPixels = 6f;    // first ring; each further ring adds this again
         private const float RingGray = 0.7f;
@@ -54,7 +53,6 @@ namespace NuclearMapMarkings
 
         private readonly Dictionary<Unit, Track> tracks = new Dictionary<Unit, Track>();
         private readonly List<Unit> expired = new List<Unit>();
-        private readonly HashSet<Unit> emphasized = new HashSet<Unit>();
         private readonly ApproachEnd[] ends = new ApproachEnd[2];
         private readonly List<float> ticks = new List<float>();
         private readonly List<MapPoint> points = new List<MapPoint>();
@@ -404,7 +402,6 @@ namespace NuclearMapMarkings
         private void DrawPaths(Plugin config, float factor, float width)
         {
             var local = LocalAircraft();
-            CollectEmphasized(local);
             float opacity = config.PathOpacity.Value;
             foreach (var entry in tracks)
             {
@@ -421,65 +418,16 @@ namespace NuclearMapMarkings
                     continue;
                 }
 
-                bool isLong = unit == local || emphasized.Contains(unit);
-                if (!isLong && !config.ShortPathsForAll.Value)
-                {
-                    continue;
-                }
-
+                // Every unit gets the same short path, whether it is yours, selected or targeted.
                 float surface = kind == UnitMotionKind.Aircraft ? 1f : 3f;
-                float seconds = (isLong ? config.LongPathSeconds.Value : config.ShortPathSeconds.Value) * surface;
-                float maxLength = (isLong ? config.LongPathMaxLength.Value : config.ShortPathMaxLength.Value) * 1000f;
-                float horizon = MarkingsGeometry.PathHorizon(velocity.Length, seconds, maxLength);
-                float step = surface;
-                MarkingsGeometry.PredictPath(entry.Value.Position, velocity, turnRate, config.TurnFadeSeconds.Value * surface, horizon, step, points);
+                float horizon = MarkingsGeometry.PathHorizon(velocity.Length, config.PathSeconds.Value * surface, config.PathMaxLength.Value * 1000f);
+                MarkingsGeometry.PredictPath(entry.Value.Position, velocity, turnRate, config.TurnFadeSeconds.Value * surface, horizon, surface, points);
 
                 var color = UnitColor(unit, unit == local);
-                color.a *= opacity * (isLong ? 1f : 0.7f);
+                color.a *= opacity * 0.7f;
                 for (int i = 1; i < points.Count; i++)
                 {
-                    paths.Line(Layer(points[i - 1], factor), Layer(points[i], factor), isLong ? width : width * 0.75f, color);
-                }
-
-                if (!isLong)
-                {
-                    continue;
-                }
-
-                // A dot every 10 s for aircraft, every 30 s for vehicles and ships.
-                float dotEvery = 10f * surface;
-                for (int i = 1; i < points.Count; i++)
-                {
-                    float t = Mathf.Min(horizon, i * step);
-                    if (Mathf.Abs(t / dotEvery - Mathf.Round(t / dotEvery)) < 1e-3f)
-                    {
-                        paths.Dot(Layer(points[i], factor), DotPixels, color);
-                    }
-                }
-            }
-        }
-
-        private void CollectEmphasized(Aircraft? local)
-        {
-            emphasized.Clear();
-            foreach (var icon in map.selectedIcons)
-            {
-                if (icon is UnitMapIcon unitIcon && unitIcon.unit != null)
-                {
-                    emphasized.Add(unitIcon.unit);
-                }
-            }
-
-            var hud = SceneSingleton<CombatHUD>.i;
-            var targets = local != null && hud != null ? hud.GetTargetList() : null;
-            if (targets != null)
-            {
-                foreach (var target in targets)
-                {
-                    if (target != null)
-                    {
-                        emphasized.Add(target);
-                    }
+                    paths.Line(Layer(points[i - 1], factor), Layer(points[i], factor), width * 0.75f, color);
                 }
             }
         }

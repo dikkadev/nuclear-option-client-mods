@@ -31,7 +31,30 @@ internal static class SpectatorChecks
             keys.Sort(SpectatorCycle.Compare);
             Expect(string.Join(",", keys.Select(k => k.Name + k.Id)) == "Alpha4,Alpha5,alpha2,zulu1,Brawler3,Chicane9");
         });
+        test("spectator starts in the cockpit only from nothing or from a cockpit", () => {
+            Expect(SpectatorCycle.StartInCockpit(FollowedView.None, true, true));
+            Expect(!SpectatorCycle.StartInCockpit(FollowedView.None, false, true));
+            Expect(!SpectatorCycle.StartInCockpit(FollowedView.Outside, true, true));
+            Expect(SpectatorCycle.StartInCockpit(FollowedView.Cockpit, false, true));
+            Expect(!SpectatorCycle.StartInCockpit(FollowedView.Cockpit, true, false));
+        });
+        test("hide all UI steps through game UI, everything and nothing", () => {
+            Expect(SpectatorCycle.NextHideLevel(HideLevel.None) == HideLevel.GameUi);
+            Expect(SpectatorCycle.NextHideLevel(HideLevel.GameUi) == HideLevel.All);
+            Expect(SpectatorCycle.NextHideLevel(HideLevel.All) == HideLevel.None);
+        });
+        test("cockpit movement speed curves with the stick and ramps into fast mode", () => {
+            Expect(Near(SpectatorCycle.MoveSpeed(1f, 10f, 2f, 4f, 0f), 10f));
+            Expect(Near(SpectatorCycle.MoveSpeed(0.5f, 10f, 2f, 4f, 0f), 2.5f));
+            Expect(Near(SpectatorCycle.MoveSpeed(0f, 10f, 2f, 4f, 1f), 0f));
+            Expect(Near(SpectatorCycle.MoveSpeed(1f, 10f, 2f, 4f, 1f), 40f));
+            Expect(Near(SpectatorCycle.MoveSpeed(1f, 10f, 2f, 4f, 0.5f), 25f));
+            Expect(Near(SpectatorCycle.MoveSpeed(2f, 10f, 2f, 4f, 2f), 40f));
+            Expect(Near(SpectatorCycle.MoveSpeed(0.5f, 10f, 1f, 1f, 1f), 5f));
+        });
     }
+
+    private static bool Near(float value, float expected) => Math.Abs(value - expected) < 0.001f;
 
     private static void Expect(bool condition)
     {

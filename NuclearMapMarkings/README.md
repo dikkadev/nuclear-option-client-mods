@@ -11,7 +11,7 @@ Every marking has its own switch for the full map and for the minimap. The minim
 - **Runways and approaches:** runways drawn to scale, with a dashed centerline extending outward from each landing threshold and a cross tick every 1 km. Line length shows runway size within a fixed range: runways up to 600 m get 2 km, runways from 2 km on get 5 km. Between those, the line grows more slowly as the runway gets longer, so big bases do not dominate the map. The game log lists each runway's measured length once per map, for tuning. Reversible runways get a line at both ends. Carrier runways follow the ship.
 - **Bases:** friendly and neutral bases by default; optionally friendly only or every base. Colors follow the map's friendly/neutral/hostile icon colors. Spectators see every base.
 - **Range rings:** gray, semi-transparent dashed rings at 10 and 20 km around your aircraft, on the full map and the minimap. Each ring further out has wider gaps between its dashes, so the rings are easy to tell apart. `Distances` is a list of radii in kilometres, up to eight rings. Minimap rings are 1.5 times as wide so they stay readable on the small cockpit copy.
-- **Predicted paths:** where a unit will be if it keeps its current speed and turn. Your aircraft, units selected on the map and your HUD targets get a long path (60 s by default) with a dot every 10 s. Other moving aircraft get a short 10 s path. Vehicles and ships use three times these times, with a dot every 30 s. Path length grows almost linearly with speed when slow and levels off towards a maximum, 8 km for long paths and 2.5 km for short ones, so fast aircraft do not draw very long lines. At Mach 1 a long path is about 7.4 km instead of 20 km. Missiles and buildings never get paths.
+- **Predicted paths:** where a unit will be if it keeps its current speed and turn. Every moving aircraft gets the same thin 10 s path, including yours, units selected on the map and your HUD targets; vehicles and ships get 30 s. Path length grows almost linearly with speed when slow and levels off towards 2.5 km, so fast aircraft do not draw very long lines. Missiles and buildings never get paths.
 - **Fair use of information:** enemy paths use only your team's actively observed track data, the same data as the native enemy icon. Paths disappear when the track is lost. Changing team clears all motion history.
 - Markings draw beneath map icons and labels and keep a constant line width while zooming.
 
@@ -73,12 +73,9 @@ Opacity = 0.5
 [Predicted Paths]
 Show On Full Map = true
 Show On Minimap = true
-Short Paths For All Units = true
-Short Path Seconds = 10
-Long Path Seconds = 60
+Path Seconds = 10
 ## Kilometres; 0 means no limit
-Short Path Max Length = 2.5
-Long Path Max Length = 8
+Path Max Length = 2.5
 ## 0 draws straight lines
 Turn Fade Seconds = 6
 Opacity = 0.8
@@ -88,11 +85,11 @@ All values apply live through Configuration Manager.
 
 The prediction measures each unit's speed over the last second and its turn rate over the last two seconds. Speed stays constant. The turn eases out over `Turn Fade Seconds`, so the path bends by at most the current turn rate times that value (about 6 s of turn by default) instead of curling into a loop. Measured turns under about 2°/s count as straight, because they are usually position jitter. Turn rates are capped at about 20°/s for aircraft and 6°/s for vehicles and ships.
 
-Version 0.1.1 fixes paths that turned far too much in 0.1.0, which kept the measured turn rate constant for the whole path. It also changed tick spacing from 2 km to 1 km for new configs. Version 0.1.2 replaces the fixed 15 km line (0.1.0) and the linear 2.5x rule (0.1.1) with the bounded 3 to 7.5 km range above; the old keys `Approach Length` and `Approach Length Per Runway Length` are unused. Version 0.1.3 shortens approach lines to two thirds (2 to 5 km), shows range rings on the full map, makes them stronger (opacity 0.6, wider on the minimap) and limits path length. Saved settings that still hold the 0.1.2 defaults for approach length, ring opacity and full-map rings move to the new defaults once; changed values are kept. `[Internal] Defaults Revision` records this. Version 0.1.4 costs less frame time: runways and range rings rebuild only when the zoom, view or settings change (and once per second for base ownership), the rings follow your aircraft without a rebuild, and predicted paths update 10 times per second instead of every frame. Version 0.1.5 draws range rings as gray dashed lines (8 px dashes; gaps of 6 px on the first ring, 12 px on the second and so on) instead of solid white, with defaults of 10 and 20 km at opacity 0.5. Saved settings that still hold `10, 20, 40` or opacity 0.6 move to the new defaults once.
+Version 0.1.1 fixes paths that turned far too much in 0.1.0, which kept the measured turn rate constant for the whole path. It also changed tick spacing from 2 km to 1 km for new configs. Version 0.1.2 replaces the fixed 15 km line (0.1.0) and the linear 2.5x rule (0.1.1) with the bounded 3 to 7.5 km range above; the old keys `Approach Length` and `Approach Length Per Runway Length` are unused. Version 0.1.3 shortens approach lines to two thirds (2 to 5 km), shows range rings on the full map, makes them stronger (opacity 0.6, wider on the minimap) and limits path length. Saved settings that still hold the 0.1.2 defaults for approach length, ring opacity and full-map rings move to the new defaults once; changed values are kept. `[Internal] Defaults Revision` records this. Version 0.1.4 costs less frame time: runways and range rings rebuild only when the zoom, view or settings change (and once per second for base ownership), the rings follow your aircraft without a rebuild, and predicted paths update 10 times per second instead of every frame. Version 0.1.5 draws range rings as gray dashed lines (8 px dashes; gaps of 6 px on the first ring, 12 px on the second and so on) instead of solid white, with defaults of 10 and 20 km at opacity 0.5. Saved settings that still hold `10, 20, 40` or opacity 0.6 move to the new defaults once. Version 0.1.6 drops the long paths with dots: your aircraft, selected units and targets get the same short path as everything else. `Short Path Seconds` and `Short Path Max Length` become `Path Seconds` and `Path Max Length` with their saved values; the long path settings and `Short Paths For All Units` are removed from the file.
 
 ## Client testing
 
-Client feedback drives the length calibration: 0.1.1 and 0.1.2 followed reports that approach lines were too long or too short, and 0.1.3 follows a 2026-10-29 report that 0.1.2's approach lines were about 1.5 times too long, range rings were too faint and missing from the full map, and paths grew too long below Mach 1. 0.1.5 follows a 2026-10-30 report that the solid white rings were far too prominent. Offline checks cover the geometry, the path length limit and the motion estimate only.
+Client feedback drives the length calibration: 0.1.1 and 0.1.2 followed reports that approach lines were too long or too short, and 0.1.3 follows a 2026-10-29 report that 0.1.2's approach lines were about 1.5 times too long, range rings were too faint and missing from the full map, and paths grew too long below Mach 1. 0.1.5 follows a 2026-10-30 report that the solid white rings were far too prominent. 0.1.6 follows a 2026-10-31 request for short paths only, whatever is selected. Offline checks cover the geometry, the path length limit and the motion estimate only.
 
 ## Local Development Install
 

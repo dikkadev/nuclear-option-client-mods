@@ -228,6 +228,11 @@
       "fieldType": "UnityEngine.AudioClip"
     },
     {
+      "type": "GearIndicator",
+      "name": "raiseGearVoice",
+      "fieldType": "UnityEngine.AudioClip"
+    },
+    {
       "type": "LandingScreenUI",
       "name": "altitude",
       "fieldType": "UnityEngine.UI.Text"

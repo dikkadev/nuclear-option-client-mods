@@ -81,7 +81,7 @@ GPUs limit one texture to 16384 pixels per side, so larger maps are split into t
 
 ## Producing data
 
-`tools/build_satellite_data.py` builds the `.nosat` files from the separate `nuclear-option-map` satellite dataset and terrain geometry:
+`tools/build_satellite_data.py` builds the `.nosat` files using local `nuclear-option-map` metadata and terrain geometry. Satellite tiles come from `https://map.scramd.com` by default; no mapwork VM or SSH tunnel is required. Absolute HTTP(S) tile URLs in the local catalog are supported. Override `--tile-origin` to use another tile source:
 
 ```bash
 uv run --script tools/build_satellite_data.py --map all --preview

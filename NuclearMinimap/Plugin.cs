@@ -155,7 +155,8 @@ namespace NuclearMinimap
         // cockpit screen that another mod (NuclearSpectator) initialized for it.
         private Aircraft? SpectatedAircraft()
         {
-            if (GameManager.GetLocalAircraft(out _)) return null;
+            // A destroyed own aircraft stays the local aircraft until the server removes it.
+            if (GameManager.GetLocalAircraft(out var own) && !own.disabled) return null;
             var camera = SceneSingleton<CameraStateManager>.i;
             if (camera == null || camera.currentState == null || camera.currentState != camera.cockpitState) return null;
             if (!(camera.followingUnit is Aircraft followed) || followed == null || followed.disabled) return null;

@@ -4,24 +4,33 @@ using UnityEngine;
 
 namespace NuclearSpectator
 {
-    // One key hides every on-screen interface (HUD, chat, kill feed, map, panels) for
-    // clean video and screenshots. Canvases that render into cockpit screens and other
-    // render textures, and world-space canvases, stay visible. The full map brings the
-    // interface back while it is open.
+    // One key steps through hiding the on-screen interface for clean video and
+    // screenshots: the game's interface (HUD, chat, kill feed, map, panels) with the
+    // mod's info panel kept, then everything, then nothing. Canvases that render into
+    // cockpit screens and other render textures, and world-space canvases, stay visible.
+    // The full map brings the interface back while it is open. The info panel hides
+    // itself in the last step (HidesOverlay), so it is never in the scanned set.
     internal sealed class CleanView
     {
         private const float ScanSeconds = 0.25f;
         private readonly List<Canvas> hidden = new List<Canvas>();
-        private bool toggled;
+        private readonly InfoPanel info;
+        private HideLevel level;
         private float nextScan;
         private int toggles;
+
+        internal CleanView(InfoPanel info) => this.info = info;
+
+        internal bool HidesOverlay => level == HideLevel.All && !DynamicMap.mapMaximized;
 
         internal void Update()
         {
             var plugin = Plugin.Instance;
-            if (plugin == null || !plugin.Enabled.Value)
+            // Spectating only: while you fly the key does nothing, and getting an aircraft
+            // shows everything again.
+            if (plugin == null || !plugin.Enabled.Value || !FollowView.Spectating())
             {
-                toggled = false;
+                level = HideLevel.None;
                 Restore();
                 return;
             }
@@ -31,11 +40,12 @@ namespace NuclearSpectator
             if (ui != null && ui.menuCanvas != null && ui.menuCanvas.enabled) return;
             if (!InputFieldChecker.InsideInputField && plugin.HideAllUi.IsDown())
             {
-                toggled = !toggled;
+                level = SpectatorCycle.NextHideLevel(level);
                 nextScan = 0f;
-                if (toggles++ < 20) Plugin.Log?.LogInfo("Hide All UI " + (toggled ? "on" : "off") + ".");
+                if (toggles++ < 30)
+                    Plugin.Log?.LogInfo(level == HideLevel.None ? "Hide All UI off." : level == HideLevel.GameUi ? "Hide All UI: game interface hidden, info panel kept." : "Hide All UI: everything hidden.");
             }
-            if (!toggled || DynamicMap.mapMaximized)
+            if (level == HideLevel.None || DynamicMap.mapMaximized)
             {
                 Restore();
                 return;
@@ -45,7 +55,7 @@ namespace NuclearSpectator
             foreach (var canvas in Object.FindObjectsOfType<Canvas>())
             {
                 if (canvas == null || !canvas.enabled || !canvas.isRootCanvas || !OnScreen(canvas)) continue;
-                if (ui != null && canvas == ui.menuCanvas) continue;
+                if ((ui != null && canvas == ui.menuCanvas) || info.Owns(canvas)) continue;
                 canvas.enabled = false;
                 if (!hidden.Contains(canvas)) hidden.Add(canvas);
             }
@@ -54,7 +64,7 @@ namespace NuclearSpectator
 
         internal void Dispose()
         {
-            toggled = false;
+            level = HideLevel.None;
             Restore();
         }
 

@@ -6,7 +6,8 @@ using UnityEngine.UI;
 
 namespace NuclearSpectator
 {
-    // Pilot, type, speed, altitude and heading of the followed aircraft, bottom centre.
+    // Pilot, type, speed, altitude and heading of the followed aircraft, bottom centre,
+    // with the Follow Nearest When Lost status below. Either part can show alone.
     internal sealed class InfoPanel
     {
         private const float RefreshSeconds = 0.1f;
@@ -16,15 +17,28 @@ namespace NuclearSpectator
         private RectTransform? panel;
         private TextMeshProUGUI? text;
         private float nextRefresh;
+        private string? lastStatus;
         private bool broken;
 
-        internal void Update()
+        internal bool Owns(Canvas canvas) => root != null && canvas.gameObject == root;
+
+        // `hidden`: Hide All UI is in its hide-everything step.
+        internal void Update(bool hidden, AutoFollow follow)
         {
             if (broken) return;
             try
             {
-                var aircraft = Target();
-                if (aircraft == null)
+                Aircraft? aircraft = null;
+                string? status = null;
+                var plugin = Plugin.Instance;
+                var cam = SceneSingleton<CameraStateManager>.i;
+                if (!hidden && plugin != null && plugin.Enabled.Value && cam != null && cam.currentState != null
+                    && !DynamicMap.mapMaximized && GameManager.flightControlsEnabled && FollowView.Spectating())
+                {
+                    aircraft = Target(plugin, cam);
+                    status = Status(plugin, cam, follow);
+                }
+                if (aircraft == null && status == null)
                 {
                     if (root != null && root.activeSelf) root.SetActive(false);
                     return;
@@ -35,9 +49,10 @@ namespace NuclearSpectator
                     root.SetActive(true);
                     nextRefresh = 0f;
                 }
-                if (Time.unscaledTime < nextRefresh) return;
+                if (Time.unscaledTime < nextRefresh && status == lastStatus) return;
                 nextRefresh = Time.unscaledTime + RefreshSeconds;
-                Refresh(aircraft);
+                lastStatus = status;
+                Refresh(plugin!, aircraft, status);
             }
             catch (Exception error)
             {
@@ -55,27 +70,37 @@ namespace NuclearSpectator
             text = null;
         }
 
-        private static Aircraft? Target()
+        private static Aircraft? Target(Settings plugin, CameraStateManager cam)
         {
-            var plugin = Plugin.Instance;
-            if (plugin == null || !plugin.Enabled.Value || !plugin.ShowInfo.Value) return null;
-            if (DynamicMap.mapMaximized || !GameManager.flightControlsEnabled || GameManager.GetLocalAircraft(out _)) return null;
-            var cam = SceneSingleton<CameraStateManager>.i;
-            if (cam == null || cam.currentState == null) return null;
+            if (!plugin.ShowInfo.Value) return null;
             if (cam.currentState == cam.cockpitState && !plugin.InfoInCockpit.Value) return null;
             if (!(cam.followingUnit is Aircraft aircraft) || aircraft == null || aircraft.disabled) return null;
             return aircraft;
         }
 
-        private void Refresh(Aircraft aircraft)
+        private static string? Status(Settings plugin, CameraStateManager cam, AutoFollow follow)
         {
-            var plugin = Plugin.Instance!;
-            var player = aircraft.Player;
-            string pilot = player != null ? player.GetDisplayName(PlayerNameContext.Other) ?? "" : "AI";
-            float heading = Mathf.Repeat(aircraft.transform.eulerAngles.y, 360f);
-            string value = $"<b>{Escape(pilot)}</b>   {Escape(aircraft.definition.unitName)}\n"
-                + $"{UnitConverter.SpeedReading(aircraft.speed)}   ALT {UnitConverter.AltitudeReading(aircraft.transform.position.GlobalY())}   "
-                + $"AGL {UnitConverter.AltitudeReading(aircraft.radarAlt)}   HDG {Mathf.RoundToInt(heading) % 360:000}";
+            if (!plugin.ShowFollowNearestStatus.Value) return null;
+            if (follow.Pending) return "<color=#9FE0A0>Following the nearest aircraft...</color>";
+            if (!(cam.followingUnit is Aircraft aircraft) || !FollowView.Alive(aircraft)) return null;
+            return plugin.FollowNearest.Value
+                ? "<color=#9FE0A0>Follow nearest when lost: on</color>"
+                : "<color=#A0A0A0>Follow nearest when lost: off</color>";
+        }
+
+        private void Refresh(Settings plugin, Aircraft? aircraft, string? status)
+        {
+            string value = string.Empty;
+            if (aircraft != null)
+            {
+                var player = aircraft.Player;
+                string pilot = player != null ? player.GetDisplayName(PlayerNameContext.Other) ?? "" : "AI";
+                float heading = Mathf.Repeat(aircraft.transform.eulerAngles.y, 360f);
+                value = $"<b>{Escape(pilot)}</b>   {Escape(aircraft.definition.unitName)}\n"
+                    + $"{UnitConverter.SpeedReading(aircraft.speed)}   ALT {UnitConverter.AltitudeReading(aircraft.transform.position.GlobalY())}   "
+                    + $"AGL {UnitConverter.AltitudeReading(aircraft.radarAlt)}   HDG {Mathf.RoundToInt(heading) % 360:000}";
+            }
+            if (status != null) value += (value.Length > 0 ? "\n" : "") + "<size=75%>" + status + "</size>";
             if (text!.fontSize != plugin.InfoFontSize.Value) text.fontSize = plugin.InfoFontSize.Value;
             if (text.text != value) text.text = value;
             panel!.sizeDelta = text.GetPreferredValues(value) + Padding;

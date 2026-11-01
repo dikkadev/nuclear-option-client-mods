@@ -44,7 +44,7 @@ namespace NuclearSounds
 
         private void Update()
         {
-            if (!Plugin.Instance.EnableTerrainWarnings.Value)
+            if (!Plugin.Instance.EnableTerrainWarnings.Value || Spectating.Muted)
             {
                 _activeWarning = WarningType.None;
                 return;

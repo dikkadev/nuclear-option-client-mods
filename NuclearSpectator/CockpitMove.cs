@@ -7,13 +7,15 @@ using UnityEngine;
 namespace NuclearSpectator
 {
     // While spectating from another aircraft's cockpit, the free-camera move inputs
-    // (left stick, WASD) move the eye relative to the view, attached to the aircraft.
-    // The native view reset ("Center") returns to the pilot's eye point.
+    // (left stick, WASD) move the eye relative to the view, attached to the aircraft,
+    // faster while Fast Move is held.
+    // The native view reset ("Center") glides back to the pilot's eye point.
     //
     // The native state writes the look (mouse, head tracker) as the camera's local pose
     // under cameraPivot, which turns with the aircraft. With the horizon locked, that
     // same local pose is applied to a level frame (aircraft heading, no pitch or roll)
-    // instead, so head tracking turns, tilts and rolls relative to the horizon.
+    // instead, so head tracking turns, tilts and rolls relative to the horizon. Locking
+    // and unlocking turn the view between the two frames over LockBlendSeconds.
     internal static class CockpitMove
     {
         // In the pivot frame, or in the level frame while the horizon is locked.
@@ -26,6 +28,17 @@ namespace NuclearSpectator
         private static Quaternion nativeRotation;
         private static Quaternion level = Quaternion.identity;
         private static bool levelValid;
+        // 0 normal to 1 fast, eased in and out while Fast Move is held.
+        private static float fastRamp;
+        private const float FastRampSeconds = 0.4f;
+        // 0 aircraft frame to 1 level frame; the view turns between them instead of jumping.
+        private static float lockBlend;
+        private const float LockBlendSeconds = 0.6f;
+        // Center glides the eye back to the seat; any move input stops the glide.
+        private static bool returning;
+        private static Vector3 returnFrom;
+        private static float returnTime;
+        private static float returnSeconds;
 
         // Restore last frame's native local pose, so the native state sees the pilot's
         // eye point and its own look angles.
@@ -42,7 +55,7 @@ namespace NuclearSpectator
             var plugin = Plugin.Instance;
             var aircraft = cam.followingUnit as Aircraft;
             if (plugin == null || !plugin.Enabled.Value || !plugin.CockpitMove.Value || aircraft == null
-                || cam.currentState != cam.cockpitState || GameManager.GetLocalAircraft(out _))
+                || cam.currentState != cam.cockpitState || OwnAircraft.Flying())
             {
                 // Leaving the cockpit view, native LeaveState already restored the exterior.
                 Reset(restoreInterior: cam.currentState == cam.cockpitState);
@@ -54,6 +67,9 @@ namespace NuclearSpectator
             UpdateLevel(pivot);
             nativePosition = cam.transform.localPosition;
             nativeRotation = cam.transform.localRotation;
+            // Read every frame: a skipped frame makes a binding wait for release.
+            bool fast = plugin.FastMove.IsHeld();
+            fastRamp = Mathf.MoveTowards(fastRamp, fast ? 1f : 0f, Time.unscaledDeltaTime / FastRampSeconds);
 
             if (GameManager.flightControlsEnabled && !InputFieldChecker.InsideInputField && !DynamicMap.mapMaximized)
             {
@@ -63,9 +79,11 @@ namespace NuclearSpectator
                     SetHorizonLock(!horizonLocked, pivot);
                     Plugin.Log?.LogInfo("Spectator horizon lock " + (horizonLocked ? "on" : "off") + ".");
                 }
-                if (input.GetButtonDown("Center"))
+                // Sampled before the || so Center cannot skip it: a skipped frame makes a binding wait for release.
+                bool returnToSeat = plugin.ReturnToSeat.IsDown();
+                if (input.GetButtonDown("Center") || returnToSeat)
                 {
-                    offset = Vector3.zero;
+                    StartReturn();
                 }
                 else
                 {
@@ -73,27 +91,61 @@ namespace NuclearSpectator
                     float right = input.GetAxis("Move Lateral");
                     float up = input.GetAxis("Move Vertical");
                     if (plugin.TriggersMoveVertically.Value) up = Mathf.Clamp(up + TriggerAxis(input), -1f, 1f);
-                    if (forward != 0f || right != 0f || up != 0f)
+                    var stick = new Vector3(right, up, forward);
+                    float deflection = stick.magnitude;
+                    if (deflection > 0f)
                     {
-                        float speed = plugin.MoveSpeed.Value * (Input.GetKey(KeyCode.LeftShift) ? 5f : 1f);
-                        var frame = Frame(pivot);
+                        returning = false;
+                        float speed = SpectatorCycle.MoveSpeed(deflection, plugin.MoveSpeed.Value, plugin.StickCurve.Value, plugin.FastMultiplier.Value, fastRamp);
+                        stick /= deflection;
+                        var frame = BlendedFrame(pivot);
                         var view = frame * nativeRotation;
-                        var world = view * Vector3.forward * forward + view * Vector3.right * right + frame * Vector3.up * up;
-                        offset += Quaternion.Inverse(frame) * world * (speed * Time.unscaledDeltaTime);
+                        var world = view * Vector3.forward * stick.z + view * Vector3.right * stick.x + frame * Vector3.up * stick.y;
+                        offset += Quaternion.Inverse(Frame(pivot)) * world * (speed * Time.unscaledDeltaTime);
                         offset = Vector3.ClampMagnitude(offset, plugin.MaxMoveDistance.Value);
                     }
                 }
             }
+            UpdateReturn();
+            lockBlend = Mathf.MoveTowards(lockBlend, horizonLocked ? 1f : 0f, Time.unscaledDeltaTime / LockBlendSeconds);
 
             overridden = true;
-            if (horizonLocked)
-                cam.transform.SetPositionAndRotation(pivot.position + level * (nativePosition + offset), level * nativeRotation);
+            if (lockBlend > 0f)
+            {
+                // The look and the seat turn with the blended frame; the offset stays in the
+                // target frame, so the eye does not jump when the lock changes.
+                var frame = BlendedFrame(pivot);
+                cam.transform.SetPositionAndRotation(pivot.position + frame * nativePosition + Frame(pivot) * offset, frame * nativeRotation);
+            }
             else
                 cam.transform.localPosition = nativePosition + offset;
             SetExterior(aircraft, offset.magnitude > plugin.ExteriorDistance.Value);
         }
 
         private static Quaternion Frame(Transform pivot) => horizonLocked ? level : pivot.rotation;
+
+        private static Quaternion BlendedFrame(Transform pivot) => Quaternion.Slerp(pivot.rotation, level, Ease(lockBlend));
+
+        private static float Ease(float t) => t * t * (3f - 2f * t);
+
+        // Longer glides take a little longer, up to a second for the full distance.
+        private static void StartReturn()
+        {
+            if (offset == Vector3.zero) return;
+            returning = true;
+            returnFrom = offset;
+            returnTime = 0f;
+            returnSeconds = Mathf.Clamp(0.4f + 0.025f * offset.magnitude, 0.4f, 1f);
+        }
+
+        private static void UpdateReturn()
+        {
+            if (!returning) return;
+            returnTime += Time.unscaledDeltaTime;
+            float t = Mathf.Clamp01(returnTime / returnSeconds);
+            offset = returnFrom * (1f - Ease(t));
+            if (t >= 1f) returning = false;
+        }
 
         // The aircraft's heading on the horizon. Pointing straight up or down, the heading
         // comes from the aircraft's up axis; keep the last one if both are vertical. Over the
@@ -116,9 +168,11 @@ namespace NuclearSpectator
         // Keeps the eye where it is when the lock changes the frame the offset is kept in.
         private static void SetHorizonLock(bool value, Transform pivot)
         {
-            var world = Frame(pivot) * offset;
+            var before = Frame(pivot);
             horizonLocked = value;
-            offset = Quaternion.Inverse(Frame(pivot)) * world;
+            var change = Quaternion.Inverse(Frame(pivot)) * before;
+            offset = change * offset;
+            returnFrom = change * returnFrom;
         }
 
         // Right trigger up, left trigger down, read from the named gamepad template.
@@ -144,6 +198,9 @@ namespace NuclearSpectator
             exterior = false;
             overridden = false;
             levelValid = false;
+            fastRamp = 0f;
+            returning = false;
+            lockBlend = horizonLocked ? 1f : 0f;
         }
 
         private static void Reset(bool restoreInterior)
@@ -153,6 +210,9 @@ namespace NuclearSpectator
             exterior = false;
             owner = null;
             levelValid = false;
+            fastRamp = 0f;
+            returning = false;
+            lockBlend = horizonLocked ? 1f : 0f;
         }
 
         // Away from the seat, show the outside of the aircraft and its pilot instead of

@@ -44,11 +44,8 @@ namespace NuclearMapMarkings
 
         internal ConfigEntry<bool> PathsOnFullMap { get; private set; } = null!;
         internal ConfigEntry<bool> PathsOnMinimap { get; private set; } = null!;
-        internal ConfigEntry<bool> ShortPathsForAll { get; private set; } = null!;
-        internal ConfigEntry<float> ShortPathSeconds { get; private set; } = null!;
-        internal ConfigEntry<float> LongPathSeconds { get; private set; } = null!;
-        internal ConfigEntry<float> ShortPathMaxLength { get; private set; } = null!;
-        internal ConfigEntry<float> LongPathMaxLength { get; private set; } = null!;
+        internal ConfigEntry<float> PathSeconds { get; private set; } = null!;
+        internal ConfigEntry<float> PathMaxLength { get; private set; } = null!;
         internal ConfigEntry<float> TurnFadeSeconds { get; private set; } = null!;
         internal ConfigEntry<float> PathOpacity { get; private set; } = null!;
 
@@ -123,16 +120,10 @@ namespace NuclearMapMarkings
                 "Draw predicted paths on the full map.");
             PathsOnMinimap = Config.Bind(paths, "Show On Minimap", true,
                 "Draw predicted paths on the minimap.");
-            ShortPathsForAll = Config.Bind(paths, "Short Paths For All Units", true,
-                "Draw a short path on every moving aircraft, vehicle and ship the map shows. Enemies are included only while your team observes them. Missiles never get paths.");
-            ShortPathSeconds = Config.Bind(paths, "Short Path Seconds", 10f,
-                new ConfigDescription("Prediction length for other aircraft in seconds. Vehicles and ships use three times this.", new AcceptableValueRange<float>(2f, 60f)));
-            LongPathSeconds = Config.Bind(paths, "Long Path Seconds", 60f,
-                new ConfigDescription("Prediction length for your aircraft, selected map units and your HUD targets, with a dot every 10 seconds. Vehicles and ships use three times this, with a dot every 30 seconds.", new AcceptableValueRange<float>(10f, 180f)));
-            ShortPathMaxLength = Config.Bind(paths, "Short Path Max Length", 2.5f,
-                new ConfigDescription("Upper limit for short paths in kilometres. Paths grow with speed almost linearly when slow and level off towards this length. 0 means no limit.", new AcceptableValueRange<float>(0f, 100f)));
-            LongPathMaxLength = Config.Bind(paths, "Long Path Max Length", 8f,
-                new ConfigDescription("Upper limit for long paths in kilometres. Paths grow with speed almost linearly when slow and level off towards this length; dots stay 10 seconds apart, so faster units show fewer dots. 0 means no limit.", new AcceptableValueRange<float>(0f, 100f)));
+            PathSeconds = Config.Bind(paths, "Path Seconds", 10f,
+                new ConfigDescription("Prediction length for aircraft in seconds, the same for every moving unit the map shows, including yours, selected units and targets. Vehicles and ships use three times this. Enemies get paths only while your team observes them; missiles never do.", new AcceptableValueRange<float>(2f, 60f)));
+            PathMaxLength = Config.Bind(paths, "Path Max Length", 2.5f,
+                new ConfigDescription("Upper limit for paths in kilometres. Paths grow with speed almost linearly when slow and level off towards this length. 0 means no limit.", new AcceptableValueRange<float>(0f, 100f)));
             TurnFadeSeconds = Config.Bind(paths, "Turn Fade Seconds", 6f,
                 new ConfigDescription("How quickly a predicted turn eases out, in seconds. The path bends by at most the current turn rate times this value, so a sustained turn is not drawn as a loop. 0 draws straight lines. Vehicles and ships use three times this.", new AcceptableValueRange<float>(0f, 30f)));
             PathOpacity = Config.Bind(paths, "Opacity", 0.8f,
@@ -180,6 +171,29 @@ namespace NuclearMapMarkings
                 revision.Value = 2;
                 Logger.LogInfo("Moved settings that still held 0.1.4 range ring defaults to the 0.1.5 defaults.");
             }
+
+            if (revision.Value < 3)
+            {
+                // 0.1.6 drops long paths: the short path settings carry over under their new names,
+                // and the long path settings leave the file.
+                PathSeconds.Value = Take("Short Path Seconds", PathSeconds.Value);
+                PathMaxLength.Value = Take("Short Path Max Length", PathMaxLength.Value);
+                Take("Long Path Seconds", 60f);
+                Take("Long Path Max Length", 8f);
+                Take("Short Paths For All Units", true);
+                revision.Value = 3;
+                Config.Save();
+                Logger.LogInfo("Moved short path settings to Path Seconds and Path Max Length; long paths are gone.");
+            }
+        }
+
+        // Reads a removed Predicted Paths setting (its saved value, or fallback) and deletes it from the file.
+        private T Take<T>(string key, T fallback)
+        {
+            var entry = Config.Bind("Predicted Paths", key, fallback);
+            T value = entry.Value;
+            Config.Remove(entry.Definition);
+            return value;
         }
 
         private static void Replace(ConfigEntry<float> entry, float previous, float current)

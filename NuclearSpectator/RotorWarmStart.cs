@@ -33,7 +33,8 @@ namespace NuclearSpectator
         private static void Apply(Aircraft aircraft)
         {
             var plugin = Plugin.Instance;
-            if (plugin == null || !plugin.Enabled.Value || !plugin.FixRotors.Value) return;
+            // Spectating only: nothing changes while you fly.
+            if (plugin == null || !plugin.Enabled.Value || !plugin.FixRotors.Value || !FollowView.Spectating()) return;
             if (aircraft == null || aircraft.LocalSim || aircraft.disabled) return;
             if (!(aircraft.radarAlt > aircraft.definition.spawnOffset.y + 1f)) return;
             int rotors = 0, props = 0;

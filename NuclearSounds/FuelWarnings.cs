@@ -193,7 +193,7 @@ namespace NuclearSounds
                 var clip = currentBand == FuelWarningState.WarningBand.Bingo
                     ? FuelWarningState.BingoFuelClip
                     : FuelWarningState.LowFuelClip;
-                if (clip != null)
+                if (clip != null && !Spectating.Muted)
                 {
                     InterfaceAudio.PlayOneShot(clip, 3f);
                     FuelWarningState.LastAnnouncedBand = currentBand;

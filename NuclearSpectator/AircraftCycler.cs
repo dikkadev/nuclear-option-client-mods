@@ -20,7 +20,7 @@ namespace NuclearSpectator
             bool previous = plugin.PreviousAircraft.IsDown() && !next;
             if (!next && !previous) return;
             if (InputFieldChecker.InsideInputField || !Application.isFocused || !GameManager.flightControlsEnabled) return;
-            if (GameManager.GetLocalAircraft(out _)) return;
+            if (OwnAircraft.Flying()) return;
             var cam = SceneSingleton<CameraStateManager>.i;
             if (cam == null || cam.currentState == null) return;
 
@@ -32,12 +32,8 @@ namespace NuclearSpectator
             if (index < 0 || index == current) { Candidates.Clear(); return; }
             var target = Candidates[index].aircraft;
             Candidates.Clear();
-
-            bool wasCockpit = cam.currentState == cam.cockpitState;
+            // The SetFollowingUnit patch picks the cockpit or outside view (FollowView).
             cam.SetFollowingUnit(target);
-            if (wasCockpit && plugin.KeepCockpitView.Value && target.cockpitViewPoint != null && !target.HasEjected()
-                && ReferenceEquals(cam.followingUnit, target))
-                cam.SwitchState(cam.cockpitState);
         }
 
         // Your team's aircraft when you are in a team (the camera would drop enemies it
@@ -48,7 +44,7 @@ namespace NuclearSpectator
             bool teamOnly = GameManager.GetLocalHQ(out var localHq);
             foreach (var unit in UnitRegistry.allUnits)
             {
-                if (!(unit is Aircraft aircraft) || aircraft == null || aircraft.disabled || aircraft.HasEjected()) continue;
+                if (!(unit is Aircraft aircraft) || !FollowView.Alive(aircraft)) continue;
                 if (teamOnly && aircraft.NetworkHQ != localHq) continue;
                 var player = aircraft.Player;
                 if (player == null && !includeAi) continue;

@@ -22,6 +22,8 @@ Version 0.4.3 makes the cockpit map much cheaper again. Each copied icon keeps i
 
 Version 0.4.4 also shows the cockpit map while you spectate. With NuclearSpectator, which builds the cockpit screens of an aircraft you watch from its cockpit, the map appears on that aircraft's screen, centered on it and with its heading. It stays on the whole time, because the pilot you watch cannot switch the screen to a camera feed. Hold zoom works there too.
 
+Version 0.5.1 fixes a short flicker in which the map jumped from the cockpit screen back to the HUD's bottom-left corner for a moment. It happened when a map icon disappeared, for example when a unit was destroyed: the cockpit copy tried to read the removed icon, failed for that update, and fell back to the HUD map. The copy of a removed icon is now simply hidden until the next icon scan.
+
 ## Flight instruments on the cockpit minimap
 
 The cockpit minimap also shows small flight instruments, so it can work as a moving-map display. Each one has its own toggle under **Flight Instruments** in the F1 menu:

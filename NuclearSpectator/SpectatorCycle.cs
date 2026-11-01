@@ -17,8 +17,41 @@ namespace NuclearSpectator
         public int Id { get; }
     }
 
+    // The view of the aircraft followed so far; None when no live aircraft was followed.
+    public enum FollowedView { None, Outside, Cockpit }
+
+    // Hide All UI steps, in toggle order.
+    public enum HideLevel { None, GameUi, All }
+
     public static class SpectatorCycle
     {
+        // Whether a newly followed aircraft starts in its cockpit view. Coming from another
+        // aircraft keeps that choice; coming from nothing uses the default.
+        public static bool StartInCockpit(FollowedView previous, bool cockpitByDefault, bool keepCockpitView)
+        {
+            switch (previous)
+            {
+                case FollowedView.Cockpit: return keepCockpitView;
+                case FollowedView.Outside: return false;
+                default: return cockpitByDefault;
+            }
+        }
+
+        public static HideLevel NextHideLevel(HideLevel level)
+            => level == HideLevel.None ? HideLevel.GameUi : level == HideLevel.GameUi ? HideLevel.All : HideLevel.None;
+
+        // Cockpit movement speed in metres per second. Stick deflection (0..1) follows a power
+        // curve, so small deflections move slowly and only full stick reaches the top speed.
+        // The fast ramp (0..1) eases in the fast multiplier.
+        public static float MoveSpeed(float deflection, float maxSpeed, float curve, float fastMultiplier, float fastRamp)
+        {
+            double stick = Math.Max(0f, Math.Min(1f, deflection));
+            double ramp = Math.Max(0f, Math.Min(1f, fastRamp));
+            ramp = ramp * ramp * (3 - 2 * ramp);
+            double fast = 1 + (Math.Max(1f, fastMultiplier) - 1) * ramp;
+            return (float)(maxSpeed * Math.Pow(stick, Math.Max(1f, curve)) * fast);
+        }
+
         // Players first, then by name ignoring case; the id keeps equal names stable.
         public static int Compare(CycleKey a, CycleKey b)
         {

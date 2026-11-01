@@ -30,7 +30,7 @@ namespace NuclearSpectator
             var plugin = Plugin.Instance;
             var hud = SceneSingleton<CombatHUD>.i;
             if (plugin == null || !plugin.Enabled.Value || !plugin.HideEmptyHud.Value || hud == null
-                || hud.aircraft != null || GameManager.GetLocalAircraft(out _))
+                || OwnAircraft.OnHud(hud) || OwnAircraft.Flying())
             {
                 Restore();
                 return;

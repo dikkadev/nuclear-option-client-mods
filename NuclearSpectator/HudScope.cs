@@ -72,17 +72,20 @@ namespace NuclearSpectator
             return false;
         }
 
+        // Your destroyed aircraft can stay on CombatHUD and as the local aircraft for about
+        // 30 s; inside the scope the spectated aircraft replaces it too.
         public static Aircraft ResolveHudAircraft(CombatHUD hud)
         {
             var aircraft = hud.aircraft;
-            return aircraft != null ? aircraft : current!;
+            return current != null && (aircraft == null || aircraft.disabled) ? current : aircraft!;
         }
 
         public static bool ResolveLocalAircraft(out Aircraft localAircraft)
         {
-            if (GameManager.GetLocalAircraft(out localAircraft)) return true;
-            localAircraft = current!;
-            return localAircraft != null;
+            bool found = GameManager.GetLocalAircraft(out localAircraft);
+            if (current == null || (found && !localAircraft.disabled)) return found;
+            localAircraft = current;
+            return true;
         }
 
         internal static IEnumerable<CodeInstruction> Rewrite(IEnumerable<CodeInstruction> instructions, string target)

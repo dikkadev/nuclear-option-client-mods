@@ -65,6 +65,7 @@ namespace NuclearSounds
         private ConfigEntry<bool> _playAudioTest = null!;
         private bool _audioTestRunning;
 
+        internal ConfigEntry<bool> PlayWhileSpectating { get; private set; } = null!;
         internal ConfigEntry<bool> EnableMissileVoiceWarnings { get; private set; } = null!;
         internal ConfigEntry<float> MissileVoiceRepeatSeconds { get; private set; } = null!;
         internal ConfigEntry<bool> EnableDesignateTones { get; private set; } = null!;
@@ -141,6 +142,7 @@ namespace NuclearSounds
             _harmony?.UnpatchSelf();
             FuelWarningState.DestroyLabel();
             DesignateToneState.Clear();
+            Spectating.Clear();
             AudioLoader.Clear();
         }
 
@@ -169,6 +171,9 @@ namespace NuclearSounds
             var legacy = new LegacyConfig(Config, Logger);
             _playAudioTest = Config.Bind("Audio Test", "Play Audio Test", false,
                 "Tick once, then close the F1 settings menu. After two seconds, plays a test tone followed by the custom lower-gear voice through the normal game Interface audio channel. Resets automatically; records mixer and clip diagnostics in Player.log.");
+
+            PlayWhileSpectating = Config.Bind("Spectating", "Play While Spectating", false,
+                "Play warning sounds while you spectate (in a mission without an aircraft of your own). Off: no missile, fuel, terrain or designation sounds, and the lower-gear, raise-gear, overspeed and stall voices are silent too, including the game's own. The aircraft-loss callout for your own aircraft still plays.");
 
             EnableMissileVoiceWarnings = legacy.Bind("Warnings", "Enable Missile Voice Warnings", true, "Play voice callouts for incoming missile seeker types.");
             MissileVoiceRepeatSeconds = legacy.Bind("Warnings", "Missile Voice Repeat Seconds", 2.5f, "Minimum time between missile voice callouts. Increase this if flare/notch warnings feel too rapid.");
