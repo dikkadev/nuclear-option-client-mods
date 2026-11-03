@@ -25,5 +25,6 @@
     <Compile Include="../../NuclearMapTrails/TrailHistory.cs" Link="Production/TrailHistory.cs" />
     <Compile Include="../../NuclearMapMarkings/MarkingsGeometry.cs" Link="Production/MarkingsGeometry.cs" />
     <Compile Include="../../NuclearSpectator/SpectatorCycle.cs" Link="Production/SpectatorCycle.cs" />
+    <Compile Include="../../NuclearNightVision/FadeMath.cs" Link="Production/FadeMath.cs" />
   </ItemGroup>
 </Project>

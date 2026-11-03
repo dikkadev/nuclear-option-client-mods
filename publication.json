@@ -11,8 +11,8 @@
     {
       "name": "NuclearControllerGestures",
       "id": "dev.dikka.nuclearcontrollergestures",
-      "version": "0.2.0",
-      "inputHash": "fd49297569e82b91c7858530d83e83232326c39074dd6015c048096fdacb00af"
+      "version": "0.2.1",
+      "inputHash": "3683daa943f3473e0e8789e9679e04e02a3932d896073636fe37267920bc0f1c"
     },
     {
       "name": "NuclearDeathBlackout",
@@ -41,20 +41,26 @@
     {
       "name": "NuclearMfdWeapons",
       "id": "dev.dikka.nuclearmfdweapons",
-      "version": "0.1.7",
-      "inputHash": "59785bf0db0d78a66b17dd496d9a1451683b191df20d1e8699144dc796ef2d27"
+      "version": "0.1.8",
+      "inputHash": "9c15b04c0103b700f969472aaa79260c79321a62b29d184d2d222dceaf547000"
+    },
+    {
+      "name": "NuclearNightVision",
+      "id": "dev.dikka.nuclearnightvision",
+      "version": "0.1.0",
+      "inputHash": "3f380a3a2009d97065ce63c7e586348b6b6740a786b601e3fd86323da01091c3"
     },
     {
       "name": "NuclearTargeting",
       "id": "dev.dikka.nucleartargeting",
-      "version": "0.2.4",
-      "inputHash": "69d63904d1e7e1dfbbb3494db0a541ad53804011a1ff44148d6f02a0c1e7a213"
+      "version": "0.2.5",
+      "inputHash": "854a357102d19c582e8b254bc83b954e2bd70f89d10b59e69f44923c9e991ded"
     },
     {
       "name": "NuclearSatelliteMap",
       "id": "dev.dikka.nuclearsatellitemap",
-      "version": "0.2.1",
-      "inputHash": "db0abb36f81e5925e8c5a34cf35de28f87d7baeaaca50ce8ddb1458770e82c26"
+      "version": "0.2.2",
+      "inputHash": "e090978a6e921647f03a8ca8fbce9f5b16294c844655db4e012ec6a318cb58b5"
     },
     {
       "name": "NuclearSounds",
@@ -83,31 +89,93 @@
     {
       "name": "NuclearDelivery",
       "id": "dev.dikka.nucleardelivery",
-      "version": "0.1.6",
-      "inputHash": "9a3ba61901fa8165ff8ac78ae780b00250af336eae81fba354fa95334de4db3c"
+      "version": "0.1.7",
+      "inputHash": "d784f37b3832b4fcee05539dbb3b432ee8cf5cbb56f65066861e997f499715e8"
     },
     {
       "name": "NuclearMinimap",
       "id": "dev.dikka.nuclearminimap",
       "version": "0.5.2",
       "inputHash": "6a261f8726bf5b36fbb0e979b1acc9ee21af056ecbcf452b179b1df2567a7477"
+    },
+    {
+      "name": "NuclearLiveFeed",
+      "id": "dev.dikka.nuclearlivefeed",
+      "version": "0.3.2",
+      "inputHash": "d2af2b6b798ee79cb3cafda55324c63abac6d0bddf7f634b38f80b616a34538f"
     }
   ],
   "releases": [
     {
       "kind": "mod",
-      "name": "NuclearSounds",
-      "version": "0.1.5",
-      "tag": "NuclearSounds-v0.1.5",
-      "asset": "NuclearSounds.zip",
+      "name": "NuclearControllerGestures",
+      "version": "0.2.1",
+      "tag": "NuclearControllerGestures-v0.2.1",
+      "asset": "NuclearControllerGestures.zip",
       "prerelease": false
     },
     {
       "kind": "mod",
-      "name": "NuclearMinimap",
-      "version": "0.5.2",
-      "tag": "NuclearMinimap-v0.5.2",
-      "asset": "NuclearMinimap.zip",
+      "name": "NuclearMapMarkings",
+      "version": "0.1.6",
+      "tag": "NuclearMapMarkings-v0.1.6",
+      "asset": "NuclearMapMarkings.zip",
+      "prerelease": false
+    },
+    {
+      "kind": "mod",
+      "name": "NuclearMfdWeapons",
+      "version": "0.1.8",
+      "tag": "NuclearMfdWeapons-v0.1.8",
+      "asset": "NuclearMfdWeapons.zip",
+      "prerelease": false
+    },
+    {
+      "kind": "mod",
+      "name": "NuclearNightVision",
+      "version": "0.1.0",
+      "tag": "NuclearNightVision-v0.1.0",
+      "asset": "NuclearNightVision.zip",
+      "prerelease": false
+    },
+    {
+      "kind": "mod",
+      "name": "NuclearTargeting",
+      "version": "0.2.5",
+      "tag": "NuclearTargeting-v0.2.5",
+      "asset": "NuclearTargeting.zip",
+      "prerelease": false
+    },
+    {
+      "kind": "mod",
+      "name": "NuclearSatelliteMap",
+      "version": "0.2.2",
+      "tag": "NuclearSatelliteMap-v0.2.2",
+      "asset": "NuclearSatelliteMap.zip",
+      "prerelease": false
+    },
+    {
+      "kind": "mod",
+      "name": "NuclearSpectator",
+      "version": "0.1.12",
+      "tag": "NuclearSpectator-v0.1.12",
+      "asset": "NuclearSpectator.zip",
+      "prerelease": false
+    },
+    {
+      "kind": "mod",
+      "name": "NuclearDelivery",
+      "version": "0.1.7",
+      "tag": "NuclearDelivery-v0.1.7",
+      "asset": "NuclearDelivery.zip",
+      "prerelease": false
+    },
+    {
+      "kind": "mod",
+      "name": "NuclearLiveFeed",
+      "version": "0.3.2",
+      "tag": "NuclearLiveFeed-v0.3.2",
+      "asset": "NuclearLiveFeed.zip",
       "prerelease": false
     }
   ]

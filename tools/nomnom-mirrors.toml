@@ -57,6 +57,14 @@ tags = ["QoL", "HUD", "Immersion"]
 include = ["README.md", "THIRD-PARTY-NOTICES.txt"]
 project = "NuclearMfdWeapons/NuclearMfdWeapons.csproj"
 
+[mods.NuclearNightVision]
+id = "dev.dikka.nuclearnightvision"
+display_name = "NuclearNightVision"
+description = "Client-side Nuclear Option mod that fades smoothly into and out of night vision instead of switching instantly, with configurable fade times."
+tags = ["QoL", "Visual", "Immersion"]
+include = ["README.md"]
+project = "NuclearNightVision/NuclearNightVision.csproj"
+
 [mods.NuclearTargeting]
 id = "dev.dikka.nucleartargeting"
 display_name = "NuclearTargeting"
@@ -121,3 +129,11 @@ description = "Native minimap orientation and hold zoom, with an optional cockpi
 tags = ["QoL", "HUD", "Map"]
 include = ["README.md", "THIRD-PARTY-NOTICES.txt"]
 project = "NuclearMinimap/NuclearMinimap.csproj"
+
+[mods.NuclearLiveFeed]
+id = "dev.dikka.nuclearlivefeed"
+display_name = "NuclearLiveFeed"
+description = "Streams your side's live battlefield picture to the live map page in Chrome or Edge, with optional target selection from the page."
+tags = ["Map", "Integration"]
+include = ["README.md"]
+project = "NuclearLiveFeed/NuclearLiveFeed.csproj"

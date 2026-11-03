@@ -353,6 +353,11 @@ def mod_input_hashes(files, mods):
     return result
 
 
+# Release ZIPs with bundled data are large: NuclearSatelliteMap 0.2.1 is 125 MiB.
+MAX_REFERENCE = 256 * 1024 * 1024
+REFERENCE_TOO_LARGE = 'Published plugin reference exceeds the 256 MiB download limit'
+
+
 def download_reference(url):
     parsed = urlsplit(url)
     if parsed.scheme != 'https' or parsed.hostname != 'github.com' or parsed.username or parsed.password or parsed.port not in (None, 443):
@@ -364,19 +369,19 @@ def download_reference(url):
         asset = next((a for a in release.get('assets', []) if a['name'] == unquote(parts[5])), None)
         if asset is None:
             raise ValueError('Published reference asset is missing: ' + url)
-        if asset['size'] > 64 * 1024 * 1024:
-            raise ValueError('Published plugin reference exceeds the 64 MiB download limit')
+        if asset['size'] > MAX_REFERENCE:
+            raise ValueError(REFERENCE_TOO_LARGE)
         data = gh('api', f'repos/{repo}/releases/assets/{asset["id"]}', '-H', 'Accept: application/octet-stream')
-        if len(data) > 64 * 1024 * 1024:
-            raise ValueError('Published plugin reference exceeds the 64 MiB download limit')
+        if len(data) > MAX_REFERENCE:
+            raise ValueError(REFERENCE_TOO_LARGE)
         return data
     try:
         with urlopen(Request(url, headers={'User-Agent': 'nuclear-option-local-release'}), timeout=45) as response:
-            data = response.read(64 * 1024 * 1024 + 1)
+            data = response.read(MAX_REFERENCE + 1)
     except OSError as error:
         raise ValueError('Could not verify the published plugin package: ' + url) from error
-    if len(data) > 64 * 1024 * 1024:
-        raise ValueError('Published plugin reference exceeds the 64 MiB download limit')
+    if len(data) > MAX_REFERENCE:
+        raise ValueError(REFERENCE_TOO_LARGE)
     return data
 
 

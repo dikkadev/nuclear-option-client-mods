@@ -285,13 +285,13 @@ def codec_probe() -> None:
 
 class TileSource:
     def __init__(self, root: Path, spec: tuple, level: int, origin: str):
-        variants = json.loads((root / "demo/public/maps/variants.json").read_text(encoding="utf-8"))
+        variants = json.loads((root / "maps/variants.json").read_text(encoding="utf-8"))
         satellite = next(v for v in variants["maps"][spec[0]] if v["id"] == "satellite")
         self.level = next(v for v in satellite["tiles"]["levels"] if v["level"] == level)
         self.size = int(self.level.get("tileSize", satellite["tiles"].get("tileSize", 512)))
         self.gutter = int(self.level.get("gutter", satellite["tiles"].get("gutter", 2)))
         self.width, self.height = int(self.level["width"]), int(self.level["height"])
-        self.root, self.origin = root / "demo/public/maps", origin.rstrip("/")
+        self.root, self.origin = root / "maps", origin.rstrip("/")
         self.cache: dict[tuple[int, int], Image.Image] = {}
         self.missing = 0
 
