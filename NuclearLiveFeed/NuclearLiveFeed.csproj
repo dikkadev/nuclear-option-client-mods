@@ -3,7 +3,7 @@
     <TargetFramework>netstandard2.1</TargetFramework>
     <AssemblyName>NuclearLiveFeed</AssemblyName>
     <RootNamespace>NuclearLiveFeed</RootNamespace>
-    <Version>0.3.2</Version>
+    <Version>0.3.3</Version>
     <BepInExPluginGuid>dev.dikka.nuclearlivefeed</BepInExPluginGuid>
     <BepInExPluginName>NuclearLiveFeed</BepInExPluginName>
     <Nullable>enable</Nullable>

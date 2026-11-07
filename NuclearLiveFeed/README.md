@@ -1,3 +1,5 @@
+<img src="docs/assets/icon.png" alt="NuclearLiveFeed" width="96" height="96">
+
 # NuclearLiveFeed
 
 Version 0.3.2 (`dev.dikka.nuclearlivefeed`). It is an active mod: `install-all-mods.sh`, the build loops and the modpack (`tools/nomnom-mirrors.toml`) include it. The viewer page is not part of the mod package.

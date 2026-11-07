@@ -1,4 +1,4 @@
-![NuclearMapMarkings](docs/assets/cover.png)
+<img src="docs/assets/icon.png" alt="NuclearMapMarkings" width="96" height="96">
 
 # NuclearMapMarkings
 

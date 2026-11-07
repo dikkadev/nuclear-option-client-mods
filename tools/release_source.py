@@ -64,10 +64,10 @@ RELEASE_TOOL = re.compile(r'tools/release(?:_[a-z0-9_]+)?\.py')
 SHARED_ROOT = 'Shared'
 TESTS_ROOT = 'tests'
 
-# README cover image inside each mod directory (tools/covers/generate-covers.py).
-COVER = 'docs/assets/cover.png'
-# Covers of unpublished mods, shown in the public README without their source.
-PREVIEW_COVERS = {'NuclearReplay': 'assets/covers/NuclearReplay.png'}
+# Square icon inside each mod directory (tools/icons/generate-icons.py); also its NOMM image.
+ICON = 'docs/assets/icon.png'
+# Icons of unpublished mods, shown in the public README without their source.
+PREVIEW_ICONS = {'NuclearReplay': 'assets/icons/NuclearReplay.png'}
 
 SECRET_PATTERNS = (
     ('private key', re.compile(rb'-----BEGIN [A-Z0-9 ]*PRIVATE KEY(?: BLOCK)?-----')),
@@ -129,7 +129,7 @@ def mod_directories(root: Path, mods: list[dict]) -> list[str]:
 
 def is_exportable(path: str, mod_dirs: list[str]) -> bool:
     """Whether a safe relative path belongs in the public snapshot."""
-    if path in PREVIEW_COVERS.values():
+    if path in PREVIEW_ICONS.values():
         return True
     parts = path.split('/')
     name = parts[-1]
@@ -231,9 +231,9 @@ def collect_source(root: Path, mods: list[dict], *, include_untracked: bool = Fa
     mod_dirs = mod_directories(root, mods)
     files: dict[str, bytes] = {}
     candidates = list_source_files(root, include_untracked)
-    for name, public in PREVIEW_COVERS.items():
-        if candidates.get(f'{name}/{COVER}') in ('100644', 'untracked'):
-            files[public] = read_regular_file(root, f'{name}/{COVER}')
+    for name, public in PREVIEW_ICONS.items():
+        if candidates.get(f'{name}/{ICON}') in ('100644', 'untracked'):
+            files[public] = read_regular_file(root, f'{name}/{ICON}')
     for path, mode in sorted(candidates.items()):
         try:
             check_relative_path(path)
@@ -317,27 +317,32 @@ def _cell(value: object) -> str:
     return re.sub(r'\s+', ' ', str(value)).replace('|', '\\|').strip()
 
 
-def cover_line(name: str) -> str:
-    return f'![{name}]({COVER})'
+def _icon(path: str, name: str, size: int) -> str:
+    return f'<img src="{path}" alt="{name}" width="{size}" height="{size}">'
 
 
-def strip_cover(readme: bytes, name: str) -> bytes:
-    """A mod README without its leading cover line, so adding a cover is not a source change."""
-    prefix = cover_line(name).encode() + b'\n\n'
+def _inline_icon(path: str) -> str:
+    # Width only: table cells may narrow it, and a fixed height would squash it.
+    return f'<img src="{path}" alt="" width="40" align="middle">'
+
+
+def icon_line(name: str) -> str:
+    """The first line of a mod README: its icon."""
+    return _icon(ICON, name, 96)
+
+
+def strip_icon(readme: bytes, name: str) -> bytes:
+    """A mod README without its leading icon line, so changing an icon is not a source change."""
+    prefix = icon_line(name).encode() + b'\n\n'
     return readme[len(prefix):] if readme.startswith(prefix) else readme
 
 
-def _gallery(mods: list[dict], files: dict[str, bytes]) -> list[str]:
-    lines = []
-    for mod in sorted(mods, key=lambda item: item['name']):
-        directory = Path(mod['project']).parent.name
-        if f'{directory}/{COVER}' in files:
-            lines += [f'[![{mod["name"]}]({directory}/{COVER})]({directory}/)', '']
-    previews = [(name, path) for name, path in sorted(PREVIEW_COVERS.items()) if path in files]
-    if previews:
-        lines += ['**Experimental**, not yet part of these releases:', '']
-        lines += [line for name, path in previews for line in (f'![{name}]({path})', '')]
-    return lines
+def _previews(files: dict[str, bytes]) -> list[str]:
+    previews = [(name, path) for name, path in sorted(PREVIEW_ICONS.items()) if path in files]
+    if not previews:
+        return []
+    lines = ['**Experimental**, not yet part of these releases:', '']
+    return lines + [line for name, path in previews for line in (f'{_icon(path, name, 64)} `{name}`', '')]
 
 
 def public_readme(mods: list[dict], repo: str, files: dict[str, bytes] | None = None) -> bytes:
@@ -349,10 +354,14 @@ def public_readme(mods: list[dict], repo: str, files: dict[str, bytes] | None = 
     else:
         raise SourceError('repo must be owner/name or an https URL')
     folder = clone.rsplit('/', 1)[-1].removesuffix('.git')
+    files = files or {}
     rows = []
     for mod in sorted(mods, key=lambda item: item['name']):
         description = _cell(mod['description']) if mod.get('description') else ''
-        rows.append(f"| `{_cell(mod['name'])}` | {_cell(mod['version'])} | `{_cell(mod['guid'])}` | {description} |")
+        directory = Path(mod['project']).parent.name
+        # The icon shares the name's cell; an own narrow column would squash it.
+        icon = f'[{_inline_icon(f"{directory}/{ICON}")}]({directory}/) ' if f'{directory}/{ICON}' in files else ''
+        rows.append(f"| {icon}[`{_cell(mod['name'])}`]({directory}/) | {_cell(mod['version'])} | `{_cell(mod['guid'])}` | {description} |")
     first = Path(sorted(mods, key=lambda item: item['name'])[0]['project'])
     lines = [
         '# Nuclear Option client mods',
@@ -361,7 +370,6 @@ def public_readme(mods: list[dict], repo: str, files: dict[str, bytes] | None = 
         'This repository holds published source snapshots and releases only, not the',
         'private development history.',
         '',
-        *_gallery(mods, files or {}),
         '## Mods',
         '',
         '| Mod | Version | Plugin ID | Description |',
@@ -370,6 +378,7 @@ def public_readme(mods: list[dict], repo: str, files: dict[str, bytes] | None = 
         '',
         'Each publication contains all of these mods at the versions shown.',
         '',
+        *_previews(files),
         '## Requirements',
         '',
         '- The .NET 10 SDK.',

@@ -1,4 +1,4 @@
-![NuclearNightVision](docs/assets/cover.png)
+<img src="docs/assets/icon.png" alt="NuclearNightVision" width="96" height="96">
 
 # NuclearNightVision
 

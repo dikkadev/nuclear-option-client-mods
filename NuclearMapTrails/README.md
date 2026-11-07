@@ -1,4 +1,4 @@
-![NuclearMapTrails](docs/assets/cover.png)
+<img src="docs/assets/icon.png" alt="NuclearMapTrails" width="96" height="96">
 
 # NuclearMapTrails
 

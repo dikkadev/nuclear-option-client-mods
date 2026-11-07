@@ -1,3 +1,5 @@
+<img src="docs/assets/icon.png" alt="NuclearSatelliteMap" width="96" height="96">
+
 # NuclearSatelliteMap
 
 `NuclearSatelliteMap` is a client-side `Nuclear Option` BepInEx mod that replaces the in-game map image with satellite imagery. Water is transparent, so the sea shows the map background (expanded map) or the world behind the HUD (minimized map).

@@ -1,4 +1,4 @@
-![NuclearConnectivity](docs/assets/cover.png)
+<img src="docs/assets/icon.png" alt="NuclearConnectivity" width="96" height="96">
 
 # NuclearConnectivity
 

@@ -1,4 +1,4 @@
-![NuclearMapPlayerNames](docs/assets/cover.png)
+<img src="docs/assets/icon.png" alt="NuclearMapPlayerNames" width="96" height="96">
 
 # NuclearMapPlayerNames
 

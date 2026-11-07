@@ -333,15 +333,15 @@ def mod_input_hashes(files, mods):
     build ID. Shared-source consumers conservatively include all production
     Shared sources, so a helper change cannot slip past an unchanged version.
     """
-    from release_source import COVER, source_hash, strip_cover
+    from release_source import ICON, source_hash, strip_icon
     result = {}
     for mod in mods:
         prefix = mod['name'] + '/'
-        # README covers are presentation only and stay out of the fingerprint.
+        # Icons are presentation only and stay out of the fingerprint.
         inputs = {name: data for name, data in files.items()
-                  if name.startswith(prefix) and 'tests' not in Path(name).parts and name != prefix + COVER}
+                  if name.startswith(prefix) and 'tests' not in Path(name).parts and name != prefix + ICON}
         if prefix + 'README.md' in inputs:
-            inputs[prefix + 'README.md'] = strip_cover(inputs[prefix + 'README.md'], mod['name'])
+            inputs[prefix + 'README.md'] = strip_icon(inputs[prefix + 'README.md'], mod['name'])
         project = files[mod['name'] + '/' + mod['project'].name].replace(b'\\', b'/')
         if b'Shared/' in project:
             inputs.update({name: data for name, data in files.items()

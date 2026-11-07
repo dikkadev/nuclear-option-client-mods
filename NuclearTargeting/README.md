@@ -1,4 +1,4 @@
-![NuclearTargeting](docs/assets/cover.png)
+<img src="docs/assets/icon.png" alt="NuclearTargeting" width="96" height="96">
 
 # NuclearTargeting
 

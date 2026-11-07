@@ -1,4 +1,4 @@
-![NuclearTrackAge](docs/assets/cover.png)
+<img src="docs/assets/icon.png" alt="NuclearTrackAge" width="96" height="96">
 
 # NuclearTrackAge
 
