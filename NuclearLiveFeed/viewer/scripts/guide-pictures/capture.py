@@ -87,8 +87,39 @@ with sync_playwright() as p:
       const x = Math.min(...r.map(b => b.left)) - 4, y = Math.min(...r.map(b => b.top)) - 4;
       return { x, y, width: Math.max(...r.map(b => b.right)) + 4 - x, height: Math.max(...r.map(b => b.bottom)) + 4 - y }; }""")
     cut(e, "part-strip.webp")
+    for key, name in [("MISSILE:", "first-missile"), ("IN RANGE:", "first-range"), ("bandit:", "first-bandit")]:
+        card = box(f'#strip [data-key^="{key}"]')
+        assert card, f"Missing first-fight card: {key}"
+        cut(card, f"{name}.webp")
     callouts["stripEntries"] = e
     callouts["stripText"] = strip_text
+
+    # The other cards, each in a state of the same battle: a pinned friendly helicopter, a teammate under missile attack
+    # (Friendly threat card on), and THREAT once you are outside every area but near one.
+    def card_shot(text: str, name: str) -> None:
+        card = page.locator("#strip button", has_text=text).first
+        card.wait_for(timeout=4000)
+        webp(card.screenshot(), name, 1.0, 82)
+
+    page.evaluate(scenario)
+    page.evaluate("""() => { window.__nlf.select('heli'); }""")
+    page.wait_for_timeout(300)
+    page.keyboard.press("p")
+    page.wait_for_timeout(600)
+    card_shot("PINNED", "card-pinned.webp")
+    page.keyboard.press("p")
+    page.click("#btn-layers"); page.click("#settings-flight-tab")
+    if not page.is_checked("#opt-friendly-threats"):
+        page.check("#opt-friendly-threats")
+    page.click("#btn-layers")
+    page.evaluate("""() => { const w = window.__nlf.world; w.missileTargets.clear(); w.missileTargets.set('m1', 'heli'); w.missileTargets.set('m2', 'heli'); }""")
+    page.wait_for_timeout(600)
+    card_shot("FRIENDLY THREAT", "card-friendly.webp")
+    page.evaluate("""() => { const w = window.__nlf.world; for (const id of ['m1', 'm2', 'lr1']) w.tracks.delete(id); w.missileTargets.clear(); }""")
+    page.wait_for_timeout(600)
+    card_shot("THREAT", "card-threat.webp")
+    page.evaluate(scenario)
+    page.wait_for_timeout(300)
 
     # Read a contact: the selected, targeted enemy fighter alone, with its label and path.
     page.evaluate(scenario)
@@ -101,15 +132,35 @@ with sync_playwright() as p:
     webp(contact, "contact.webp", 1.0, 82)
     callouts["contactViper"] = [150, 60]
 
+    page.keyboard.press("Escape")
+    # Give the complete settings and contact panels enough vertical room for clean reference crops.
+    page.set_viewport_size({"width": W, "height": 980})
     page.click("#btn-layers")
     page.wait_for_timeout(300)
     webp(page.locator("#layers").screenshot(), "part-layers.webp", 1.0, 80)
     callouts["layers"] = box("#layers")
     print(json.dumps(callouts, indent=1))
     page.click("#btn-layers")
+    # A complete contact list with a shared reference, including live and last-known aircraft.
+    page.evaluate(scenario)
+    page.wait_for_timeout(400)
+    page.keyboard.press("Escape")
+    page.keyboard.down("Alt"); page.mouse.click(430, 500); page.keyboard.up("Alt")
+    page.keyboard.press("l")
+    page.wait_for_timeout(400)
+    webp(page.locator("#contacts").screenshot(), "part-contacts.webp", 1.0, 82)
+    page.keyboard.press("l")
+    # Clear the example bullseye before the independent symbol scenes.
+    page.keyboard.down("Alt"); page.mouse.click(430, 500); page.keyboard.up("Alt")
+    page.set_viewport_size({"width": W, "height": H})
     page.mouse.move(1050, 600)
     marks = (Path(__file__).parent / "marks.js").read_text(encoding="utf-8")
     page.evaluate(marks)
+    page.evaluate("""() => { const c=document.querySelector('#overlay').getContext('2d'),clear=c.clearRect,fill=c.fillText;
+      window.markLabels=[];
+      c.clearRect=function(...a){markLabels=[];return clear.apply(this,a)};
+      c.fillText=function(text,x,y,...a){if(text.includes('Raven heading')||text.includes('km/h /')||/^\\d+ s$/.test(text)){const h=Number(this.font.match(/([0-9.]+)px/)[1]);markLabels.push({x,y:y-h/2,w:this.measureText(text).width,h});}return fill.call(this,text,x,y,...a)};
+    }""")
     for name in page.evaluate("Object.keys(window.__marks)"):
         page.evaluate(f"window.__marks[{name!r}]()")
         page.wait_for_load_state("networkidle")
@@ -117,7 +168,14 @@ with sync_playwright() as p:
         if name in ("contact-ring", "effects"):
             page.evaluate(f"window.__marks[{name!r}]()")  # restart the animation right before the picture
             page.wait_for_timeout(330 if name == "contact-ring" else 40)
-        webp(page.screenshot(clip={"x": W / 2 - 88, "y": H / 2 - 58, "width": 176, "height": 116}), f"mark-{name}.webp", 1.0, 80)
+        clip = {"x": W / 2 - 88, "y": H / 2 - 58, "width": 176, "height": 116}
+        if name in ("you", "missile-at-you", "long-path"):
+            labels=page.evaluate('window.markLabels')
+            assert any('x' in b for b in labels), f"Missing own-aircraft label: {name}"
+            left=min(clip['x'],*[b['x']-10 for b in labels]);top=min(clip['y'],*[b['y']-10 for b in labels])
+            right=max(clip['x']+clip['width'],*[b['x']+b['w']+10 for b in labels]);bottom=max(clip['y']+clip['height'],*[b['y']+b['h']+10 for b in labels])
+            clip={'x':left,'y':top,'width':right-left,'height':bottom-top}
+        webp(page.screenshot(clip=clip), f"mark-{name}.webp", 1.0, 80)
     browser.close()
 
 target.mkdir(parents=True, exist_ok=True)

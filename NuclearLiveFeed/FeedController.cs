@@ -14,8 +14,11 @@ namespace NuclearLiveFeed
         private readonly EntityTracker tracker = new EntityTracker();
         private readonly TypeTable types = new TypeTable();
         private readonly Dictionary<uint, string> buildingStates = new Dictionary<uint, string>();
+        private readonly Dictionary<uint, DateTime> observedBuildingAt = new Dictionary<uint, DateTime>();
+        private readonly Dictionary<uint, string> observedBuildingState = new Dictionary<uint, string>();
         private readonly Dictionary<uint, double> buildingSentAt = new Dictionary<uint, double>();
         private readonly HashSet<uint> seenBuildings = new HashSet<uint>();
+        private readonly Dictionary<uint, double> trackAges = new Dictionary<uint, double>();
         private readonly List<uint> scratch = new List<uint>();
         private readonly Dictionary<int, ushort> missileEvents = new Dictionary<int, ushort>();
         private readonly Dictionary<UnitDefinition, (EntityType Type, string Code)> definitionTypes = new Dictionary<UnitDefinition, (EntityType, string)>();
@@ -23,9 +26,14 @@ namespace NuclearLiveFeed
         /// <summary>Orientation and damage at the last moment the player's side observed a unit; stale tracks must not reveal newer state.</summary>
         private readonly Dictionary<uint, (Vec3 Forward, Vec3 Right, Vec3 Down, uint Damage)> lastObserved = new Dictionary<uint, (Vec3, Vec3, Vec3, uint)>();
         private readonly Dictionary<string, (string Fingerprint, double SentAt)> airbaseStates = new Dictionary<string, (string, double)>();
-        private string? sentOwnship, sentTargets;
+        private string? sentOwnship, sentTargets, sentMissiles;
+        private readonly List<(EntityId Missile, EntityId Target)> missilePairs = new List<(EntityId, EntityId)>();
+        private readonly Dictionary<uint, EntityId> lastMissileTarget = new Dictionary<uint, EntityId>();
+        /// <summary>Anti-air range of each building type with anti-air weapons (0 when it has none); learned once its weapon stations exist.</summary>
+        private readonly Dictionary<UnitDefinition, float> buildingAirRange = new Dictionary<UnitDefinition, float>();
+        private readonly Dictionary<UnitDefinition, string> buildingAirEnvelope = new Dictionary<UnitDefinition, string>();
         private double nextAirbases, nextTargets;
-        private readonly List<EntityId> targetIds = new List<EntityId>();
+        private readonly List<string> targetIds = new List<string>();
         private readonly List<Unit> resolved = new List<Unit>();
         private static readonly AccessTools.FieldRef<CombatHUD, Dictionary<Unit, HUDUnitMarker>> HudMarkers = AccessTools.FieldRefAccess<CombatHUD, Dictionary<Unit, HUDUnitMarker>>("markerLookup");
         private static readonly AccessTools.FieldRef<CombatHUD, AudioClip> SelectSound = AccessTools.FieldRefAccess<CombatHUD, AudioClip>("selectSound");
@@ -96,6 +104,7 @@ namespace NuclearLiveFeed
             if (buildingPass) { nextBuildings = now + 1; seenBuildings.Clear(); }
             bool revealAll = plugin.RevealAll.Value && state == GameState.SinglePlayer;
 
+            trackAges.Clear();
             tracker.BeginFrame();
             var units = UnitRegistry.allUnits;
             for (int i = 0; i < units.Count; i++)
@@ -104,13 +113,56 @@ namespace NuclearLiveFeed
                 if (unit == null || unit.disabled || unit is Scenery) continue;
                 if (unit is Building building)
                 {
-                    if (buildingPass) ObserveBuilding(building, now, utc);
+                    if (buildingPass && BuildingKnown(building, revealAll)) ObserveBuilding(building, now, utc, revealAll);
                     continue;
                 }
-                if (TrySample(unit, revealAll, out var sample)) tracker.Observe(sample, now, utc, anchor!, sink);
+                if (!TrySample(unit, revealAll, out var sample)) continue;
+                tracker.Observe(sample, now, utc, anchor!, sink);
+                if (unit is Missile missile) NoteMissileTarget(missile, sample.Key, sample.Frozen);
             }
             tracker.EndFrame(utc, sink);
-            if (buildingPass) RemoveMissingBuildings(utc);
+            if (buildingPass) { RemoveMissingBuildings(utc); PublishTrackAges(utc); }
+            PublishMissileTargets();
+            try { PublishOwnship(); } catch (Exception e) { plugin.Report("ownship", e); }
+        }
+
+        /// <summary>
+        /// Each seen missile's current target (the game's synced targetID), so a viewer can tell which missiles are guiding on
+        /// whom right now, not only at launch: a missile that loses its target or switches to another one is followed.
+        /// </summary>
+        private void NoteMissileTarget(Missile missile, uint key, bool lost)
+        {
+            if (!tracker.TryGetId(key, out var id)) return;
+            // A missile your side lost keeps the target it had when last seen: its later switches stay unknown, like its position.
+            if (lost) { if (lastMissileTarget.TryGetValue(key, out var seen)) missilePairs.Add((id, seen)); return; }
+            if (missile.targetID.TryGetUnit(out var target) && target != null && tracker.TryGetId(Key(target), out var targetId))
+            {
+                missilePairs.Add((id, targetId));
+                lastMissileTarget[key] = targetId;
+            }
+            else lastMissileTarget.Remove(key);
+        }
+
+        // Mission-clock ages come from the side's tracking database, including observations before a viewer connected.
+        private void PublishTrackAges(DateTime utc)
+        {
+            var sb = new System.Text.StringBuilder();
+            foreach (var pair in trackAges)
+                if (tracker.TryGetId(pair.Key, out var id))
+                    sb.Append(sb.Length > 0 ? " " : "").Append(id).Append('@').Append(pair.Value.ToString("0.0", System.Globalization.CultureInfo.InvariantCulture));
+            sink!.Building("nlf-track-ages", CotWriter.TrackAges(sb.ToString(), anchor!, utc), false);
+        }
+
+        private void PublishMissileTargets()
+        {
+            missilePairs.Sort((a, b) => a.Missile.Entity.CompareTo(b.Missile.Entity));
+            var sb = new System.Text.StringBuilder();
+            foreach (var (missile, target) in missilePairs) sb.Append(sb.Length > 0 ? " " : "").Append(missile).Append('>').Append(target);
+            missilePairs.Clear();
+            string value = sb.ToString();
+            if (value == sentMissiles) return;
+            sentMissiles = value;
+            sink!.Building("nlf-missiles", CotWriter.MissileTargets(value, anchor!, DateTime.UtcNow), false);
         }
 
         public void MissileLaunched(Missile missile)
@@ -132,7 +184,10 @@ namespace NuclearLiveFeed
         {
             if (sink == null || session == null || anchor == null || missile == null) return;
             uint key = Key(missile);
-            if (!tracker.TryGetState(key, out var state)) return; // only munitions the player's side could see
+            if (!tracker.TryGetState(key, out var state)) return;
+            bool revealAll = plugin.RevealAll.Value && GameManager.gameState == GameState.SinglePlayer;
+            // Having seen a missile earlier does not reveal its impact after observation is lost.
+            if (!TrySample(missile, revealAll, out var sample) || sample.Frozen) return;
             GlobalPosition at = useUnit && relativeUnit != null ? relativeUnit.transform.TransformPoint(pos).ToGlobalPosition() : new GlobalPosition(pos);
             var result = !armed ? DetonationResult.Dud
                 : useUnit && relativeUnit != null ? (hitArmor ? DetonationResult.EntityImpact : DetonationResult.EntityProximate)
@@ -143,6 +198,7 @@ namespace NuclearLiveFeed
             var eventId = missileEvents.TryGetValue(missile.GetInstanceID(), out var number)
                 ? new EntityId(tracker.Site, tracker.Application, number) : NextEvent();
             missileEvents.Remove(missile.GetInstanceID());
+            lastMissileTarget.Remove(key);
             var utc = DateTime.UtcNow;
             sink.Event(DisWriter.Detonation(tracker.Exercise, DisWriter.Timestamp(utc), firing, target, state.Id, eventId,
                 state.Velocity, anchor.EnuToEcef(Enu(at)), state.Type, inEntity, result));
@@ -166,7 +222,7 @@ namespace NuclearLiveFeed
                 if (!revealAll)
                 {
                     if (!sessionHq!.trackingDatabase.TryGetValue(unit.persistentID, out var track)) return false;
-                    if (!track.Observed()) { frozen = true; position = track.lastKnownPosition; }
+                    if (!track.Observed()) { frozen = true; position = track.lastKnownPosition; trackAges[Key(unit)] = Math.Max(0, Time.timeSinceLevelLoad - track.lastSpottedTime); }
                 }
             }
 
@@ -237,15 +293,10 @@ namespace NuclearLiveFeed
         {
             if (!(unit is GroundVehicle) && !(unit is Ship)) { airRangeKnown.Add(definition); return; }
             if (unit.weaponStations.Count == 0) return;
-            float range = 0;
-            foreach (var station in unit.weaponStations)
-            {
-                var info = station?.WeaponInfo;
-                if (info != null && info.effectiveness.antiAir > 0) range = Math.Max(range, info.targetRequirements.maxRange);
-            }
+            var (range, envelope) = AirEnvelope(unit);
             airRangeKnown.Add(definition);
             if (range <= 0) return;
-            types.SetAirRange(definition.name, range);
+            types.SetAirRange(definition.name, range, envelope);
             plugin.Log.LogInfo("Air defense range " + (range / 1000).ToString("0.0") + " km: " + (definition.unitName ?? definition.name));
         }
 
@@ -254,10 +305,16 @@ namespace NuclearLiveFeed
             bool present = GameManager.GetLocalAircraft(out var own) && own != null && !own.disabled;
             var id = EntityId.None;
             if (present && !tracker.TryGetId(Key(own!), out id)) return; // not sampled yet; next check
-            string value = present ? id.ToString() : "";
+            // Height above the ground (the game's radar altitude, which anti-air ceilings use), in 25 m steps, and the
+            // selected weapon with its longest range: both only your own aircraft's data.
+            float agl = present ? Mathf.Round(own!.radarAlt / 25f) * 25f : 0;
+            var weapon = present && own!.weaponManager != null ? own.weaponManager.currentWeaponStation?.WeaponInfo : null;
+            string weaponName = weapon != null ? (!string.IsNullOrEmpty(weapon.shortName) ? weapon.shortName : weapon.weaponName ?? "") : "";
+            float weaponRange = weapon != null && !weapon.gun && !weapon.bomb ? weapon.targetRequirements.maxRange : 0;
+            string value = present ? id + "/" + agl + "/" + weaponName + "/" + weaponRange : "";
             if (value == sentOwnship) return;
             sentOwnship = value;
-            sink!.Building("nlf-ownship", CotWriter.Ownship(id, present, anchor!, DateTime.UtcNow), false);
+            sink!.Building("nlf-ownship", CotWriter.Ownship(id, present, anchor!, DateTime.UtcNow, agl, weaponName, weaponRange), false);
         }
 
         /// <summary>The local aircraft's HUD and its target list (the same list object the weapon manager uses), when the player flies.</summary>
@@ -277,7 +334,12 @@ namespace NuclearLiveFeed
             targetIds.Clear();
             if (editable)
                 foreach (var unit in list)
-                    if (unit != null && tracker.TryGetId(Key(unit), out var id)) targetIds.Add(id);
+                {
+                    if (unit == null) continue;
+                    // Buildings travel as their feed uid; everything else as its entity ID. Order is kept: primary first.
+                    if (unit is Building building && building.persistentID.IsValid) targetIds.Add("nlf-b-" + building.persistentID.Id);
+                    else if (tracker.TryGetId(Key(unit), out var id)) targetIds.Add(id.ToString());
+                }
             string value = (editable ? "1 " : "0 ") + string.Join(" ", targetIds);
             if (value == sentTargets) return;
             sentTargets = value;
@@ -309,6 +371,10 @@ namespace NuclearLiveFeed
             foreach (var id in command.Ids)
                 if (tracker.TryGetKey(id, out var key) && key < 0x80000000u && UnitRegistry.TryGetUnit(new PersistentID { Id = key }, out var unit) && unit != null && !unit.disabled)
                     resolved.Add(unit);
+            // Buildings come by persistent ID, and only those the feed shows (known to your side).
+            foreach (var key in command.Buildings)
+                if (UnitRegistry.TryGetUnit(new PersistentID { Id = key }, out var unit) && unit is Building building && !unit.disabled && BuildingKnown(building, false))
+                    resolved.Add(unit);
             var markers = HudMarkers(hud);
             bool added = false, removed = false;
             if (command.Op == TargetOp.Remove || command.Op == TargetOp.Set)
@@ -331,7 +397,9 @@ namespace NuclearLiveFeed
                 for (int i = resolved.Count - 1; i >= 0 && list.Count < TargetCommand.MaxIds; i--)
                 {
                     var unit = resolved[i];
-                    if (unit == hud.aircraft || list.Contains(unit) || !markers.TryGetValue(unit, out var marker) || marker == null) continue;
+                    // Never your own aircraft or your own side's units, whatever client sent the change.
+                    if (unit == hud.aircraft || (unit.NetworkHQ != null && unit.NetworkHQ == hud.aircraft.NetworkHQ)) continue;
+                    if (list.Contains(unit) || !markers.TryGetValue(unit, out var marker) || marker == null) continue;
                     if (selector != null && selector.CheckExclusions(unit)) continue;
                     list.Insert(0, unit);
                     marker.SelectMarker();
@@ -391,7 +459,20 @@ namespace NuclearLiveFeed
             return code;
         }
 
-        private void ObserveBuilding(Building building, double now, DateTime utc)
+        /// <summary>
+        /// Like the in-game map (DynamicMap.GenerateMap): your side's and neutral buildings always, an enemy building only once
+        /// it is in your side's tracking database. Without a side, only neutral buildings: no side knows anything yet.
+        /// A building that stops being known is removed by the next building pass.
+        /// </summary>
+        private bool BuildingKnown(Building building, bool revealAll)
+        {
+            var hq = building.NetworkHQ;
+            if (hq == null || revealAll || (sessionHq != null && hq == sessionHq)) return true;
+            if (sessionHq == null) return false;
+            return sessionHq.trackingDatabase.ContainsKey(building.persistentID);
+        }
+
+        private void ObserveBuilding(Building building, double now, DateTime utc, bool revealAll)
         {
             uint key = Key(building);
             seenBuildings.Add(key);
@@ -404,7 +485,13 @@ namespace NuclearLiveFeed
                 Unit.UnitState.Abandoned => "abandoned",
                 _ => "active",
             };
-            string fingerprint = state + (int)force;
+            bool observed = force != ForceId.Opposing || revealAll
+                || (sessionHq != null && sessionHq.trackingDatabase.TryGetValue(building.persistentID, out var track) && track.Observed());
+            if (observed) { observedBuildingState[key] = state; observedBuildingAt[key] = utc; }
+            else state = observedBuildingState.TryGetValue(key, out var lastState) ? lastState : "unknown";
+            float airRange = BuildingAirRange(building);
+            string airEnvelope = building.definition != null && buildingAirEnvelope.TryGetValue(building.definition, out var c) ? c : "";
+            string fingerprint = state + (int)force + "/" + observed + "/" + airRange + "/" + airEnvelope;
             if (buildingStates.TryGetValue(key, out var previous) && previous == fingerprint
                 && buildingSentAt.TryGetValue(key, out var sentAt) && now - sentAt < 600) return;
             buildingStates[key] = fingerprint;
@@ -413,7 +500,44 @@ namespace NuclearLiveFeed
             var definition = building.definition;
             string name = definition != null && !string.IsNullOrEmpty(definition.unitName) ? definition.unitName : building.unitName ?? "";
             string code = definition != null ? definition.code ?? "" : "";
-            sink!.Building("nlf-b-" + key, CotWriter.Building("nlf-b-" + key, force, lat, lon, hae, utc, TimeSpan.FromHours(1), name, code, state), false);
+            sink!.Building("nlf-b-" + key, CotWriter.Building("nlf-b-" + key, force, lat, lon, hae, utc, TimeSpan.FromHours(1), name, code, state, airRange: airRange, airEnvelope: airEnvelope, observed: observed, lastSeenUtc: observedBuildingAt.TryGetValue(key, out var lastAt) ? lastAt : (DateTime?)null), false);
+        }
+
+        /// <summary>
+        /// Longest range and highest ceiling of a unit's anti-air weapons. The turret AI (CombatAI.AnalyzeTarget) engages a target
+        /// only below targetRequirements.maxAltitude above ground, within maxRange; 0 ceiling means the weapons give none.
+        /// </summary>
+        private static (float Range, string Envelope) AirEnvelope(Unit unit)
+        {
+            float range = 0;
+            var pairs = new List<string>();
+            foreach (var station in unit.weaponStations)
+            {
+                var info = station?.WeaponInfo;
+                if (info == null || info.effectiveness.antiAir <= 0 || info.targetRequirements.maxRange <= 0) continue;
+                range = Math.Max(range, info.targetRequirements.maxRange);
+                // Each weapon's own range and ceiling: a long-range weapon with a low ceiling must not borrow another's height.
+                string pair = Math.Round(info.targetRequirements.maxRange) + ":" + Math.Round(Math.Max(0, info.targetRequirements.maxAltitude));
+                if (!pairs.Contains(pair)) pairs.Add(pair);
+            }
+            return (range, string.Join(" ", pairs));
+        }
+
+        /// <summary>
+        /// Anti-air emplacements are buildings: the same turret fire gate as for vehicles (targetRequirements.maxRange of
+        /// weapons with effectiveness.antiAir above 0), cached per building type once its weapon stations exist.
+        /// </summary>
+        private float BuildingAirRange(Building building)
+        {
+            var definition = building.definition;
+            if (definition == null) return 0;
+            if (buildingAirRange.TryGetValue(definition, out var known)) return known;
+            if (building.weaponStations == null || building.weaponStations.Count == 0) return 0;
+            var (range, envelope) = AirEnvelope(building);
+            buildingAirRange[definition] = range;
+            buildingAirEnvelope[definition] = envelope;
+            if (range > 0) plugin.Log.LogInfo("Air defense range " + (range / 1000).ToString("0.0") + " km: " + (definition.unitName ?? definition.name));
+            return range;
         }
 
         private void RemoveMissingBuildings(DateTime utc)
@@ -423,6 +547,8 @@ namespace NuclearLiveFeed
             foreach (var key in scratch)
             {
                 buildingStates.Remove(key);
+                observedBuildingState.Remove(key);
+                observedBuildingAt.Remove(key);
                 buildingSentAt.Remove(key);
                 string uid = "nlf-b-" + key;
                 sink!.Building(uid, CotWriter.Building(uid, ForceId.Neutral, anchor!.Latitude, anchor.Longitude, 0, utc, TimeSpan.Zero, "", "", "removed"), true);
@@ -451,8 +577,16 @@ namespace NuclearLiveFeed
             airbaseStates.Clear();
             sentOwnship = null;
             sentTargets = null;
+            sentMissiles = null;
+            missilePairs.Clear();
+            lastMissileTarget.Clear();
+            buildingAirRange.Clear();
+            buildingAirEnvelope.Clear();
             nextAirbases = nextTargets = 0;
+            trackAges.Clear();
             buildingStates.Clear();
+            observedBuildingState.Clear();
+            observedBuildingAt.Clear();
             buildingSentAt.Clear();
             missileEvents.Clear();
             eventNumber = 0;

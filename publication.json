@@ -101,161 +101,17 @@
     {
       "name": "NuclearLiveFeed",
       "id": "dev.dikka.nuclearlivefeed",
-      "version": "0.3.3",
-      "inputHash": "a1268396519a0a9c9d085207e555fdc51da0a2ac5da44d3a79f25035850f808c"
+      "version": "0.4.0",
+      "inputHash": "60ed02befa1b038098538fbf20a45bfbdf1a985b144525d6bfb5a883effe4e82"
     }
   ],
   "releases": [
     {
       "kind": "mod",
-      "name": "NuclearConnectivity",
-      "version": "0.2.7",
-      "tag": "NuclearConnectivity-v0.2.7",
-      "asset": "NuclearConnectivity.zip",
-      "prerelease": false
-    },
-    {
-      "kind": "mod",
-      "name": "NuclearControllerGestures",
-      "version": "0.2.2",
-      "tag": "NuclearControllerGestures-v0.2.2",
-      "asset": "NuclearControllerGestures.zip",
-      "prerelease": false
-    },
-    {
-      "kind": "mod",
-      "name": "NuclearDeathBlackout",
-      "version": "0.2.7",
-      "tag": "NuclearDeathBlackout-v0.2.7",
-      "asset": "NuclearDeathBlackout.zip",
-      "prerelease": false
-    },
-    {
-      "kind": "mod",
-      "name": "NuclearMapPlayerNames",
-      "version": "0.2.8",
-      "tag": "NuclearMapPlayerNames-v0.2.8",
-      "asset": "NuclearMapPlayerNames.zip",
-      "prerelease": false
-    },
-    {
-      "kind": "mod",
-      "name": "NuclearMapMarkings",
-      "version": "0.1.7",
-      "tag": "NuclearMapMarkings-v0.1.7",
-      "asset": "NuclearMapMarkings.zip",
-      "prerelease": false
-    },
-    {
-      "kind": "mod",
-      "name": "NuclearMapTrails",
-      "version": "0.1.6",
-      "tag": "NuclearMapTrails-v0.1.6",
-      "asset": "NuclearMapTrails.zip",
-      "prerelease": false
-    },
-    {
-      "kind": "mod",
-      "name": "NuclearMfdWeapons",
-      "version": "0.1.9",
-      "tag": "NuclearMfdWeapons-v0.1.9",
-      "asset": "NuclearMfdWeapons.zip",
-      "prerelease": false
-    },
-    {
-      "kind": "mod",
-      "name": "NuclearNightVision",
-      "version": "0.1.1",
-      "tag": "NuclearNightVision-v0.1.1",
-      "asset": "NuclearNightVision.zip",
-      "prerelease": false
-    },
-    {
-      "kind": "mod",
-      "name": "NuclearTargeting",
-      "version": "0.2.6",
-      "tag": "NuclearTargeting-v0.2.6",
-      "asset": "NuclearTargeting.zip",
-      "prerelease": false
-    },
-    {
-      "kind": "mod",
-      "name": "NuclearSatelliteMap",
-      "version": "0.2.3",
-      "tag": "NuclearSatelliteMap-v0.2.3",
-      "asset": "NuclearSatelliteMap.zip",
-      "prerelease": false
-    },
-    {
-      "kind": "mod",
-      "name": "NuclearSounds",
-      "version": "0.1.6",
-      "tag": "NuclearSounds-v0.1.6",
-      "asset": "NuclearSounds.zip",
-      "prerelease": false
-    },
-    {
-      "kind": "mod",
-      "name": "NuclearSpectator",
-      "version": "0.1.13",
-      "tag": "NuclearSpectator-v0.1.13",
-      "asset": "NuclearSpectator.zip",
-      "prerelease": false
-    },
-    {
-      "kind": "mod",
-      "name": "NuclearTrackAge",
-      "version": "0.1.7",
-      "tag": "NuclearTrackAge-v0.1.7",
-      "asset": "NuclearTrackAge.zip",
-      "prerelease": false
-    },
-    {
-      "kind": "mod",
-      "name": "NuclearUnits",
-      "version": "1.2.8",
-      "tag": "NuclearUnits-v1.2.8",
-      "asset": "NuclearUnits.zip",
-      "prerelease": false
-    },
-    {
-      "kind": "mod",
-      "name": "NuclearDelivery",
-      "version": "0.1.8",
-      "tag": "NuclearDelivery-v0.1.8",
-      "asset": "NuclearDelivery.zip",
-      "prerelease": false
-    },
-    {
-      "kind": "mod",
-      "name": "NuclearMinimap",
-      "version": "0.5.3",
-      "tag": "NuclearMinimap-v0.5.3",
-      "asset": "NuclearMinimap.zip",
-      "prerelease": false
-    },
-    {
-      "kind": "mod",
       "name": "NuclearLiveFeed",
-      "version": "0.3.3",
-      "tag": "NuclearLiveFeed-v0.3.3",
+      "version": "0.4.0",
+      "tag": "NuclearLiveFeed-v0.4.0",
       "asset": "NuclearLiveFeed.zip",
-      "prerelease": false
-    },
-    {
-      "kind": "pack",
-      "name": "our",
-      "version": "1.1.1",
-      "tag": "Modpack-mine-v1.1.1",
-      "asset": "nuclear-option-modpack-mine.nommpack",
-      "prerelease": false
-    },
-    {
-      "kind": "pack",
-      "name": "full",
-      "version": "1.1.1",
-      "tag": "Modpack-full-v1.1.1",
-      "asset": "nuclear-option-modpack-full.nommpack",
       "prerelease": false
     }
   ]

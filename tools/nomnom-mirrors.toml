@@ -133,7 +133,8 @@ project = "NuclearMinimap/NuclearMinimap.csproj"
 [mods.NuclearLiveFeed]
 id = "dev.dikka.nuclearlivefeed"
 display_name = "NuclearLiveFeed"
-description = "Streams your side's live battlefield picture to the live map page in Chrome or Edge, with optional target selection from the page."
+description = "Live tactical map on a second screen: open map.scramd.com in Chrome or Edge while you fly. Shows your side’s known contacts, missile warnings, estimated air-defense areas and runway guidance. Inspect or pin aircraft, pick game targets and copy grid calls for your team. Join a side and take an aircraft for flight readouts and target picking."
+info_url = "https://map.scramd.com/guide"
 tags = ["Map", "Integration"]
 include = ["README.md"]
 project = "NuclearLiveFeed/NuclearLiveFeed.csproj"

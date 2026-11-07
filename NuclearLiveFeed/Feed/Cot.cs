@@ -24,6 +24,9 @@ namespace NuclearLiveFeed.Feed
             public readonly int Index; public readonly UnitClass Class; public readonly string Code, Name;
             /// <summary>Longest anti-air weapon range in meters (turret fire gate), 0 when the type has none.</summary>
             public float AirRange;
+            /// <summary>Each anti-air weapon's "range:ceiling" in meters (targetRequirements.maxRange and maxAltitude, the
+            /// highest target height above ground it engages; 0 when none), space-separated; empty when the type has none.</summary>
+            public string AirEnvelope = "";
             public Entry(int index, UnitClass unitClass, string code, string name) { Index = index; Class = unitClass; Code = code; Name = name; }
         }
 
@@ -46,10 +49,11 @@ namespace NuclearLiveFeed.Feed
         public int IndexOf(string key) => byKey.TryGetValue(key, out var e) ? e.Index : 0;
 
         /// <summary>Records a type's anti-air range once known; a change republishes the session.</summary>
-        public void SetAirRange(string key, float meters)
+        public void SetAirRange(string key, float meters, string envelope = "")
         {
-            if (!byKey.TryGetValue(key, out var e) || Math.Abs(e.AirRange - meters) < 1) return;
+            if (!byKey.TryGetValue(key, out var e) || (Math.Abs(e.AirRange - meters) < 1 && e.AirEnvelope == envelope)) return;
             e.AirRange = meters;
+            e.AirEnvelope = envelope;
             Version++;
         }
 
@@ -84,12 +88,16 @@ namespace NuclearLiveFeed.Feed
         private static readonly CultureInfo Inv = CultureInfo.InvariantCulture;
 
         public static string Building(string uid, ForceId force, double lat, double lon, double hae, DateTime now, TimeSpan staleAfter,
-            string name, string code, string state, string kind = "structure", IReadOnlyList<RunwayInfo>? runways = null)
+            string name, string code, string state, string kind = "structure", IReadOnlyList<RunwayInfo>? runways = null, double airRange = 0, string airEnvelope = "", bool observed = true, DateTime? lastSeenUtc = null)
         {
             string affiliation = force == ForceId.Friendly ? "f" : force == ForceId.Opposing ? "h" : "n";
             var sb = Event(uid, "a-" + affiliation + "-G-I", now, staleAfter, lat, lon, hae);
             sb.Append("<detail><contact callsign=\"").Append(Escape(name)).Append("\"/>");
             sb.Append("<nlf kind=\"").Append(kind).Append("\" state=\"").Append(state).Append("\" code=\"").Append(Escape(code)).Append("\" force=\"").Append((int)force).Append('"');
+            sb.Append(" observed=\"").Append(observed ? "true" : "false").Append('"');
+            if (lastSeenUtc.HasValue) sb.Append(" lastSeenUtc=\"").Append(T(lastSeenUtc.Value)).Append('"');
+            if (airRange > 0) sb.Append(" airRange=\"").Append(N(airRange)).Append('"');
+            if (airEnvelope.Length > 0) sb.Append(" airEnvelope=\"").Append(Escape(airEnvelope)).Append('"');
             if (runways == null || runways.Count == 0) sb.Append("/>");
             else
             {
@@ -118,17 +126,35 @@ namespace NuclearLiveFeed.Feed
             {
                 sb.Append("<type index=\"").Append(t.Index).Append("\" class=\"").Append(t.Class.ToString().ToLowerInvariant()).Append("\" code=\"").Append(Escape(t.Code)).Append("\" name=\"").Append(Escape(t.Name)).Append('"');
                 if (t.AirRange > 0) sb.Append(" airRange=\"").Append(N(t.AirRange)).Append('"');
+                if (t.AirEnvelope.Length > 0) sb.Append(" airEnvelope=\"").Append(t.AirEnvelope).Append('"');
                 sb.Append("/>");
             }
             return sb.Append("</nlf></detail></event>").ToString();
         }
 
         /// <summary>Which entity is the local player's aircraft; an empty ID means none (menu, dead, spectating).</summary>
-        public static string Ownship(EntityId id, bool present, GeoAnchor anchor, DateTime now)
+        public static string Ownship(EntityId id, bool present, GeoAnchor anchor, DateTime now, float agl = 0, string weapon = "", float weaponRange = 0)
         {
             var sb = Event("nlf-ownship", "b-x-nlf-ownship", now, TimeSpan.FromDays(1), anchor.Latitude, anchor.Longitude, anchor.Height);
-            sb.Append("<detail><nlf entity=\"").Append(present ? id.ToString() : "").Append("\"/></detail></event>");
+            sb.Append("<detail><nlf entity=\"").Append(present ? id.ToString() : "").Append('"');
+            if (present) sb.Append(" agl=\"").Append(N(agl)).Append("\" weapon=\"").Append(Escape(weapon)).Append("\" weaponRange=\"").Append(N(weaponRange)).Append('"');
+            sb.Append("/></detail></event>");
             return sb.ToString();
+        }
+
+        /// <summary>Current target of each missile the player's side sees: space-separated "missile>target" entity ID pairs.</summary>
+        public static string MissileTargets(string pairs, GeoAnchor anchor, DateTime now)
+        {
+            var sb = Event("nlf-missiles", "b-x-nlf-missiles", now, TimeSpan.FromDays(1), anchor.Latitude, anchor.Longitude, anchor.Height);
+            sb.Append("<detail><nlf pairs=\"").Append(Escape(pairs)).Append("\"/></detail></event>");
+            return sb.ToString();
+        }
+
+        /// <summary>Age in mission seconds of the side's last observation, for each lost mobile track.</summary>
+        public static string TrackAges(string pairs, GeoAnchor anchor, DateTime now)
+        {
+            var sb = Event("nlf-track-ages", "b-x-nlf-track-ages", now, TimeSpan.FromDays(1), anchor.Latitude, anchor.Longitude, anchor.Height);
+            return sb.Append("<detail><nlf pairs=\"").Append(Escape(pairs)).Append("\"/></detail></event>").ToString();
         }
 
         /// <summary>Sent to each viewer alone on connect: what this viewer may control.</summary>
@@ -143,7 +169,7 @@ namespace NuclearLiveFeed.Feed
         /// The local player's target list, newest first (index 0 is the game's primary target). Editable is false when the
         /// player has no aircraft or weapons, so viewers offer no selection.
         /// </summary>
-        public static string Targets(IEnumerable<EntityId> ids, bool editable, GeoAnchor anchor, DateTime now)
+        public static string Targets<T>(IEnumerable<T> ids, bool editable, GeoAnchor anchor, DateTime now)
         {
             var sb = Event("nlf-targets", "b-x-nlf-targets", now, TimeSpan.FromDays(1), anchor.Latitude, anchor.Longitude, anchor.Height);
             sb.Append("<detail><nlf editable=\"").Append(editable ? "true" : "false").Append("\" entities=\"").Append(string.Join(" ", ids)).Append("\"/></detail></event>");

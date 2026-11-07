@@ -143,6 +143,9 @@ var anchor = new GeoAnchor(45, 0, 0);
     Check("parse targets add", TargetCommand.TryParse("targets add 1:1:5 1:1:6 1:1:5 junk", out var add) && add.Op == TargetOp.Add && add.Ids.Count == 2);
     Check("parse targets set empty", TargetCommand.TryParse("targets set", out var set) && set.Op == TargetOp.Set && set.Ids.Count == 0);
     Check("parse targets clear", TargetCommand.TryParse("targets clear", out var clear) && clear.Op == TargetOp.Clear);
+    Check("parse building targets", TargetCommand.TryParse("targets add nlf-b-42 1:1:5 nlf-b-42 nlf-b-x nlf-b-4294967295", out var withBuilding)
+        && withBuilding.Ids.Count == 1 && withBuilding.Buildings.Count == 1 && withBuilding.Buildings[0] == 42);
+    Check("building-only command", TargetCommand.TryParse("targets remove nlf-b-7", out var onlyBuilding) && onlyBuilding.Buildings.Count == 1 && onlyBuilding.Ids.Count == 0);
     Check("reject unknown commands", !TargetCommand.TryParse("targets fire 1:1:5", out _) && !TargetCommand.TryParse("hello", out _) && !TargetCommand.TryParse("targets remove", out _));
     var many = "targets add " + string.Join(" ", Enumerable.Range(1, 300).Select(i => "1:1:" + i));
     Check("target command capped", TargetCommand.TryParse(many, out var capped) && capped.Ids.Count == TargetCommand.MaxIds);
@@ -156,6 +159,19 @@ var anchor = new GeoAnchor(45, 0, 0);
     Check("removed entity has no key", !t.TryGetKey(id, out _));
     var targets = CotWriter.Targets(new[] { new EntityId(1, 1, 5), new EntityId(1, 1, 9) }, true, anchor, DateTime.UtcNow);
     Check("targets message", targets.Contains("b-x-nlf-targets") && targets.Contains("entities=\"1:1:5 1:1:9\"") && targets.Contains("editable=\"true\""));
+    var missiles = System.Xml.Linq.XDocument.Parse(CotWriter.MissileTargets("1:1:7>1:1:5 1:1:8>1:1:9", anchor, DateTime.UtcNow));
+    Check("missile targets message", missiles.Root!.Attribute("type")!.Value == "b-x-nlf-missiles"
+        && missiles.Descendants("nlf").Single().Attribute("pairs")!.Value == "1:1:7>1:1:5 1:1:8>1:1:9");
+    var ages = System.Xml.Linq.XDocument.Parse(CotWriter.TrackAges("1:1:7@125.0", anchor, DateTime.UtcNow));
+    Check("track age message", ages.Root!.Attribute("type")!.Value == "b-x-nlf-track-ages" && ages.Descendants("nlf").Single().Attribute("pairs")!.Value == "1:1:7@125.0");
+    var emplacement = CotWriter.Building("nlf-b-2", ForceId.Opposing, 45, 0, 0, DateTime.UtcNow, TimeSpan.FromHours(1), "23mm AAA Emplacement", "AAA", "active", airRange: 2500);
+    Check("building air range", System.Xml.Linq.XDocument.Parse(emplacement).Descendants("nlf").Single().Attribute("airRange")!.Value == "2500");
+    var envelope = System.Xml.Linq.XDocument.Parse(CotWriter.Building("nlf-b-4", ForceId.Opposing, 45, 0, 0, DateTime.UtcNow, TimeSpan.FromHours(1), "SAM", "", "active", airRange: 12000, airEnvelope: "12000:8000 4000:3000")).Descendants("nlf").Single();
+    Check("building air envelope", envelope.Attribute("airEnvelope")!.Value == "12000:8000 4000:3000");
+    var observedAt = new DateTime(2026, 1, 2, 3, 4, 5, DateTimeKind.Utc);
+    var remembered = System.Xml.Linq.XDocument.Parse(CotWriter.Building("nlf-b-5", ForceId.Opposing, 45, 0, 0, DateTime.UtcNow, TimeSpan.FromHours(1), "SAM", "", "damaged", observed: false, lastSeenUtc: observedAt)).Descendants("nlf").Single();
+    Check("remembered building observation", remembered.Attribute("observed")!.Value == "false" && remembered.Attribute("lastSeenUtc")!.Value == "2026-01-02T03:04:05.000Z" && remembered.Attribute("state")!.Value == "damaged");
+    Check("no air range attribute without weapons", !CotWriter.Building("nlf-b-3", ForceId.Opposing, 45, 0, 0, DateTime.UtcNow, TimeSpan.FromHours(1), "Hangar", "", "active").Contains("airRange"));
 }
 
 // Server: origin policy, snapshot ordering and live delivery over a real WebSocket.

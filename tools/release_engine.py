@@ -314,7 +314,7 @@ def sanitized_config(mods):
     lines = ['# Public build/package inputs. Project files supply plugin versions.', 'configuration = "Release"', '']
     for mod in mods:
         lines.append(f'[mods.{mod["name"]}]')
-        for key in ('id', 'display_name', 'description', 'tags', 'include'):
+        for key in ('id', 'display_name', 'description', 'info_url', 'tags', 'include'):
             if key in mod:
                 lines.append(f'{key} = {json.dumps(mod[key], ensure_ascii=False)}')
         if mod.get('data'):
@@ -864,7 +864,7 @@ def manifest(mod, item, asset, value):
     artifacts[item['version']] = artifact
     return dict(old, **{'id': mod['guid'], 'displayName': mod.get('display_name', mod['name']),
             'description': mod['description'], 'tags': mod.get('tags', []), 'authors': ['dikkadev'],
-            'isClientOrServer': 'Client', 'urls': [{'name': 'info', 'url': source}, {'name': 'source', 'url': source}],
+            'isClientOrServer': 'Client', 'urls': [{'name': 'info', 'url': mod.get('info_url', source)}, {'name': 'source', 'url': source}],
             'githubOwner': value['repository'].split('/')[0], 'githubRepoName': value['repository'].split('/')[1],
             'autoUpdateArtifacts': 'True', 'releaseTagPrefix': mod['name'] + '-v', 'releaseAssetName': item['asset'],
             'artifacts': [artifacts[v] for v in sorted(artifacts, key=version_key, reverse=True)]})
