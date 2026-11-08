@@ -33,6 +33,12 @@
       "inputHash": "f2105ac470cb911faa2f952133ff903cd301629c139d5224aadd12f90ed57600"
     },
     {
+      "name": "NuclearMapPan",
+      "id": "dev.dikka.nuclearmappan",
+      "version": "0.1.1",
+      "inputHash": "bde88396de72cd25b2fabed299b2687558521bb894e82cb7a556e967d0b69060"
+    },
+    {
       "name": "NuclearMapTrails",
       "id": "dev.dikka.nuclearmaptrails",
       "version": "0.1.6",
@@ -108,10 +114,26 @@
   "releases": [
     {
       "kind": "mod",
-      "name": "NuclearLiveFeed",
-      "version": "0.4.0",
-      "tag": "NuclearLiveFeed-v0.4.0",
-      "asset": "NuclearLiveFeed.zip",
+      "name": "NuclearMapPan",
+      "version": "0.1.1",
+      "tag": "NuclearMapPan-v0.1.1",
+      "asset": "NuclearMapPan.zip",
+      "prerelease": false
+    },
+    {
+      "kind": "pack",
+      "name": "our",
+      "version": "1.2.0",
+      "tag": "Modpack-mine-v1.2.0",
+      "asset": "nuclear-option-modpack-mine.nommpack",
+      "prerelease": false
+    },
+    {
+      "kind": "pack",
+      "name": "full",
+      "version": "1.2.0",
+      "tag": "Modpack-full-v1.2.0",
+      "asset": "nuclear-option-modpack-full.nommpack",
       "prerelease": false
     }
   ]

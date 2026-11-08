@@ -164,6 +164,7 @@ MapTrailChecks.Run(Case);
 MapMarkingsChecks.Run(Case);
 SpectatorChecks.Run(Case);
 NightVisionChecks.Run(Case);
+MapPanChecks.Run(Case);
 SatelliteMapChecks.Run(Case);
 Console.WriteLine($"{passed} passed; {failed} failed.");
 return failed == 0 ? 0 : 1;

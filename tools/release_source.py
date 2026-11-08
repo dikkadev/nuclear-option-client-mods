@@ -34,7 +34,7 @@ SAFE_NAMES = frozenset({'.gitignore', '.env.example'})
 # Directory components that are never exported, at any depth (compared lowercase).
 DENIED_DIRECTORIES = frozenset({
     '.git', '.jj', '.dev', '.vs', '.vscode', '.idea', '.agent-feedback', '.cache',
-    'archive', 'nuclearreplay', 'references', 'game', 'nuclear option', 'bepinex',
+    'archive', 'references', 'game', 'nuclear option', 'bepinex',
     'screenshots', 'screenshot', 'bin', 'obj', 'dist',
     'node_modules', '__pycache__', 'downloads', 'logs', 'tmp', 'temp',
 })
@@ -66,8 +66,6 @@ TESTS_ROOT = 'tests'
 
 # Square icon inside each mod directory (tools/icons/generate-icons.py); also its NOMM image.
 ICON = 'docs/assets/icon.png'
-# Icons of unpublished mods, shown in the public README without their source.
-PREVIEW_ICONS = {'NuclearReplay': 'assets/icons/NuclearReplay.png'}
 
 SECRET_PATTERNS = (
     ('private key', re.compile(rb'-----BEGIN [A-Z0-9 ]*PRIVATE KEY(?: BLOCK)?-----')),
@@ -129,8 +127,6 @@ def mod_directories(root: Path, mods: list[dict]) -> list[str]:
 
 def is_exportable(path: str, mod_dirs: list[str]) -> bool:
     """Whether a safe relative path belongs in the public snapshot."""
-    if path in PREVIEW_ICONS.values():
-        return True
     parts = path.split('/')
     name = parts[-1]
     lowered = [part.lower() for part in parts]
@@ -231,9 +227,6 @@ def collect_source(root: Path, mods: list[dict], *, include_untracked: bool = Fa
     mod_dirs = mod_directories(root, mods)
     files: dict[str, bytes] = {}
     candidates = list_source_files(root, include_untracked)
-    for name, public in PREVIEW_ICONS.items():
-        if candidates.get(f'{name}/{ICON}') in ('100644', 'untracked'):
-            files[public] = read_regular_file(root, f'{name}/{ICON}')
     for path, mode in sorted(candidates.items()):
         try:
             check_relative_path(path)
@@ -337,14 +330,6 @@ def strip_icon(readme: bytes, name: str) -> bytes:
     return readme[len(prefix):] if readme.startswith(prefix) else readme
 
 
-def _previews(files: dict[str, bytes]) -> list[str]:
-    previews = [(name, path) for name, path in sorted(PREVIEW_ICONS.items()) if path in files]
-    if not previews:
-        return []
-    lines = ['**Experimental**, not yet part of these releases:', '']
-    return lines + [line for name, path in previews for line in (f'{_icon(path, name, 64)} `{name}`', '')]
-
-
 def public_readme(mods: list[dict], repo: str, files: dict[str, bytes] | None = None) -> bytes:
     """Consumer-facing build document: all supplied mods, no private details."""
     if re.fullmatch(r'[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+', repo):
@@ -378,7 +363,6 @@ def public_readme(mods: list[dict], repo: str, files: dict[str, bytes] | None = 
         '',
         'Each publication contains all of these mods at the versions shown.',
         '',
-        *_previews(files),
         '## Requirements',
         '',
         '- The .NET 10 SDK.',

@@ -41,6 +41,14 @@ tags = ["QoL", "Map"]
 include = ["README.md"]
 project = "NuclearMapMarkings/NuclearMapMarkings.csproj"
 
+[mods.NuclearMapPan]
+id = "dev.dikka.nuclearmappan"
+display_name = "NuclearMapPan"
+description = "Client-side Nuclear Option mod that moves the expanded map faster with a controller stick, with an adjustable stick curve and top speed."
+tags = ["QoL", "Map"]
+include = ["README.md"]
+project = "NuclearMapPan/NuclearMapPan.csproj"
+
 [mods.NuclearMapTrails]
 id = "dev.dikka.nuclearmaptrails"
 display_name = "NuclearMapTrails"

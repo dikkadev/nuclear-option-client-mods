@@ -21,6 +21,7 @@ MOD_DIRS=(
   "NuclearDelivery"
   "NuclearLiveFeed"
   "NuclearMapMarkings"
+  "NuclearMapPan"
   "NuclearMapPlayerNames"
   "NuclearMapTrails"
   "NuclearMinimap"

@@ -86,7 +86,6 @@ class CollectSourceTests(unittest.TestCase):
         self.write('.dev/modding-reference.md', 'private\n')
         self.write('Alpha/.dev/wip/notes.md', 'private\n')
         self.write('archive/Old/Old.cs', 'class Old {}\n')
-        self.write('NuclearReplay/Replay.cs', 'class R {}\n')
         self.write('references/managed/Game.dll', b'dll')
         self.write('Alpha/bin/Release/Generated.cs', 'generated\n')
         self.write('Alpha/obj/Generated.cs', 'generated\n')
@@ -325,22 +324,17 @@ class PublicReadmeTests(unittest.TestCase):
         for forbidden in ('/private/place', 'c:\\', 'users', 'agent', 'forgejo', '.dev', 'claude', 'tailscale', 'jj '):
             self.assertNotIn(forbidden, text)
 
-    def test_mod_table_shows_linked_icons_and_lists_previews_last(self):
+    def test_mod_table_shows_linked_icons(self):
         self.assertNotIn('docs/assets/icon.png', rs.public_readme(self.MODS, 'o/r').decode())
-        files = {'Zed/docs/assets/icon.png': b'z', 'Alpha/docs/assets/icon.png': b'a',
-                 'assets/icons/NuclearReplay.png': b'r'}
+        files = {'Zed/docs/assets/icon.png': b'z', 'Alpha/docs/assets/icon.png': b'a'}
         text = rs.public_readme(self.MODS, 'o/r', files).decode()
         alpha = text.index('| [<img src="Alpha/docs/assets/icon.png" alt="" width="40" align="middle">](Alpha/) [`Alpha`](Alpha/) |')
         zed = text.index('| [<img src="Zed/docs/assets/icon.png" alt="" width="40" align="middle">](Zed/) [`Zed`](Zed/) |')
-        replay = text.index('<img src="assets/icons/NuclearReplay.png" alt="NuclearReplay" width="64" height="64"> `NuclearReplay`')
         self.assertLess(text.index('## Mods'), alpha)
         self.assertLess(alpha, zed)
-        self.assertLess(zed, replay)
-        self.assertNotIn('](NuclearReplay/)', text)
         partial = rs.public_readme(self.MODS, 'o/r', {'Zed/docs/assets/icon.png': b'z'}).decode()
         self.assertNotIn('Alpha/docs', partial)
         self.assertIn('| [`Alpha`](Alpha/) |', partial)
-        self.assertNotIn('Experimental', partial)
 
     def test_readme_icon_line_is_stripped_only_when_exact(self):
         line = rs.icon_line('Alpha').encode()
@@ -348,9 +342,8 @@ class PublicReadmeTests(unittest.TestCase):
         self.assertEqual(rs.strip_icon(b'# Alpha\n' + line + b'\n', 'Alpha'), b'# Alpha\n' + line + b'\n')
         self.assertEqual(rs.strip_icon(line + b'\n\n', 'Zed'), line + b'\n\n')
 
-    def test_preview_icon_is_the_only_export_from_an_unpublished_mod(self):
-        self.assertTrue(rs.is_exportable('assets/icons/NuclearReplay.png', ['Alpha']))
-        self.assertFalse(rs.is_exportable('NuclearReplay/docs/assets/icon.png', ['Alpha']))
+    def test_only_listed_mod_icons_are_exported(self):
+        self.assertFalse(rs.is_exportable('Unlisted/docs/assets/icon.png', ['Alpha']))
         self.assertFalse(rs.is_exportable('assets/icons/Other.png', ['Alpha']))
         self.assertTrue(rs.is_exportable('Alpha/docs/assets/icon.png', ['Alpha']))
 
@@ -386,7 +379,6 @@ class RealRepositoryTests(unittest.TestCase):
             lowered = path.lower().split('/')
             self.assertNotIn('.dev', lowered, path)
             self.assertNotIn('archive', lowered, path)
-            self.assertNotIn('nuclearreplay', lowered, path)
             self.assertNotEqual(lowered[-1], 'agents.md', path)
             self.assertNotEqual(path, 'tools/nomnom-mirrors.toml')
             self.assertNotEqual(path, 'README.md')

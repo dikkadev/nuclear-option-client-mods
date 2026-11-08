@@ -121,7 +121,7 @@ foreach (var (name, parameters) in new[] {
             "Texture upload API contract changed.");
     });
 }
-var mods = new[] { "NuclearConnectivity", "NuclearControllerGestures", "NuclearDeathBlackout", "NuclearDelivery", "NuclearLiveFeed", "NuclearMapMarkings", "NuclearMapPlayerNames", "NuclearMapTrails", "NuclearMinimap", "NuclearMfdWeapons", "NuclearNightVision", "NuclearSatelliteMap", "NuclearTargeting", "NuclearSounds", "NuclearSpectator", "NuclearTrackAge", "NuclearUnits" };
+var mods = new[] { "NuclearConnectivity", "NuclearControllerGestures", "NuclearDeathBlackout", "NuclearDelivery", "NuclearLiveFeed", "NuclearMapMarkings", "NuclearMapPan", "NuclearMapPlayerNames", "NuclearMapTrails", "NuclearMinimap", "NuclearMfdWeapons", "NuclearNightVision", "NuclearSatelliteMap", "NuclearTargeting", "NuclearSounds", "NuclearSpectator", "NuclearTrackAge", "NuclearUnits" };
 foreach (var mod in mods)
 {
     // Release snapshots can omit private mods. The build runner passes its exact set.

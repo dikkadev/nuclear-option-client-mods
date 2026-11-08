@@ -26,5 +26,6 @@
     <Compile Include="../../NuclearMapMarkings/MarkingsGeometry.cs" Link="Production/MarkingsGeometry.cs" />
     <Compile Include="../../NuclearSpectator/SpectatorCycle.cs" Link="Production/SpectatorCycle.cs" />
     <Compile Include="../../NuclearNightVision/FadeMath.cs" Link="Production/FadeMath.cs" />
+    <Compile Include="../../NuclearMapPan/PanMath.cs" Link="Production/PanMath.cs" />
   </ItemGroup>
 </Project>
