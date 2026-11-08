@@ -113,26 +113,18 @@
   ],
   "releases": [
     {
-      "kind": "mod",
-      "name": "NuclearMapPan",
-      "version": "0.1.1",
-      "tag": "NuclearMapPan-v0.1.1",
-      "asset": "NuclearMapPan.zip",
-      "prerelease": false
-    },
-    {
       "kind": "pack",
       "name": "our",
-      "version": "1.2.0",
-      "tag": "Modpack-mine-v1.2.0",
+      "version": "1.2.1",
+      "tag": "Modpack-mine-v1.2.1",
       "asset": "nuclear-option-modpack-mine.nommpack",
       "prerelease": false
     },
     {
       "kind": "pack",
       "name": "full",
-      "version": "1.2.0",
-      "tag": "Modpack-full-v1.2.0",
+      "version": "1.2.1",
+      "tag": "Modpack-full-v1.2.1",
       "asset": "nuclear-option-modpack-full.nommpack",
       "prerelease": false
     }
