@@ -5,11 +5,6 @@ origin = "https://github.com/BepInEx/BepInEx.ConfigurationManager"
 layout = "zip"
 strip_prefix = "BepInEx/plugins/"
 
-[mods."vet.solar.collimatedhud"]
-origin = "https://github.com/SolarDyn/Collimated-HUD"
-layout = "7z"
-strip_prefix = "Collimated HUD/"
-
 [mods."LoadoutPresets"]
 origin = "https://github.com/RudrNaik/NO-LoadoutPresets"
 layout = "dll"

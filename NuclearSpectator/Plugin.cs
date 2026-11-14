@@ -116,6 +116,9 @@ namespace NuclearSpectator
         internal ConfigEntry<float> FollowNearestDelay { get; private set; } = null!;
         internal ConfigEntry<bool> ShowFollowNearestStatus { get; private set; } = null!;
 
+        // When Follow Nearest When Lost was last switched off (unscaled time).
+        internal float FollowNearestOffTime { get; private set; } = float.NegativeInfinity;
+
         // Changes whenever a cockpit setting changes, so the current cockpit is rebuilt.
         internal int CockpitVersion { get; private set; }
 
@@ -199,14 +202,25 @@ namespace NuclearSpectator
 
             StartInCockpit = Config.Bind(following, "Start In Cockpit View", true,
                 "When you start following an aircraft while you have no aircraft of your own (from the map, the scoreboard, the game's spectate controls or the aircraft keys), show its cockpit view instead of the outside view. Switching from the outside view of one aircraft to another stays outside.");
-            FollowNearest = Config.Bind(following, "Follow Nearest When Lost", true,
-                "When the aircraft you follow is destroyed, its pilot dies or ejects, or it leaves the game, follow the aircraft nearest to it, of any team. An outside view stays outside; a cockpit view stays in the cockpit while Keep Cockpit View is on. Menus delay it; the spawn menu or another follow choice during the delay cancels it. Include AI Aircraft decides whether AI aircraft count. Enemy aircraft your team does not track are skipped, because the game's camera cannot follow them.");
+            FollowNearest = Config.Bind(following, "Follow Nearest When Lost", false,
+                "When the aircraft you follow is destroyed, its pilot dies or ejects, or it leaves the game, follow the aircraft nearest to it, of any team. Off by default. An outside view stays outside; a cockpit view stays in the cockpit while Keep Cockpit View is on. Menus delay it; the spawn menu or another follow choice during the delay cancels it. Include AI Aircraft decides whether AI aircraft count. Enemy aircraft your team does not track are skipped, because the game's camera cannot follow them.");
+            // 0.1.8-0.1.13 had it on by default; the user turned that off on 2026-11-14.
+            if (revision.Value < 2)
+            {
+                FollowNearest.Value = false;
+                revision.Value = 2;
+            }
+            // Switching off by F1 or the binding; the info panel confirms it for a moment.
+            FollowNearest.SettingChanged += (sender, args) =>
+            {
+                if (!FollowNearest.Value) FollowNearestOffTime = Time.unscaledTime;
+            };
             ToggleFollowNearest = InputBinding.Bind(Config, log, following, "Toggle Follow Nearest", "",
                 "Switch Follow Nearest When Lost on or off. Unbound by default.", allowFullMap: true);
             FollowNearestDelay = Config.Bind(following, "Follow Nearest Delay", 2f,
                 new ConfigDescription("Seconds to keep watching the place where the aircraft was lost before following the nearest one.", new AcceptableValueRange<float>(0f, 10f)));
             ShowFollowNearestStatus = Config.Bind(following, "Show Follow Nearest Status", true,
-                "While you follow an aircraft without one of your own, show whether Follow Nearest When Lost is on, at the info panel position (also in the cockpit view). Hide All UI hides it only in its hide-everything step.");
+                "While you follow an aircraft without one of your own and Follow Nearest When Lost is on, show a line that says so, at the info panel position (also in the cockpit view). After you switch it off, the line says off for 3 seconds. Hide All UI hides it only in its hide-everything step.");
 
             Enabled.SettingChanged += OnCockpitSettingChanged;
             ShowHud.SettingChanged += OnCockpitSettingChanged;

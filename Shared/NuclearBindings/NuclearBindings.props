@@ -1,5 +1,5 @@
 <Project>
-  <!-- The public source-only package NuclearOption.Bindings (github.com/clankagent/nuclear-option-bindings).
+  <!-- The public source-only package NuclearOption.Bindings (github.com/scramd/nuclear-option-bindings).
        Its files compile into the consuming plugin; there is no runtime library DLL or plugin dependency.
        Consumers reference Rewired_Core, Assembly-CSharp-firstpass, Unity.TextMeshPro, UnityEngine.UI,
        UnityEngine.InputLegacyModule and UnityEngine.IMGUIModule. Change the version only here. -->

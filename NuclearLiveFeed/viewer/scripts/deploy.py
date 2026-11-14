@@ -2,7 +2,8 @@
 # requires-python = ">=3.11"
 # dependencies = ["boto3"]
 # ///
-"""Uploads the built page (dist/) into the R2 bucket that serves https://map.scramd.com, then purges the cached pages.
+"""Uploads the built pages (dist/) into the R2 bucket that serves https://map.scramd.com and
+https://mission.scramd.com, then purges the cached pages.
 
 Same result as deploy.sh, for machines without bash or an account-wide token. Uploads go through R2's S3 API, so a
 token limited to the bucket works: its S3 access key is the token ID and the secret is the SHA-256 of the token.
@@ -22,6 +23,7 @@ import boto3
 BUCKET = "nuclear-live-map-data"
 ZONE = "scramd.com"
 SITE = "https://map.scramd.com"
+MISSION_SITE = "https://mission.scramd.com"
 API = "https://api.cloudflare.com/client/v4"
 PAGE = "public, max-age=300"
 ASSET = "public, max-age=31536000, immutable"
@@ -39,8 +41,9 @@ def cf(path: str, token: str, body: dict | None = None) -> dict:
 
 def main() -> None:
     dist = Path(__file__).resolve().parent.parent / "dist"
-    if not (dist / "index.html").is_file():
-        sys.exit("dist/ is missing: run pnpm build first.")
+    # All three pages, or none: the map links to the Mission picture.
+    if not all((dist / page).is_file() for page in ("index.html", "guide.html", "mission.html")):
+        sys.exit("dist/ is missing a page: run pnpm build first.")
     token, account = os.environ["CLOUDFLARE_API_TOKEN"], os.environ["CLOUDFLARE_ACCOUNT_ID"]
     token_id = cf("/user/tokens/verify", token)["result"]["id"]
     s3 = boto3.client(
@@ -61,10 +64,12 @@ def main() -> None:
     put("index.html", dist / "index.html", "text/html; charset=utf-8", PAGE)
     # The guide's key has no extension, so its address is /guide without a rewrite rule.
     put("guide", dist / "guide.html", "text/html; charset=utf-8", PAGE)
+    # The Mission picture page; a zone rule serves this key at mission.scramd.com/.
+    put("mission", dist / "mission.html", "text/html; charset=utf-8", PAGE)
 
     zone = cf(f"/zones?name={ZONE}", token)["result"][0]["id"]
-    cf(f"/zones/{zone}/purge_cache", token, {"files": [f"{SITE}/", f"{SITE}/index.html", f"{SITE}/guide"]})
-    print(f"purged the cached pages; {SITE} serves the new build")
+    cf(f"/zones/{zone}/purge_cache", token, {"files": [f"{SITE}/", f"{SITE}/index.html", f"{SITE}/guide", f"{MISSION_SITE}/"]})
+    print(f"purged the cached pages; {SITE} and {MISSION_SITE} serve the new build")
 
 
 if __name__ == "__main__":

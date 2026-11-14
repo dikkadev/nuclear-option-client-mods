@@ -37,7 +37,7 @@ class Balance(HTMLParser):
 
 
 failed = False
-for name in ["index.html", "guide.html"]:
+for name in ["index.html", "guide.html", "mission.html"]:
     p = Balance()
     p.feed((Path(__file__).resolve().parents[1] / name).read_text(encoding="utf-8"))
     p.close()

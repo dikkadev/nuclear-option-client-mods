@@ -37,9 +37,9 @@ class Versions(unittest.TestCase):
         self.assertEqual(engine.next_version('1.2.9', 'minor'), '1.3.0')
         self.assertEqual(engine.next_version('1.2.9.4', 'major'), '2.0.0.0')
 
-    def test_destination_is_users_account(self):
-        self.assertEqual(engine.repository('dikkadev/test'), 'dikkadev/test')
-        for bad in ('clankagent/test', 'https://github.com/dikkadev/test', 'dikkadev/../test'):
+    def test_destination_is_the_organization(self):
+        self.assertEqual(engine.repository('scramd/test'), 'scramd/test')
+        for bad in ('clankagent/test', 'dikkadev/test', 'https://github.com/scramd/test', 'scramd/../test'):
             with self.assertRaises(ValueError):
                 engine.repository(bad)
 
@@ -58,7 +58,7 @@ class Versions(unittest.TestCase):
             return [{'tag_name': 'Beta-v99.0.0'}, {'tag_name': 'Alpha-v1.2.0', 'name': '500.0.0'},
                     {'tag_name': 'Alpha-v2.0.0-rc1'}, {'tag_name': 'Alpha-v10.0.0', 'draft': True}]
         with patch.object(engine, 'fetch_json', side_effect=fetch), patch.object(engine, 'release_list', side_effect=releases):
-            found = engine.discovery([mod], 'dikkadev/test')
+            found = engine.discovery([mod], 'scramd/test')
         self.assertEqual(found['versions'], {'Alpha': '1.4.0'})
 
     def test_base_commit_is_checked_even_when_repository_size_is_stale(self):
@@ -69,7 +69,7 @@ class Versions(unittest.TestCase):
                 return {'sha': 'a' * 40}
             return {'private': False, 'default_branch': 'main', 'size': 0}
         with patch.object(engine, 'fetch_json', side_effect=fetch), patch.object(engine, 'release_list', return_value=[]):
-            self.assertEqual(engine.discovery([], 'dikkadev/test')['baseCommit'], 'a' * 40)
+            self.assertEqual(engine.discovery([], 'scramd/test')['baseCommit'], 'a' * 40)
 
     def test_private_repository_is_discovered_normally(self):
         def fetch(url, **kwargs):
@@ -79,16 +79,16 @@ class Versions(unittest.TestCase):
                 return {'sha': 'a' * 40}
             return {'private': True, 'default_branch': 'main'}
         with patch.object(engine, 'fetch_json', side_effect=fetch), patch.object(engine, 'release_list', return_value=[]):
-            result = engine.discovery([], 'dikkadev/test')
+            result = engine.discovery([], 'scramd/test')
         self.assertTrue(result['exists'])
         self.assertEqual(result['baseCommit'], 'a' * 40)
 
     def test_private_asset_download_uses_authenticated_github_api(self):
-        url = 'https://github.com/dikkadev/test/releases/download/Alpha-v1.2.3/Alpha.zip'
+        url = 'https://github.com/scramd/test/releases/download/Alpha-v1.2.3/Alpha.zip'
         metadata = {'assets': [{'id': 123, 'name': 'Alpha.zip', 'size': 9}]}
         with patch.object(engine, 'has_gh_auth', return_value=True), patch.object(engine, 'gh_json', return_value=metadata), patch.object(engine, 'gh', return_value=b'zip bytes') as gh:
             self.assertEqual(engine.download_reference(url), b'zip bytes')
-        gh.assert_called_once_with('api', 'repos/dikkadev/test/releases/assets/123', '-H', 'Accept: application/octet-stream')
+        gh.assert_called_once_with('api', 'repos/scramd/test/releases/assets/123', '-H', 'Accept: application/octet-stream')
 
 
 class Fixture(unittest.TestCase):
@@ -103,7 +103,7 @@ class Fixture(unittest.TestCase):
         self.command('config', 'user.email', 'private@example.test')
         self.write('.gitignore', '.env\ndist/\n**/bin/\n**/obj/\n')
         self.write('.env.example', 'NO_MANAGED_DIR="/your/game/Managed"\nNO_BEPINEX_CORE_DIR="/your/BepInEx/core"\n')
-        self.write('tools/release.toml', '[publication]\nrepository="dikkadev/test"\nbranch="main"\ncommit_name="dikkadev"\ncommit_email="dikkadev@users.noreply.github.com"\n[packs]\nour_version="1.0.0"\nfull_version="2.0.0"\n')
+        self.write('tools/release.toml', '[publication]\nrepository="scramd/test"\nbranch="main"\ncommit_name="dikkadev"\ncommit_email="dikkadev@users.noreply.github.com"\n[packs]\nour_version="1.0.0"\nfull_version="2.0.0"\n')
         entries = []
         for name, version in [('Alpha', '1.2.3'), ('Beta', '0.2.0')]:
             self.write(f'{name}/{name}.csproj', f'<Project><PropertyGroup><Version>{version}</Version><AssemblyName>{name}</AssemblyName><BepInExPluginGuid>dev.test.{name.lower()}</BepInExPluginGuid></PropertyGroup></Project>\n')
@@ -404,7 +404,7 @@ class PackVersionConsistency(Fixture):
     def remote(self, data):
         return {'versions': {'Beta': '0.2.0'}, 'releases': [], 'baseCommit': None, 'exists': True,
                 'registryEntries': {'dev.test.beta': {'artifacts': [{'version': '0.2.0',
-                    'fileName': 'Beta.zip', 'downloadUrl': 'https://github.com/dikkadev/test/releases/download/Beta-v0.2.0/Beta.zip',
+                    'fileName': 'Beta.zip', 'downloadUrl': 'https://github.com/scramd/test/releases/download/Beta-v0.2.0/Beta.zip',
                     'hash': 'sha256:' + engine.digest(data)}]}}}
 
     def test_input_hashes_ignore_other_mods_pack_versions_and_test_changes(self):
@@ -480,7 +480,7 @@ class PackVersionConsistency(Fixture):
         data = content.getvalue()
         return {'versions': {}, 'baseCommit': None, 'exists': True, 'releases': [{'tag_name': 'ClientModpack-v1.0.0',
             'assets': [{'name': 'nuclear-option-client-mods.nommpack', 'browser_download_url':
-                'https://github.com/dikkadev/test/releases/download/ClientModpack-v1.0.0/nuclear-option-client-mods.nommpack',
+                'https://github.com/scramd/test/releases/download/ClientModpack-v1.0.0/nuclear-option-client-mods.nommpack',
                 'digest': 'sha256:' + engine.digest(data)}]}]}, data
 
     def test_a_previous_pack_only_version_cannot_hide_changed_source_in_next_pack(self):
@@ -552,18 +552,18 @@ class Publication(Fixture):
         if args == ('api', 'user'):
             return {'login': self.login}
         path = args[1]
-        if path == 'repos/dikkadev/test' and len(args) == 2:
+        if path == 'repos/scramd/test' and len(args) == 2:
             return {'private': self.repo_private, 'default_branch': 'main', 'permissions': {'push': self.can_push}}
         if '--slurp' in args:
             return [list(copy.deepcopy(self.releases).values())]
-        if path == 'repos/dikkadev/test/releases' and data:
+        if path == 'repos/scramd/test/releases' and data:
             entry = json.loads(data)
             entry['id'] = len(self.releases) + 1
             entry['assets'] = []
             self.releases[entry['tag_name']] = entry
             self.events.append(('draft', entry['tag_name']))
             return copy.deepcopy(entry)
-        if path.startswith('repos/dikkadev/test/releases/'):
+        if path.startswith('repos/scramd/test/releases/'):
             identifier = int(path.rsplit('/', 1)[1])
             return copy.deepcopy(next(r for r in self.releases.values() if r['id'] == identifier))
         raise AssertionError(args)
@@ -665,7 +665,7 @@ class Publication(Fixture):
             archive.writestr('Beta/Beta.dll', b'different published dll')
         self.remote['versions'] = {'Beta': '0.2.0'}
         self.remote['registryEntries'] = {'dev.test.beta': {'artifacts': [{'version': '0.2.0', 'fileName': 'Beta.zip',
-            'downloadUrl': 'https://github.com/dikkadev/test/releases/download/Beta-v0.2.0/Beta.zip'}]}}
+            'downloadUrl': 'https://github.com/scramd/test/releases/download/Beta-v0.2.0/Beta.zip'}]}}
         with self.publishing(), patch.object(engine, 'download_reference', return_value=content.getvalue()):
             with self.assertRaisesRegex(ValueError, 'differs from the published same-version DLL'):
                 engine.publish(self.out / 'plan.json')
@@ -692,18 +692,18 @@ class Publication(Fixture):
         self.repo_private = True
         with self.publishing():
             result = engine.publish(self.out / 'plan.json')
-        self.assertEqual(result['repository'], 'dikkadev/test')
+        self.assertEqual(result['repository'], 'scramd/test')
         self.assertTrue(all(not r['draft'] and r['assets'] for r in self.releases.values()))
 
-    def test_invited_agent_can_validate_a_repository_owned_by_the_user(self):
+    def test_agent_can_validate_a_repository_of_the_organization(self):
         self.login = 'clankagent'
         with self.publishing():
             result = engine.publish(self.out / 'plan.json', dry_run=True)
-        self.assertEqual(result['repository'], 'dikkadev/test')
+        self.assertEqual(result['repository'], 'scramd/test')
         self.assertTrue(result['dryRun'])
         self.assertEqual(self.events, [])
 
-    def test_invited_agent_without_write_permission_cannot_publish(self):
+    def test_agent_without_write_permission_cannot_publish(self):
         self.login = 'clankagent'
         self.can_push = False
         with self.publishing():
@@ -711,11 +711,11 @@ class Publication(Fixture):
                 engine.publish(self.out / 'plan.json')
         self.assertEqual(self.events, [])
 
-    def test_invited_agent_cannot_create_a_repository_under_the_users_account(self):
+    def test_missing_repository_is_not_created_in_the_organization(self):
         self.login = 'clankagent'
         self.remote['exists'] = False
         with self.publishing():
-            with self.assertRaisesRegex(ValueError, 'must first be created by dikkadev'):
+            with self.assertRaisesRegex(ValueError, 'must first be created under scramd'):
                 engine.publish(self.out / 'plan.json', create_repo=True)
         self.assertEqual(self.events, [])
 
@@ -768,7 +768,7 @@ class CommandLine(unittest.TestCase):
 
     def test_help_explains_history_versions_auth_and_recovery(self):
         help_text = cli.parser().format_help()
-        for phrase in ('private Git/jj history', 'same built DLLs', 'dikkadev', 'Retry the SAME', '--expect-hash', 'EXIT CODES'):
+        for phrase in ('private Git/jj history', 'same built DLLs', 'scramd', 'Retry the SAME', '--expect-hash', 'EXIT CODES'):
             self.assertIn(phrase, help_text)
 
     def test_wizard_operation_errors_are_reported_without_tracebacks(self):
@@ -789,7 +789,7 @@ class Wizard(Fixture):
         question = lambda *args, **kwargs: types.SimpleNamespace(ask=lambda: next(answers))
         questionary = types.SimpleNamespace(Choice=lambda label, value: value,
             checkbox=question, select=question, text=question, confirm=question, path=question)
-        state = {'repository': 'dikkadev/test', 'items': [{'name': 'Alpha', 'local': '1.2.3',
+        state = {'repository': 'scramd/test', 'items': [{'name': 'Alpha', 'local': '1.2.3',
             'published': None, 'suggested': '1.2.3'}]}
         with patch.dict(sys.modules, questionary=questionary), patch.object(engine, 'ROOT', self.root), \
              patch.object(engine, 'status', return_value=state), patch.object(engine, 'plan', return_value=value) as planned, \

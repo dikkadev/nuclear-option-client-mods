@@ -3,7 +3,7 @@
     <TargetFramework>netstandard2.1</TargetFramework>
     <AssemblyName>NuclearSpectator</AssemblyName>
     <RootNamespace>NuclearSpectator</RootNamespace>
-    <Version>0.1.13</Version>
+    <Version>0.1.14</Version>
     <BepInExPluginGuid>dev.dikka.nuclearspectator</BepInExPluginGuid>
     <BepInExPluginName>NuclearSpectator</BepInExPluginName>
     <Nullable>enable</Nullable>

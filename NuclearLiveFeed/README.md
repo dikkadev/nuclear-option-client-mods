@@ -51,4 +51,4 @@ Turn on **Server / Allow LAN Viewers**, then open the map on the other PC, click
 
 An unofficial fan project, not affiliated with, sponsored by or endorsed by Shockfront Studios. It needs a legally acquired copy of Nuclear Option.
 
-For developers: [source, feed format and design on GitHub](https://github.com/dikkadev/nuclear-option-client-mods/tree/main/NuclearLiveFeed).
+For developers: [source, feed format and design on GitHub](https://github.com/scramd/nuclear-option-client-mods/tree/main/NuclearLiveFeed).

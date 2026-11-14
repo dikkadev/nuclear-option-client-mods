@@ -113,8 +113,8 @@ def config(root=ROOT):
 def repository(value):
     if not re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9-]*/[A-Za-z0-9_.-]+', value):
         raise ValueError('Repository must be OWNER/NAME, without a URL')
-    if value.split('/')[0].lower() != 'dikkadev':
-        raise ValueError('This publisher targets a repository under dikkadev')
+    if value.split('/')[0].lower() != 'scramd':
+        raise ValueError('This publisher targets a repository under the scramd organization')
     if value.split('/')[1] in {'.', '..'}:
         raise ValueError('Invalid repository name')
     return value
@@ -1042,7 +1042,7 @@ def publish(plan_path, *, create_repo=False, dry_run=False, expect_hash=None):
         if not create_repo:
             raise ValueError('Repository does not exist; use --create-repo for the first publication')
         if login.lower() != owner.lower():
-            raise ValueError(f'The repository must first be created by {owner}; clankagent can publish to an existing repository as a collaborator')
+            raise ValueError(f'The repository must first be created under {owner}; --create-repo only creates one under the signed-in account')
     for item in value['items']:
         latest = remote['versions'].get(item['name'])
         if item['kind'] == 'pack':

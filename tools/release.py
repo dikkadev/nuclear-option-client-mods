@@ -73,9 +73,9 @@ OUTPUTS AND RECOVERY
 REQUIREMENTS AND FIRST USE
   Python 3.11+ through uv; git; .NET 10; authorized client/BepInEx references in
   .env or the environment. gh is needed only for publish/remote verify. Sign gh
-  in with write access, such as dikkadev or the invited clankagent collaborator.
+  in with write access to the scramd organization, such as dikkadev or clankagent.
   Existing repositories can be private or public; publication keeps visibility.
-  The repository remains owned by dikkadev. A VM may prepare the entire folder
+  The repository belongs to the scramd organization. A VM may prepare the entire folder
   and hand it to the signed-in PC. Edit tools/release.toml to choose the repo.
   On first publication use --create-repo explicitly; no earlier command creates
   it. Supply a chosen LICENSE (or plan --license-file FILE) before publishing.
@@ -95,7 +95,7 @@ def parser():
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
     commands = result.add_subparsers(dest='command')
     status = commands.add_parser('status', help='Compare local, GitHub and registry versions (read-only)')
-    status.add_argument('--repo', help='Public destination OWNER/NAME under dikkadev; default tools/release.toml')
+    status.add_argument('--repo', help='Public destination OWNER/NAME under scramd; default tools/release.toml')
     status.add_argument('--offline', action='store_true', help='Show local versions without any network access')
     bump = commands.add_parser('bump', help='Explicitly edit selected local project or pack versions; no build/upload')
     bump.add_argument('--mod', action='append', default=[], help='Active mod name, repeatable')
@@ -109,7 +109,7 @@ def parser():
     plan.add_argument('--pack', choices=['mine', 'full', 'both', 'our'], help='Separately versioned pack: mine bundles your mods, full adds external registry references; our is a mine alias')
     plan.add_argument('--game-version', required=True, help='Actual supported client game version, for example 0.34.2; no stale default')
     plan.add_argument('--output', type=Path, required=True, help='New or empty release directory for plan.json and source/')
-    plan.add_argument('--repo', help='Override tools/release.toml destination (OWNER/NAME under dikkadev)')
+    plan.add_argument('--repo', help='Override tools/release.toml destination (OWNER/NAME under scramd)')
     plan.add_argument('--prerelease', action='store_true', help='Mark every selected GitHub release as a prerelease; versions stay numeric')
     plan.add_argument('--notes-file', type=Path, help='UTF-8 release notes shared by selected releases; default factual name/version/game summary')
     plan.add_argument('--license-file', type=Path, help='Copy the chosen license into the public snapshot as LICENSE')

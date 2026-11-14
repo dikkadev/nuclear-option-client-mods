@@ -1,2 +1,5 @@
 node_modules/
 dist/
+
+# Game-derived icon images, built by scripts/game-icons.py from a local client; never committed.
+src/icon-sets/generated/

@@ -236,8 +236,6 @@ def full_payload(root: Path, own: dict[str, bytes]) -> dict[str, bytes]:
         'to turn off its fuel overlay while retaining NuclearSounds fuel text.\n'
         'For Loadout Presets isolation, disable it in NOMM rather than its internal Enabled\n'
         'setting: that setting can still suppress vanilla loadout defaults.\n'
-        'Collimated HUD (registry game version 0.34.2) replaces the helmet display update:\n'
-        'with NuclearSpectator Show HUD on, the spectated speed/altitude/heading tapes freeze.\n'
         'Build/API checks cover our active mods. External files are downloaded by NOMM;\n'
         'full-pack gameplay still requires testing in the client.\n'
     ).encode()

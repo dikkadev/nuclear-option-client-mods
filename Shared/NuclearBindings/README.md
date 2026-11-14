@@ -2,7 +2,7 @@
 
 One binding concept for every key and button setting in these mods: F1 rows bound by pressing a key, mouse button, gamepad control or any joystick button, hat or axis direction. Keys are read through Unity input, controllers through the game's Rewired.
 
-The code is the public library [clankagent/nuclear-option-bindings](https://github.com/clankagent/nuclear-option-bindings) (MIT), published on nuget.org as the source-only package `NuclearOption.Bindings`. Its README describes the F1 rows, the stored row format, the behavior and the API. `NuclearBindings.props` adds the package; its files compile into each consuming plugin, so there is no helper DLL and no plugin dependency. Change the code in the library, release it, then raise the version in `NuclearBindings.props`.
+The code is the public library [scramd/nuclear-option-bindings](https://github.com/scramd/nuclear-option-bindings) (MIT), published on nuget.org as the source-only package `NuclearOption.Bindings`. Its README describes the F1 rows, the stored row format, the behavior and the API. `NuclearBindings.props` adds the package; its files compile into each consuming plugin, so there is no helper DLL and no plugin dependency. Change the code in the library, release it, then raise the version in `NuclearBindings.props`.
 
 ## Use in a mod
 

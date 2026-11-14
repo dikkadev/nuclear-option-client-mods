@@ -20,6 +20,7 @@ MOD_DIRS=(
   "NuclearDeathBlackout"
   "NuclearDelivery"
   "NuclearLiveFeed"
+  "NuclearMapFocus"
   "NuclearMapMarkings"
   "NuclearMapPan"
   "NuclearMapPlayerNames"

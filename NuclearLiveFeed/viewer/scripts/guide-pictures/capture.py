@@ -136,6 +136,8 @@ with sync_playwright() as p:
     # Give the complete settings and contact panels enough vertical room for clean reference crops.
     page.set_viewport_size({"width": W, "height": 980})
     page.click("#btn-layers")
+    # The Show tab at its start settings: the guide's Layers section shows this tab.
+    page.click("#settings-show-tab")
     page.wait_for_timeout(300)
     webp(page.locator("#layers").screenshot(), "part-layers.webp", 1.0, 80)
     callouts["layers"] = box("#layers")

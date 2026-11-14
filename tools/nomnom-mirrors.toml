@@ -33,6 +33,14 @@ tags = ["QoL", "Map", "Multiplayer"]
 include = ["README.md"]
 project = "NuclearMapPlayerNames/NuclearMapPlayerNames.csproj"
 
+[mods.NuclearMapFocus]
+id = "dev.dikka.nuclearmapfocus"
+display_name = "NuclearMapFocus"
+description = "Client-side Nuclear Option mod that keeps the camera still while you use the expanded map: the mouse wheel zooms only the map and the right mouse button does not turn the view."
+tags = ["QoL", "Map"]
+include = ["README.md"]
+project = "NuclearMapFocus/NuclearMapFocus.csproj"
+
 [mods.NuclearMapMarkings]
 id = "dev.dikka.nuclearmapmarkings"
 display_name = "NuclearMapMarkings"

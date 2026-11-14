@@ -19,6 +19,7 @@ namespace NuclearSpectator
         private float nextRefresh;
         private string? lastStatus;
         private bool broken;
+        private const float OffSeconds = 3f;
 
         internal bool Owns(Canvas canvas) => root != null && canvas.gameObject == root;
 
@@ -78,14 +79,17 @@ namespace NuclearSpectator
             return aircraft;
         }
 
+        // The line shows while the feature is on, and for a moment after it is switched off
+        // (binding or F1); off is the default, so it does not stay on screen.
         private static string? Status(Settings plugin, CameraStateManager cam, AutoFollow follow)
         {
             if (!plugin.ShowFollowNearestStatus.Value) return null;
             if (follow.Pending) return "<color=#9FE0A0>Following the nearest aircraft...</color>";
+            bool on = plugin.FollowNearest.Value;
+            if (!on && Time.unscaledTime < plugin.FollowNearestOffTime + OffSeconds)
+                return "<color=#A0A0A0>Follow nearest when lost: off</color>";
             if (!(cam.followingUnit is Aircraft aircraft) || !FollowView.Alive(aircraft)) return null;
-            return plugin.FollowNearest.Value
-                ? "<color=#9FE0A0>Follow nearest when lost: on</color>"
-                : "<color=#A0A0A0>Follow nearest when lost: off</color>";
+            return on ? "<color=#9FE0A0>Follow nearest when lost: on</color>" : null;
         }
 
         private void Refresh(Settings plugin, Aircraft? aircraft, string? status)
